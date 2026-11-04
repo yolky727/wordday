@@ -1,5 +1,5 @@
-/* WORDDAY 2.2.1 · theme, profile and achievements */
-const CACHE_NAME = 'wordday-v2.2.2-vocab-interaction';
+/* WORDDAY 2.3 · theme, profile and achievements */
+const CACHE_NAME = 'wordday-v2.3-flow-memory';
 const CACHE_PREFIX = 'wordday-';
 const APP_ENTRY = './index.html';
 const VOCAB_ENTRY = './vocabulary-index.json';
