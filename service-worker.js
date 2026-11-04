@@ -1,5 +1,5 @@
-/* WORDDAY 2.2 · theme, profile and achievements */
-const CACHE_NAME = 'wordday-v2.2-theme-achievement';
+/* WORDDAY 2.2.1 · theme, profile and achievements */
+const CACHE_NAME = 'wordday-v2.2.1-theme-achievement';
 const CACHE_PREFIX = 'wordday-';
 const APP_ENTRY = './index.html';
 self.addEventListener('install', event => event.waitUntil((async()=>{const c=await caches.open(CACHE_NAME);try{await c.add(APP_ENTRY)}catch(e){}await self.skipWaiting()})()));
