@@ -1,5 +1,5 @@
 /* WORDDAY 2.4.1 · theme, profile and achievements */
-const CACHE_NAME = 'wordday-v2.5-wildwords';
+const CACHE_NAME = 'wordday-v2.5.1-wildwords';
 const CACHE_PREFIX = 'wordday-';
 const APP_ENTRY = './index.html';
 const VOCAB_ENTRY = './vocabulary-index.json';

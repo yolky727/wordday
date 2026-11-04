@@ -187,6 +187,34 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 #wd24QuizConfig .wd24-settings{gap:14px}
 @media(max-width:520px){#wd24QuizConfig .wd24-settings{grid-template-columns:1fr}#wd24Combo{top:14%}}
 @media(prefers-reduced-motion:reduce){#wd24Combo.active{animation:none!important;opacity:1;transform:translate(-50%,-18%)}#wd24Combo .spark{display:none}}
+
+/* 2.5.1 — editorial welcome, Wonder tab, unified quiz progress */
+.bottom-nav:not(.collapsed){width:min(370px,calc(100% - 24px));gap:4px}
+.bottom-nav [data-main-tab]{min-width:0;padding:9px 12px;line-height:1.45}
+.ideas-intro{padding:27px 24px 25px;position:relative;overflow:hidden}
+.ideas-intro:after{content:'✳';position:absolute;right:14px;top:-24px;font-size:128px;color:var(--green);opacity:.055;pointer-events:none}
+.ideas-eyebrow{font-size:10px;font-weight:750;letter-spacing:2.2px;color:var(--green);margin-bottom:15px}
+.ideas-intro h2{font-size:clamp(27px,6vw,38px);letter-spacing:-1px;margin:0 0 9px}
+.ideas-intro h2 span{display:block;font-family:Georgia,serif;font-size:15px;letter-spacing:.1px;font-weight:400;font-style:italic;color:var(--muted);margin-top:6px}
+.ideas-intro p{font-size:12px;line-height:1.8;color:var(--muted);margin:0}
+#wildIdeasHome .panel{margin-bottom:15px}
+#quiz .quiz-progress{height:8px;background:var(--pale);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+#quiz .quiz-progress i{display:block;height:100%;background:var(--green)!important;border-radius:99px;transition:width .25s ease,background .25s ease}
+#quiz .quiz-meta{color:var(--ink)}
+#wdSplash{background:color-mix(in srgb,var(--bg) 85%,var(--deep) 15%)}
+#wdSplash .wd-splash-panel{max-width:435px;text-align:left;padding:35px clamp(25px,7vw,39px) 29px;border-radius:26px;background:color-mix(in srgb,var(--paper) 93%,transparent);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+#wdSplash .wd-splash-monogram{display:flex;align-items:end;justify-content:space-between;margin-bottom:65px;border-bottom:1px solid var(--line);padding-bottom:15px}
+#wdSplash .wd-splash-monogram>span{font-family:Georgia,serif;font-size:53px;line-height:.9;letter-spacing:-5px;color:var(--green)}
+#wdSplash .wd-splash-dot{color:var(--muted)}
+#wdSplash .wd-splash-monogram i{font-size:8px;font-style:normal;letter-spacing:1.1px;color:var(--muted);max-width:112px;text-align:right;line-height:1.6}
+#wdSplash .wd-splash-overline{font-size:9px;letter-spacing:2.5px}
+#wdSplash .wd-splash-title{font-size:clamp(46px,11vw,65px);letter-spacing:-3.2px;line-height:1.04;margin:15px 0 17px;font-weight:500}
+#wdSplash .wd-splash-tagline{font-size:13px;max-width:none;line-height:2;margin:0 0 31px}
+#wdSplash .wd-splash-line{margin:0 0 23px;width:60px;height:1px;opacity:.65}
+#wdSplash .wd-splash-enter{min-height:52px;border-radius:12px}
+#wdSplash .wd-splash-skip{display:block;width:100%;text-align:center}
+#wdSplash .wd-splash-foot{text-align:center;margin-top:19px;letter-spacing:2px;font-size:9px}
+@media(prefers-reduced-motion:reduce){#quiz .quiz-progress i{transition:none}}
 </style><link rel="stylesheet" href="wildwords.css"></head><body><div class="wrap">
 <header class="top"><div class="brand">WORD<span>DAY</span> <small style="font-size:10px;color:var(--muted);font-weight:600">2.4.1 · Complete Repair</small> / Vocabulary Master</div><div class="date" id="today"></div></header>
 <section class="hero"><div><div class="eyebrow">A LITTLE EVERY DAY</div><h1>每天积累一点，<br>让英语成为习惯。</h1><p>为雅思与大学英语四级设计的词汇学习空间。学习、收藏、复习与测试，让每一次努力都留下记录。</p></div><div class="hero-stat"><strong id="streak">0</strong><span>连续打卡 · 天</span></div></section>
@@ -200,6 +228,7 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 <section id="mistakes" class="section"><div class="panel"><div class="panel-head"><h2>错词本</h2><span class="sub" id="mistakeCount"></span></div><div id="mistakeList"></div></div></section>
 <section id="stats" class="section"><div class="layout"><div class="panel"><div class="panel-head"><h2>学习数据</h2><span class="sub">持续积累</span></div><div class="stats"><div class="stat"><strong id="sKnown">0</strong><span>认识单词</span></div><div class="stat"><strong id="sDays">0</strong><span>打卡天数</span></div><div class="stat"><strong id="sQuiz">0</strong><span>答题次数</span></div><div class="stat"><strong id="sAccuracy">—</strong><span>答题正确率</span></div></div><h3 class="section-title" style="margin-top:22px">近 7 天学习情况</h3><div id="weeklyBars" class="barlist"></div></div><div class="panel"><h2 style="margin:0 0 12px">数据安全与迁移</h2><p class="smallnote">记录保存在当前浏览器。建议定期导出备份；换手机或清除 Safari 网站数据前，请先导出。</p><div class="actions"><button id="exportData">导出学习备份</button><button class="secondary" id="importBtn">导入备份</button><input id="importFile" type="file" accept="application/json" hidden></div><div class="smallnote" style="margin-top:12px">新版继续使用旧版 wordday_v1 数据标识，并兼容原有打卡、自定义词汇与小测记录。请勿删除浏览器原站点数据。</div></div></div></section>
 
+<section id="ideas" class="section"><div class="panel ideas-intro"><div class="ideas-eyebrow">WILDWORDS · CREATIVE CORNER</div><h2>妙想 <span>Little wonders, every day.</span></h2><p>收藏动物朋友，开启每日翻牌，在学习中发现意外的小惊喜。</p></div><div id="wildIdeasHome"></div></section>
 <section id="personal" class="section"><div class="panel"><div class="profile-row"><div class="avatar" id="profileAvatar">✦</div><div style="flex:1"><div style="font-size:18px;font-weight:800" id="profileName">WORDDAY 学习者</div><div class="sub">A LITTLE EVERY DAY · 你的学习档案</div></div><button class="secondary" id="editProfile">编辑资料</button></div></div>
 <div class="panel" id="personalShortcuts"><div class="panel-head"><h2>我的空间</h2><span class="sub">个人专属栏目</span></div><div class="profile-shortcuts"><button class="secondary" data-personal-page="favorites">☆ 收藏单词</button><button class="secondary" data-personal-page="mistakes">↺ 错词本</button><button class="secondary" data-personal-page="stats">▥ 详细统计与备份</button><button class="secondary" data-personal-page="history">◷ 测试历史</button></div></div><div id="personalSubpages"></div><section id="history" class="personal-subsection" style="display:none"><div class="panel"><div class="panel-head"><h2>测试历史</h2><button class="secondary" data-personal-back>返回个人</button></div><div id="quizHistory"></div></div></section>
 <div class="panel"><div class="panel-head"><h2>年度学习热力图</h2><select id="heatYear" class="field" style="width:auto"></select></div><div class="sub" id="heatSummary">真实学习记录 · 每个方格代表一天</div><div class="heatmap" id="heatmap"></div><div class="smallnote">颜色越深代表当天学习量越高；没有学习记录的日期保持空白。</div></div>
@@ -207,7 +236,7 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 <div class="panel"><div class="panel-head"><h2>成就徽章</h2><span class="sub">持续积累，逐步解锁</span></div><div class="badge-grid" id="badgeGrid"></div></div>
 <div class="panel"><div class="panel-head"><h2>动态主题</h2><span class="sub">切换 WORDDAY 的视觉氛围</span></div><div class="theme-options"><button data-theme-choice="forest">🌿 森林 Forest</button><button data-theme-choice="ocean">🌊 海洋 Ocean</button><button data-theme-choice="vintage">☀️ 复古 Vintage</button><button data-theme-choice="midnight">🌙 午夜 Midnight</button></div></div>
 <div class="panel"><div class="panel-head"><h2>交互反馈</h2><span class="sub">音效与动画</span></div><div class="tools"><label class="smallnote"><input type="checkbox" id="soundEnabled" checked> 启用音效</label><label class="smallnote">音色 <select id="soundTheme"><option value="piano">柔和钢琴</option><option value="bell">清脆铃音</option><option value="ambient">氛围音</option></select></label><label class="smallnote">音量 <input id="soundVolume" type="range" min="0" max="100" value="35"></label><button class="secondary" id="soundPreview">试听</button></div><p class="smallnote">音频需先点击交互以激活；系统减少动态效果时将自动简化动画。</p></div><div class="panel"><h2 style="margin:0 0 10px">个人资料</h2><p class="smallnote">昵称与头像保存在当前设备，不会上传到公开仓库。</p><div class="actions"><button class="secondary" id="personalExport">导出学习备份</button><button class="secondary" id="personalImport">导入学习备份</button></div></div></section>
-<nav class="bottom-nav" id="floatingNav" aria-label="主栏目导航"><button id="navGrip" class="nav-grip" aria-label="折叠底部导航" title="向下拖动折叠，向上拖动展开">⌄</button><button id="navPill" class="nav-pill" aria-label="展开导航">▤ 单词 · 展开</button><button class="active" data-main-tab="learn">▤<br>单词</button><button data-main-tab="personal">◉<br>个人</button></nav>
+<nav class="bottom-nav" id="floatingNav" aria-label="主栏目导航"><button id="navGrip" class="nav-grip" aria-label="折叠底部导航" title="向下拖动折叠，向上拖动展开">⌄</button><button id="navPill" class="nav-pill" aria-label="展开导航">▤ 单词 · 展开</button><button class="active" data-main-tab="learn">▤<br>单词</button><button data-main-tab="ideas">✧<br>妙想</button><button data-main-tab="personal">◉<br>个人</button></nav>
 <div id="profileModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:60;padding:18px;overflow:auto"><div class="panel" style="max-width:420px;margin:10vh auto"><div class="panel-head"><h2>个人资料</h2><button class="secondary" id="closeProfile">关闭</button></div><label class="smallnote">昵称</label><input id="nicknameInput" class="field" maxlength="20" placeholder="输入昵称" style="width:100%;margin:7px 0 12px"><label class="smallnote">选择头像</label><div class="tools" id="avatarChoices"><button type="button" data-avatar="🌱">🌱</button><button type="button" data-avatar="🌙">🌙</button><button type="button" data-avatar="☀️">☀️</button><button type="button" data-avatar="🪐">🪐</button><button type="button" data-avatar="✦">✦</button></div><button id="saveProfile" style="width:100%;margin-top:16px">保存资料</button></div></div>
 <div class="foot">WORDDAY · A LITTLE EVERY DAY<br>学习记录保存在当前设备浏览器中。建议定期导出备份。</div></div><div class="toast" id="toast"></div><div id="detailModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:18px;overflow:auto"><div class="panel" style="max-width:680px;margin:5vh auto"><div class="panel-head"><h2 id="detailTitle">单词详情</h2><button class="secondary" id="closeDetail">关闭</button></div><div id="detailBody"></div></div></div>
 <script>
@@ -424,6 +453,13 @@ function switchTab(name){
   document.querySelectorAll('.wrap > .section').forEach(s=>s.classList.toggle('active',s.id===name));
   if(name==='review')renderLists();if(name==='quiz')renderQuizGate();
 }
+function openIdeasPage(){
+  mainTab='ideas';
+  document.querySelectorAll('[data-main-tab]').forEach(b=>b.classList.toggle('active',b.dataset.mainTab==='ideas'));
+  document.querySelector('.nav').style.display='none';document.querySelector('.hero').style.display='none';
+  document.querySelectorAll('.wrap > .section').forEach(s=>s.classList.toggle('active',s.id==='ideas'));
+  if(window.WILDWORDS?.refreshIdeas)window.WILDWORDS.refreshIdeas();
+}
 function openPersonalPage(name=''){
   mainTab='personal';
   document.querySelectorAll('[data-main-tab]').forEach(b=>b.classList.toggle('active',b.dataset.mainTab==='personal'));
@@ -452,7 +488,7 @@ function renderHeatmap(){let y=Number($('heatYear').value)||new Date().getFullYe
 function renderPersonal(){ $('profileName').textContent=state.profile.name||'WORDDAY 学习者';$('profileAvatar').textContent=state.profile.avatar||'✦';$('pKnown').textContent=state.known.length;$('pDays').textContent=(state.days||[]).length;$('pTests').textContent=state.quizTotal;$('pAccuracy').textContent=state.quizTotal?Math.round(state.quizCorrect/state.quizTotal*100)+'%':'—';renderBadges();let sel=$('heatYear');if(!sel.options.length){let y=new Date().getFullYear();for(let n=y;n>=y-5;n--){let o=document.createElement('option');o.value=n;o.textContent=n+' 年';sel.appendChild(o)}}renderHeatmap();document.querySelectorAll('[data-theme-choice]').forEach(b=>b.classList.toggle('selected',b.dataset.themeChoice===state.theme))}
 function setTheme(t){state.theme=t;document.documentElement.dataset.theme=t;save();renderPersonal()}
 document.documentElement.dataset.theme=state.theme;
-document.querySelectorAll(['[data-main-tab]'].join('')).forEach(b=>b.addEventListener('click',()=>b.dataset.mainTab==='personal'?openPersonalPage():switchTab(tab)));document.querySelectorAll('[data-personal-page]').forEach(b=>b.addEventListener('click',()=>openPersonalPage(b.dataset.personalPage)));document.addEventListener('click',e=>{if(e.target.closest('[data-personal-back]'))openPersonalPage()});['favorites','mistakes','stats'].forEach(id=>$('personalSubpages').appendChild($(id)));
+document.querySelectorAll(['[data-main-tab]'].join('')).forEach(b=>b.addEventListener('click',()=>b.dataset.mainTab==='personal'?openPersonalPage():b.dataset.mainTab==='ideas'?openIdeasPage():switchTab(tab)));document.querySelectorAll('[data-personal-page]').forEach(b=>b.addEventListener('click',()=>openPersonalPage(b.dataset.personalPage)));document.addEventListener('click',e=>{if(e.target.closest('[data-personal-back]'))openPersonalPage()});['favorites','mistakes','stats'].forEach(id=>$('personalSubpages').appendChild($(id)));
 document.querySelectorAll('[data-theme-choice]').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.themeChoice)));
 $('heatYear').addEventListener('change',renderHeatmap);$('editProfile').addEventListener('click',()=>{$('nicknameInput').value=state.profile.name||'';$('profileModal').style.display='block'});$('closeProfile').addEventListener('click',()=>$('profileModal').style.display='none');let chosenAvatar=state.profile.avatar||'✦';$('avatarChoices').addEventListener('click',e=>{let b=e.target.closest('[data-avatar]');if(b){chosenAvatar=b.dataset.avatar;document.querySelectorAll('[data-avatar]').forEach(x=>x.style.outline=x===b?'2px solid var(--green)':'none')}});$('saveProfile').addEventListener('click',()=>{state.profile={name:$('nicknameInput').value.trim()||'WORDDAY 学习者',avatar:chosenAvatar};save();$('profileModal').style.display='none';renderPersonal();toast('个人资料已保存')});$('personalExport').addEventListener('click',()=>$('exportData').click());$('personalImport').addEventListener('click',()=>$('importBtn').click());
 
@@ -484,7 +520,7 @@ $('soundEnabled').addEventListener('change',e=>{state.audioEnabled=e.target.chec
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.id==='soundPreview'||b.id==='soundEnabled')return;const a=b.dataset.action;const k=a==='known'?'known':a==='quiz-answer'?'':a==='unknown'?'wrong':b.id==='quizNext'?'tap':'tap';if(k)playFeedback(k)},true);
 // Drag down to collapse, drag up to expand; tap handle and pill are accessible alternatives.
 const floatNav=$('floatingNav'),navGrip=$('navGrip'),navPill=$('navPill');let dragStartY=null;
-function updateNavPill(){navPill.textContent=(mainTab==='personal'?'◉ 个人':'▤ 单词')+' · 展开';navGrip.setAttribute('aria-label',floatNav.classList.contains('collapsed')?'展开底部导航':'折叠底部导航')}
+function updateNavPill(){navPill.textContent=(mainTab==='personal'?'◉ 个人':mainTab==='ideas'?'✧ 妙想':'▤ 单词')+' · 展开';navGrip.setAttribute('aria-label',floatNav.classList.contains('collapsed')?'展开底部导航':'折叠底部导航')}
 function setNavCollapsed(v){floatNav.classList.toggle('collapsed',v);navGrip.textContent=v?'⌃':'⌄';updateNavPill()}
 navGrip.addEventListener('click',()=>setNavCollapsed(!floatNav.classList.contains('collapsed')));navPill.addEventListener('click',()=>setNavCollapsed(false));
 floatNav.addEventListener('touchstart',e=>{dragStartY=e.touches[0]?.clientY??null},{passive:true});floatNav.addEventListener('touchend',e=>{if(dragStartY===null)return;const diff=(e.changedTouches[0]?.clientY??dragStartY)-dragStartY;dragStartY=null;if(Math.abs(diff)>28)setNavCollapsed(diff>0)},{passive:true});
@@ -616,7 +652,7 @@ document.addEventListener('click',ev=>{if(ev.target.closest('[data-action="revie
 const contrast={affect:['effect','affect 常作动词“影响”；effect 常作名词“效果”'],effect:['affect','effect 常作名词“效果”；affect 常作动词“影响”'],adapt:['adopt','adapt 适应/改编；adopt 采用/收养'],adopt:['adapt','adopt 采用/收养；adapt 适应/改编'],economic:['economical','economic 经济的；economical 节约的'],economical:['economic','economical 节约的；economic 经济的'],principal:['principle','principal 主要的/校长；principle 原则'],principle:['principal','principle 原则；principal 主要的/校长']};
 const oldDetail=showDetail;showDetail=function(word){oldDetail(word);const x=contrast[word?.toLowerCase()];if(x){const d=e('detailBody');d.insertAdjacentHTML('beforeend',`<h3>WORD CONTRAST · 易混词</h3><p><strong>${esc(word)} / ${esc(x[0])}</strong></p><p>${esc(x[1])}</p>`)}};
 // Splash respects iOS autoplay restrictions: sound only after explicit user tap.
-const splash=make('div','wdSplash',`<section class="wd-splash-panel" role="dialog" aria-modal="true" aria-label="欢迎来到 WORDDAY"><div class="wd-splash-orb" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M32 51V30M32 35C18 36 13 26 14 15c12 0 19 5 18 20ZM32 29c1-14 9-20 20-20 0 12-7 20-20 20Z"/></svg></div><div class="wd-splash-overline">A LITTLE EVERY DAY</div><h2 class="wd-splash-title">WORDDAY</h2><p class="wd-splash-tagline">让每一个单词，成为向前的一小步。<br>今天，也从这里开始。</p><div class="wd-splash-line"></div><button class="wd-splash-enter" id="wdEnter">开启今天的学习 <span aria-hidden="true">✦</span></button><button id="wdSkip" class="wd-splash-skip">直接进入 · 静音</button><div class="wd-splash-foot">FLOW & MEMORY · 2.4</div></section>`);document.body.appendChild(splash);
+const splash=make('div','wdSplash',`<section class="wd-splash-panel" role="dialog" aria-modal="true" aria-label="欢迎来到 WORDDAY"><div class="wd-splash-monogram" aria-hidden="true"><span>W<span class="wd-splash-dot">.</span></span><i>THE ART OF SMALL PROGRESS</i></div><div class="wd-splash-overline">YOUR DAILY LANGUAGE RITUAL</div><h2 class="wd-splash-title">WORDDAY</h2><p class="wd-splash-tagline">一个单词，一次发现。<br>让每一天的学习，都有新的可能。</p><div class="wd-splash-line"></div><button class="wd-splash-enter" id="wdEnter">开启今天的学习 <span aria-hidden="true">✦</span></button><button id="wdSkip" class="wd-splash-skip">直接进入 · 静音</button><div class="wd-splash-foot">A LITTLE EVERY DAY · 2.5.1</div></section>`);document.body.appendChild(splash);
 if(!sessionStorage.getItem('wd24Opened')){
   splash.classList.add('visible');
   const enter=()=>{playFeedback('finish');splash.classList.remove('visible');sessionStorage.setItem('wd24Opened','1')};
