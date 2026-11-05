@@ -46,7 +46,7 @@ $('wd26IntroSave').onclick=()=>finish(true);$('wd26IntroSkip').onclick=()=>finis
 const quiz=$('quiz');const quizPlay=$('quizPlay');const quizResult=$('quizResult');const quizReady=$('quizReady');
 if(quiz){const exit=document.createElement('button');exit.className='secondary wd26-quiz-exit';exit.textContent='← 返回测试中心';quizPlay?.prepend(exit);exit.onclick=()=>{if(!confirm('返回测试中心？可以使用“保存并退出测试”保留当前进度。'))return;quizPlay.style.display='none';quizReady.style.display='block';document.body.classList.remove('wd26-quiz-focus')};const observer=new MutationObserver(()=>{const active=quizPlay?.style.display==='block'||quizResult?.style.display==='block';document.body.classList.toggle('wd26-quiz-focus',active&&quiz.classList.contains('active'));void 0});observer.observe(quizPlay,{attributes:true,attributeFilter:['style']});observer.observe(quizResult,{attributes:true,attributeFilter:['style']});document.querySelectorAll('[data-tab],[data-main-tab]').forEach(b=>b.addEventListener('click',()=>{if(!quiz.classList.contains('active'))document.body.classList.remove('wd26-quiz-focus')}))}
 // Keep floating navigation behavior; smooth transitions are CSS-only.
-const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6.2 · Swiss Glass';document.querySelector('.brand small')?.replaceChildren(document.createTextNode('2.6 · WILDWORDS'));
+const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6.4 · Wildwords Refinement';document.querySelector('.brand small')?.replaceChildren(document.createTextNode('2.6 · WILDWORDS'));
 })();
 
 /* 2.6.1 · refined tactile feedback; preserve original ocean bell */
@@ -109,6 +109,8 @@ const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6.2 · 
  playFeedback=function(kind){
   if(kind!=='combo')return previous.apply(this,arguments);
   if(!state.audioEnabled)return;
+  // Midnight uses the same soft sine + subtle triangle partials as its UI interactions.
+  if(state.theme==='midnight')return previous.apply(this,arguments);
   try{
    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
    const context=window.__wd263ComboContext||(window.__wd263ComboContext=new AC());
