@@ -215,11 +215,11 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 #wdSplash .wd-splash-skip{display:block;width:100%;text-align:center}
 #wdSplash .wd-splash-foot{text-align:center;margin-top:19px;letter-spacing:2px;font-size:9px}
 @media(prefers-reduced-motion:reduce){#quiz .quiz-progress i{transition:none}}
-</style><link rel="stylesheet" href="wildwords.css"><link rel="stylesheet" href="wordday26.css"></head><body><div class="wrap">
+</style><link rel="stylesheet" href="wildwords.css"><link rel="stylesheet" href="wordday26.css"><link rel="stylesheet" href="wordday27.css"></head><body><div class="wrap">
 <header class="top"><div class="brand">WORD<span>DAY</span> <small style="font-size:10px;color:var(--muted);font-weight:600">2.4.1 · Complete Repair</small> / Vocabulary Master</div><div class="date" id="today"></div></header>
 <section class="hero"><div><div class="eyebrow">A LITTLE EVERY DAY</div><h1>每天积累一点，<br>让英语成为习惯。</h1><p>为雅思与大学英语四级设计的词汇学习空间。学习、收藏、复习与测试，让每一次努力都留下记录。</p></div><div class="hero-stat"><strong id="streak">0</strong><span>连续打卡 · 天</span></div></section>
 <nav class="nav" aria-label="学习功能"><button class="active" data-tab="learn">今日学习</button><button data-tab="quiz">每日测试</button><button data-tab="review">智能复习 <span id="dueBadge"></span></button></nav>
-<section id="learn" class="section active"><section class="panel" id="vocabularyCatalog"><div class="panel-head"><h2>词库索引</h2><span class="sub" id="catalogCount">正在加载词库…</span></div><p class="smallnote" id="catalogNote">已审核释义词条可学习和测试；补充的英文词头索引尚待补全中文释义和例句，不会伪造词义。</p><div class="tools"><input id="catalogSearch" class="field" style="flex:1" placeholder="搜索英文单词" autocomplete="off"><button id="catalogMore" class="secondary">查看更多</button></div><div id="catalogList" class="catalog-list"></div></section><div class="layout"><main class="panel"><div class="panel-head"><h2>今日单词</h2><span class="sub" id="dailyCount">今日 0 / 8</span></div><div class="tools"><label class="smallnote">今日目标 <input id="dailyTarget" type="number" min="1" max="100" value="8" style="width:68px;padding:8px;border:1px solid var(--line);border-radius:8px"></label><button class="secondary" id="applyTarget">调整数量</button><select id="level"><option value="all">雅思 + 四级</option><option value="CET-4">四级核心</option><option value="IELTS">雅思进阶</option></select><button class="secondary" id="shuffle">换一组</button></div><div class="progress"><div id="dailyBar"></div></div><div id="wordList"></div><div class="smallnote">“认识了”会计入累计掌握；“不熟悉”会加入错词本并安排复习。</div></main><aside><div class="panel"><div class="panel-head"><h2>学习概览</h2><span class="sub">本地保存</span></div><div class="stats"><div class="stat"><strong id="totalKnown">0</strong><span>累计认识单词</span></div><div class="stat"><strong id="totalDays">0</strong><span>累计打卡天数</span></div><div class="stat"><strong id="totalFav">0</strong><span>收藏单词</span></div><div class="stat"><strong id="totalDue">0</strong><span>待复习单词</span></div></div><div class="panel-head" style="margin:18px 0 8px"><h2>本月打卡</h2><span class="sub" id="monthLabel"></span></div><div class="calendar" id="calendar"></div></div><div class="panel"><h2 style="margin:0 0 12px">添加自己的单词</h2><div class="tools"><input id="newWord" placeholder="英文单词" style="flex:1;width:30%"><input id="newMeaning" placeholder="中文释义" style="flex:1;width:30%"><input id="newPos" placeholder="词性（可选，如 n. / v.）" style="flex:1;width:30%"></div><button id="addWord" style="width:100%;margin-top:9px">添加到词库</button><div class="smallnote" style="margin-top:8px">自定义词汇保存在当前浏览器中。</div></div></aside></div></section>
+<section id="learn" class="section active"><section class="panel" id="vocabularyCatalog"><div class="panel-head"><h2>词库索引</h2><span class="sub" id="catalogCount">正在加载词库…</span></div><p class="smallnote" id="catalogNote">8,100 个词头均有中文释义。支持中英文搜索、分类筛选和单词详情；专名与构词片段保留查询，不进入日常随机学习。</p><div class="tools"><input id="catalogSearch" class="field" style="flex:1" placeholder="搜索英文 / 中文释义" autocomplete="off"><button id="catalogMore" class="secondary">查看更多</button></div><div id="catalogList" class="catalog-list"></div></section><div class="layout"><main class="panel"><div class="panel-head"><h2>今日单词</h2><span class="sub" id="dailyCount">今日 0 / 8</span></div><div class="tools"><label class="smallnote">今日目标 <input id="dailyTarget" type="number" min="1" max="100" value="8" style="width:68px;padding:8px;border:1px solid var(--line);border-radius:8px"></label><button class="secondary" id="applyTarget">调整数量</button><select id="level"><option value="all">全部学习词汇</option><option value="CET-4">四级核心</option><option value="IELTS">雅思进阶</option><option value="CET-6">六级词汇</option><option value="基础词汇">基础词汇</option></select><button class="secondary" id="shuffle">换一组</button></div><div class="progress"><div id="dailyBar"></div></div><div id="wordList"></div><div class="smallnote">“认识了”会计入累计掌握；“不熟悉”会加入错词本并安排复习。</div></main><aside><div class="panel"><div class="panel-head"><h2>学习概览</h2><span class="sub">本地保存</span></div><div class="stats"><div class="stat"><strong id="totalKnown">0</strong><span>累计认识单词</span></div><div class="stat"><strong id="totalDays">0</strong><span>累计打卡天数</span></div><div class="stat"><strong id="totalFav">0</strong><span>收藏单词</span></div><div class="stat"><strong id="totalDue">0</strong><span>待复习单词</span></div></div><div class="panel-head" style="margin:18px 0 8px"><h2>本月打卡</h2><span class="sub" id="monthLabel"></span></div><div class="calendar" id="calendar"></div></div><div class="panel"><h2 style="margin:0 0 12px">添加自己的单词</h2><div class="tools"><input id="newWord" placeholder="英文单词" style="flex:1;width:30%"><input id="newMeaning" placeholder="中文释义" style="flex:1;width:30%"><input id="newPos" placeholder="词性（可选，如 n. / v.）" style="flex:1;width:30%"></div><button id="addWord" style="width:100%;margin-top:9px">添加到词库</button><div class="smallnote" style="margin-top:8px">自定义词汇保存在当前浏览器中。</div></div></aside></div></section>
 
 <section id="quiz" class="section"><div class="panel"><div class="panel-head"><h2>自由测试中心</h2><span class="sub">随时开始 · 四种模式</span></div><div id="quizGate" class="quiz-lock" style="display:none"></div><div id="quizReady" style="display:block"><div class="quiz-lock"><div class="lock-icon">✦</div><h3 style="margin:0 0 7px">选择测试</h3><p class="smallnote" id="quizReadyText">四种模式 · 随时开始</p><div class="tools" style="margin-top:12px"><button data-mode="choice">单词选择</button><button data-mode="spelling">单词拼写</button><button data-mode="sentence">句子填词</button><button data-mode="mixed">综合测试</button></div><div id="quizModeStats" class="quiz-mode-stats"></div></div></div><div id="quizPlay" style="display:none"><div class="sub" id="quizModeLabel"></div><div class="quiz-meta"><span id="quizProgressText">第 1 / 1 题</span><span id="quizScoreLive">暂未计分</span></div><div class="quiz-progress"><i id="quizProgressBar"></i></div><div class="quiz-question-card"><div class="quiz-direction" id="quizDirection">ENGLISH → 中文</div><div class="quiz-question" id="quizQuestion"></div><div class="quiz-options" id="quizOptions"></div><div class="feedback" id="quizFeedback"></div><button id="quizNext" style="width:100%;margin-top:12px" disabled>确认答案后继续</button></div></div><div id="quizResult" style="display:none"></div></div></section>
 
@@ -239,6 +239,7 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 <nav class="bottom-nav" id="floatingNav" aria-label="主栏目导航"><button id="navGrip" class="nav-grip" aria-label="折叠底部导航" title="向下拖动折叠，向上拖动展开">⌄</button><button id="navPill" class="nav-pill" aria-label="展开导航">▤ 单词 · 展开</button><button class="active" data-main-tab="learn">▤<br>单词</button><button data-main-tab="ideas">✧<br>妙想</button><button data-main-tab="personal">◉<br>个人</button></nav>
 <div id="profileModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:60;padding:18px;overflow:auto"><div class="panel" style="max-width:420px;margin:10vh auto"><div class="panel-head"><h2>个人资料</h2><button class="secondary" id="closeProfile">关闭</button></div><label class="smallnote">昵称</label><input id="nicknameInput" class="field" maxlength="20" placeholder="输入昵称" style="width:100%;margin:7px 0 12px"><label class="smallnote">选择头像</label><div class="tools" id="avatarChoices"><button type="button" data-avatar="🌱">🌱</button><button type="button" data-avatar="🌙">🌙</button><button type="button" data-avatar="☀️">☀️</button><button type="button" data-avatar="🪐">🪐</button><button type="button" data-avatar="✦">✦</button></div><button id="saveProfile" style="width:100%;margin-top:16px">保存资料</button></div></div>
 <div class="foot">WORDDAY · A LITTLE EVERY DAY<br>学习记录保存在当前设备浏览器中。建议定期导出备份。</div></div><div class="toast" id="toast"></div><div id="detailModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:18px;overflow:auto"><div class="panel" style="max-width:680px;margin:5vh auto"><div class="panel-head"><h2 id="detailTitle">单词详情</h2><button class="secondary" id="closeDetail">关闭</button></div><div id="detailBody"></div></div></div>
+<script src="lexicon.js"></script>
 <script>
 const baseWords=[
 ["benefit","/ˈbenɪfɪt/","益处；使受益","Regular exercise has many benefits for our health.","CET-4","n. / v."],
@@ -365,6 +366,11 @@ const baseWords=[
 ["utilize","/ˈjuːtəlaɪz/","利用；使用","The project will utilize existing resources.","IELTS","v."],
 ["welfare","/ˈwelfeə(r)/","福利；福祉","Public policy should protect social welfare.","CET-4","n."]
 ];
+// 2.7: replace bundled content only; user progress keeps its original word keys.
+const lexicalEntries=window.WORDDAY_LEXICON?.entries||[];
+const lexicalMap=new Map(lexicalEntries.map(x=>[x.word,x]));
+if(lexicalEntries.length){baseWords.splice(0,baseWords.length,...lexicalEntries.map(x=>[x.word,x.phonetic,x.meaning,x.example,x.category,x.pos,x.definition]));}
+const baseWordMap=new Map(baseWords.map(w=>[w[0],w]));
 const key="wordday_v1", today=new Date().toLocaleDateString('en-CA');
 const defaults={known:[],days:[],custom:[],daily:{},dailySets:{},quizDone:0,quizHistory:[]};
 function loadState(){try{return {...defaults,...JSON.parse(localStorage.getItem(key)||'{}')}}catch(e){return {...defaults}}}
@@ -373,15 +379,16 @@ state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.mistakes
 let current=[],tab='learn',shuffleNonce=0,quizSession=null,activeMode='choice';
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function save(){localStorage.setItem(key,JSON.stringify(state));renderOverview()}
-function allWords(){return baseWords.concat(state.custom||[])}
-function findWord(name){return allWords().find(w=>w[0]===name)}
-function dayAdd(n){let d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
-function dailyPool(filter){return allWords().filter(w=>filter==='all'||w[4]===filter||w[4]==='自定义')}
+function allWords(){const custom=state.custom||[],names=new Set(custom.map(w=>w[0]));return baseWords.filter(w=>!names.has(w[0])).concat(custom)}
+function findWord(name){return (state.custom||[]).find(w=>w[0]===name)||baseWordMap.get(name)}
+function dayAdd(n){let d=new Date();d.setDate(d.getDate()+n);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function dailyPool(filter){return allWords().filter(w=>lexicalMap.get(w[0])?.learnable!==false&&(filter==='all'||wordMatchesExam(w,filter)||w[4]==='自定义'))}
 function pickDaily(filter,need,previous=[]){
   const done=new Set(state.daily[today]||[]),seen=new Set(state.shownWords||[]),prior=new Set(previous);
   const eligible=dailyPool(filter).filter(w=>!done.has(w[0]));
   const unseen=eligible.filter(w=>!seen.has(w[0])&&!prior.has(w[0]));
-  const notPrevious=eligible.filter(w=>!prior.has(w[0])&&!unseen.includes(w));
+  const unseenNames=new Set(unseen.map(w=>w[0]));
+  const notPrevious=eligible.filter(w=>!prior.has(w[0])&&!unseenNames.has(w[0]));
   const recycled=eligible.filter(w=>prior.has(w[0]));
   function randomize(arr){let a=arr.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
   const result=[...randomize(unseen),...randomize(notPrevious),...randomize(recycled)].slice(0,Math.max(0,need)).map(w=>w[0]);
@@ -429,8 +436,31 @@ function renderOverview(){let days=state.days||[];$('totalKnown').textContent=st
 function showDetail(name){let w=findWord(name);if(!w)return;$('detailTitle').textContent=w[0];let pos=w[5]||'词性待补充',example=w[3]||'暂无例句';$('detailBody').innerHTML=`<div class="term">${esc(w[0])}</div><p class="phonetic">${esc(w[1])} · ${esc(pos)}</p><button data-action="speak" data-word="${esc(w[0])}">🔊 播放发音</button><h3>中文释义</h3><p>${esc(w[2])}</p><h3>英文释义</h3><p>${esc(w[6]||"英文释义待补充；请查阅权威词典")}</p><h3>例句与翻译</h3><p>${esc(example)}</p><h3>考试标签</h3><p>${esc(w[4]||'自定义')} · 当前词库标签，不代表已核实真题出处</p><h3>学习提示</h3><p>结合词性、上下文和常见搭配记忆。更多词源、近反义词及易混词资料将在后续词条数据完善后逐步补充。</p>`;$('detailModal').style.display='block'}
 function closeDetail(){$('detailModal').style.display='none'}
 function shuffleArray(list){let a=list.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function buildModeQuestions(pool,mode){const source=pool.slice(0,Math.min(Number(state.wd24?.count)||20,pool.length));const questions=source.map(w=>{let type=mode==='mixed'?['choice','spelling','sentence',w[6]?'definition':'spelling'][Math.floor(Math.random()*4)]:mode;let prompt='',correct='',options=[];if(type==='choice'){prompt=w[0];correct=String(w[2]||'').trim();const distractors=shuffleArray(pool.filter(x=>x[0]!==w[0]).map(x=>String(x[2]||'').trim()).filter(x=>x&&x!==correct));options=shuffleArray([...new Set([correct,...distractors])]).slice(0,4);if(!options.includes(correct))options[0]=correct}else if(type==='spelling'){const audio=Math.random()<.5;prompt=audio?'听发音并拼写单词':'根据中文释义拼写：'+w[2]}else if(type==='sentence'){const example=String(w[3]||'');const escaped=String(w[0]).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const masked=example.replace(new RegExp('\\b'+escaped+'\\b','i'),'_____');prompt=masked!==example?masked:'根据中文释义“'+w[2]+'”写出对应单词';if(masked===example)type='spelling'}else{prompt=String(w[6]||'');if(!prompt){type='spelling';prompt='根据中文释义拼写：'+w[2]}}if(type!=='choice')correct=String(w[0]||'').trim();if(!correct)throw new Error('题目缺少标准答案');return {id:w[0]+'-'+type,word:w[0],type,prompt,correct,answer:correct,options,meaning:w[2]}});let letterIndex=0;questions.forEach(q=>{if(q.type==='choice'&&q.options.length){let opts=q.options.slice(),target=letterIndex++%4;let ci=opts.indexOf(q.correct);if(ci>=0){[opts[ci],opts[target]]=[opts[target],opts[ci]];q.options=opts}}});return questions}
-function startMode(mode){const allowed=['choice','spelling','sentence','mixed'];if(!allowed.includes(mode)){toast('测试模式暂不可用');return}const pool=getTestPool();if(!pool.length){toast('词库暂时为空，请先添加单词');return}try{const questions=buildModeQuestions(pool,mode);if(!questions.length||questions.some(q=>!q.correct)){toast('题目数据不完整，请稍后重试');return}activeMode=mode;quizSession={mode,questions,index:0,correct:0,answers:[],startedAt:new Date().toISOString()};$('quizReady').style.display='none';$('quizResult').style.display='none';$('quizPlay').style.display='block';renderQuizQuestion()}catch(err){console.error(err);toast('题目生成失败，请检查词库数据')}}
+function buildModeQuestions(pool,mode){
+ const sentenceRegex=w=>new RegExp('\\b'+String(w[0]).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+ const hasSentence=w=>!!w[3]&&sentenceRegex(w).test(w[3]);
+ const eligible=mode==='sentence'?pool.filter(hasSentence):pool;
+ const source=eligible.slice(0,Math.min(Number(state.wd24?.count)||20,eligible.length));
+ const quizMeaning=w=>String(w[2]).split('\n')[0].trim();
+ let choiceIndex=0;let positions=shuffleArray([0,1,2,3]);
+ return source.map(w=>{
+  const types=['choice','spelling'];if(hasSentence(w))types.push('sentence');if(w[6]&&!w[6].toLowerCase().includes(w[0].toLowerCase()))types.push('definition');
+  const type=mode==='mixed'?types[Math.floor(Math.random()*types.length)]:mode;
+  let correct=w[0],options=[],prompt='';
+  if(type==='choice'){
+   correct=quizMeaning(w);
+   const distractors=shuffleArray([...new Set(pool.filter(x=>x[0]!==w[0]).map(quizMeaning).filter(x=>x&&x!==correct))]).slice(0,3);
+   options=distractors;
+   if(choiceIndex&&choiceIndex%4===0)positions=shuffleArray([0,1,2,3]);
+   const target=options.length===3?positions[choiceIndex++%4]:Math.floor(Math.random()*(options.length+1));
+   options.splice(target,0,correct);prompt=w[0];
+  }else if(type==='sentence'){prompt=w[3].replace(sentenceRegex(w),'_____')}
+  else if(type==='definition'){prompt=w[6]}
+  else{prompt=Math.random()<.5?'听发音并拼写单词':'根据中文释义拼写：'+quizMeaning(w)}
+  return {id:w[0]+'-'+type,word:w[0],type,prompt,correct,answer:correct,options,meaning:w[2]};
+ });
+}
+function startMode(mode){const allowed=['choice','spelling','sentence','mixed'];if(!allowed.includes(mode)){toast('测试模式暂不可用');return}const pool=getTestPool();if(!pool.length){toast('词库暂时为空，请先添加单词');return}try{const questions=buildModeQuestions(pool,mode);if(!questions.length||questions.some(q=>!q.correct)){toast('当前范围没有符合条件的题目，请切换范围或测试模式');return}activeMode=mode;quizSession={mode,questions,index:0,correct:0,answers:[],startedAt:new Date().toISOString()};$('quizReady').style.display='none';$('quizResult').style.display='none';$('quizPlay').style.display='block';renderQuizQuestion()}catch(err){console.error(err);toast('题目生成失败，请检查词库数据')}}
 function normalizeQuizAnswer(value){return String(value??'').normalize('NFKC').trim().toLowerCase().replace(/[\s\u3000]+/g,' ')}
 function submitQuizAnswer(value,button){const q=quizSession?.questions[quizSession.index];if(!q||quizSession.answers[quizSession.index])return;const chosen=String(value??'').trim();if(!chosen)return;const ok=normalizeQuizAnswer(chosen)===normalizeQuizAnswer(q.correct);if(ok)quizSession.correct++;playFeedback(ok?'correct':'wrong');quizSession.answers[quizSession.index]={word:q.word,chosen,correct:q.correct,ok,type:q.type};if(q.options.length){document.querySelectorAll('#quizOptions .quiz-option').forEach(b=>{b.disabled=true;if(normalizeQuizAnswer(b.dataset.answer)===normalizeQuizAnswer(q.correct))b.classList.add('correct')});if(!ok&&button)button.classList.add('wrong')}const feedback=$('quizFeedback');feedback.textContent=ok?'回答正确！继续保持。':`正确答案：${q.correct}`;feedback.style.color=ok?'var(--green)':'var(--red)';$('quizScoreLive').textContent=`已答对 ${quizSession.correct} 题`;$('quizNext').disabled=false;const input=$('typedAnswer');if(input)input.disabled=true;const submit=$('submitTyped');if(submit)submit.disabled=true}
 function answerTyped(){const input=$('typedAnswer');if(!input)return;submitQuizAnswer(input.value)}
@@ -497,19 +527,15 @@ if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addE
 
 // 2.2.2 independent, honest English headword index (supplementary entries are NOT translated).
 let vocabularyIndex=[];let catalogShown=48;
-async function loadVocabularyIndex(){
- const status=$('catalogCount');
- try{
-  let data;
-  if(window.__WORDDAY_EMBEDDED_INDEX__)data=window.__WORDDAY_EMBEDDED_INDEX__;
-  else {const r=await fetch('./vocabulary-index.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);data=await r.json()}
-  if(!Array.isArray(data.words)||data.words.length<1000)throw Error('词库索引内容不完整');
-  vocabularyIndex=[...new Set(data.words.map(w=>String(w).toLowerCase()).filter(w=>/^[a-z]{4,18}$/.test(w)))];
-  status.textContent=`${allWords().length} 条释义词条 · ${vocabularyIndex.length} 条待完善索引`;
-  renderCatalog();
- }catch(err){console.warn('Vocabulary index unavailable',err);status.textContent='补充词库加载失败，可重试';$('catalogNote').textContent='基础学习词条仍可使用。请检查 vocabulary-index.json 是否上传至仓库根目录。';$('catalogMore').textContent='重试加载';}
+function wordMatchesExam(w,category){const x=lexicalMap.get(w[0]);const tag={'CET-4':'cet4','CET-6':'cet6','IELTS':'ielts'}[category];return w[4]===category||!!(tag&&x?.tags.includes(tag))}
+async function loadVocabularyIndex(){vocabularyIndex=baseWords.map(w=>w[0]);$('catalogCount').textContent=`${baseWords.length.toLocaleString()} 个词头 · 中文释义全覆盖`;$('catalogMore').textContent='查看更多';renderCatalog();}
+function renderCatalog(){
+ const q=$('catalogSearch').value.trim().toLowerCase(),cat=$('catalogCategory')?.value||'all';
+ const matches=allWords().filter(w=>(w[0].toLowerCase().includes(q)||w[2].toLowerCase().includes(q))&&(cat==='all'||wordMatchesExam(w,cat)));
+ matches.sort((a,b)=>(b[0]===q)-(a[0]===q)||Number(b[0].startsWith(q))-Number(a[0].startsWith(q)));
+ $('catalogList').innerHTML=matches.slice(0,catalogShown).map(w=>`<button class="catalog-entry reviewed wd27-entry" data-action="detail" data-word="${esc(w[0])}"><span><strong>${esc(w[0])}</strong><small>${esc(w[4])}${state.known.includes(w[0])?' · 已掌握':''}</small></span><span class="wd27-preview">${esc(w[2].split('\n').slice(0,2).join('；'))}</span><span aria-hidden="true">↗</span></button>`).join('')||'<div class="empty">没有匹配的词条</div>';
+ $('catalogCount').textContent=`${matches.length.toLocaleString()} 个结果 · 已显示 ${Math.min(catalogShown,matches.length)}`;$('catalogMore').hidden=catalogShown>=matches.length;
 }
-function renderCatalog(){const q=$('catalogSearch').value.trim().toLowerCase();const reviewed=allWords().filter(w=>w[0].toLowerCase().includes(q));const reviewedSet=new Set(allWords().map(w=>w[0].toLowerCase()));const rest=vocabularyIndex.filter(w=>w.includes(q)&&!reviewedSet.has(w));const items=[...reviewed.map(w=>({word:w[0],ok:true})),...rest.map(word=>({word,ok:false}))].slice(0,catalogShown);$('catalogList').innerHTML=items.map(x=>`<div class="catalog-entry ${x.ok?'reviewed':''}"><strong>${esc(x.word)}</strong><small>${x.ok?'✓ 已有中文释义':'英文索引 · 释义待补'}</small></div>`).join('')||'<div class="empty">没有匹配的词条</div>';}
 $('catalogSearch').addEventListener('input',()=>{catalogShown=48;renderCatalog()});$('catalogMore').addEventListener('click',()=>{if(!vocabularyIndex.length){loadVocabularyIndex();return}catalogShown+=48;renderCatalog()});loadVocabularyIndex();
 // Persistent, user-controlled audio feedback. No autoplay and no external audio dependencies.
 let soundContext=null;
@@ -666,11 +692,11 @@ wd24.quizDates=wd24.quizDates||{};wd24.lastQuizWords=wd24.lastQuizWords||{};
 const wd24Style=()=>{document.documentElement.dataset.wdMotion=wd24.motion===0?'0':'1';document.documentElement.style.fontSize=wd24.font==='large'?'17px':wd24.font==='compact'?'14px':'16px';};wd24Style();
 // Test filters. Only explicit, trusted category fields from the supplied learning cards are used.
 const wd24Ready=e('quizReady');
-const wd24Config=make('div','wd24QuizConfig',`<details class="wd263-quiz-settings"><summary>题目设置 <span aria-hidden="true">⌄</span></summary><div class="panel" style="margin-top:10px"><div class="panel-head"><h2>TEST STUDIO</h2></div><div class="wd24-settings"><label>考试范围<select id="wd24Exam"><option value="both">四级 + 雅思</option><option value="cet">仅四级 CET-4</option><option value="ielts">仅雅思 IELTS</option></select></label><label>出题策略<select id="wd24Source"><option value="smart">智能混合 · 避免昨天重复</option><option value="new">优先未测试词汇</option><option value="review">优先到期复习</option></select></label></div><label class="wd24-count-label">题目数量<select id="wd24Count"><option value="10">10题 · 快速练习</option><option value="20">20题 · 标准测试</option><option value="30">30题 · 强化训练</option><option value="50">50题 · 深度测试</option></select></label><div class="wd24-note" id="wd24PoolInfo"></div></div></details>`);
+const wd24Config=make('div','wd24QuizConfig',`<details class="wd263-quiz-settings"><summary>题目设置 <span aria-hidden="true">⌄</span></summary><div class="panel" style="margin-top:10px"><div class="panel-head"><h2>TEST STUDIO</h2></div><div class="wd24-settings"><label>考试范围<select id="wd24Exam"><option value="all">全部学习词汇</option><option value="both">四级 + 雅思</option><option value="cet6">六级 CET-6</option><option value="basic">基础词汇</option><option value="cet">仅四级 CET-4</option><option value="ielts">仅雅思 IELTS</option></select></label><label>出题策略<select id="wd24Source"><option value="smart">智能混合 · 避免昨天重复</option><option value="new">优先未测试词汇</option><option value="review">优先到期复习</option></select></label></div><label class="wd24-count-label">题目数量<select id="wd24Count"><option value="10">10题 · 快速练习</option><option value="20">20题 · 标准测试</option><option value="30">30题 · 强化训练</option><option value="50">50题 · 深度测试</option></select></label><div class="wd24-note" id="wd24PoolInfo"></div></div></details>`);
 wd24Ready.insertBefore(wd24Config,wd24Ready.firstChild);
 e('wd24Exam').value=wd24.exam;e('wd24Source').value=wd24.source;e('wd24Count').value=String(wd24.count||20);e('wd24Count').onchange=ev=>{wd24.count=Number(ev.target.value);persist();wd24PoolCount()};
-function wd24Pool(){return allWords().filter(w=>Array.isArray(w)&&w[0]&&w[2]&&w[3]&&((wd24.exam==='both'&&['CET-4','IELTS'].includes(w[4]))||(wd24.exam==='cet'&&w[4]==='CET-4')||(wd24.exam==='ielts'&&w[4]==='IELTS')))}
-function wd24PoolCount(){const n=wd24Pool().length;e('wd24PoolInfo').textContent=`当前有 ${n} 个带释义、例句及考试分类标签的可测试词条，最多可生成 ${Math.min(n,Number(wd24.count)||20)} 题。考试归属以词库标签为准。${n<10?' 当前范围较少，建议选混合范围。':''}`}
+function wd24Pool(){return allWords().filter(w=>w[0]&&w[2]&&lexicalMap.get(w[0])?.learnable!==false&&(wd24.exam==='all'||(wd24.exam==='both'&&(wordMatchesExam(w,'CET-4')||wordMatchesExam(w,'IELTS')))||wordMatchesExam(w,{'cet':'CET-4','ielts':'IELTS','cet6':'CET-6','basic':'基础词汇'}[wd24.exam])))}
+function wd24PoolCount(){const pool=wd24Pool();e('wd24PoolInfo').textContent=`当前范围 ${pool.length.toLocaleString()} 个释义词条，${pool.filter(w=>w[3]).length} 个带例句。选择与拼写可使用全部释义词条；填词仅使用带目标词的例句。考试标签为词库分类，不代表真题出处。`}
 for(const [id,key] of [['wd24Exam','exam'],['wd24Source','source']])e(id).addEventListener('change',ev=>{wd24[key]=ev.target.value;persist();wd24PoolCount()});wd24PoolCount();
 const wd24GetTestPool=getTestPool;
 getTestPool=function(){let pool=wd24Pool(),y=new Date();y.setDate(y.getDate()-1);const yesterday=`${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,'0')}-${String(y.getDate()).padStart(2,'0')}`;const prev=new Set(wd24.lastQuizWords[yesterday]||[]);const due=w=>{let m=w23.memory[w[0]];return !!(m?.due&&m.due<=dateLocal())};const recently=w=>prev.has(w[0]);const lastDates=wd24.quizDates||{};let rank=w=>wd24.source==='review'?(due(w)?-100:0)+(recently(w)?1000:0):wd24.source==='new'?(lastDates[w[0]]?30:0)+(recently(w)?1000:0):(due(w)?-35:0)+(recently(w)?1000:0)+(lastDates[w[0]]===dateLocal()?20:0);return pool.map(w=>({w,r:rank(w)+Math.random()*5})).sort((a,b)=>a.r-b.r).map(x=>x.w)};
@@ -720,4 +746,4 @@ const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd
 renderAchievements();renderResume();
 })();
 
-</script><script src="wildwords.js"></script><script src="wordday26.js"></script></body></html>
+</script><script src="wildwords.js"></script><script src="wordday26.js"></script><script src="wordday27.js"></script></body></html>

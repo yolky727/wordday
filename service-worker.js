@@ -1,9 +1,24 @@
-/* WORDDAY 2.4.1 · theme, profile and achievements */
-const CACHE_NAME = 'wordday-v2.6.4-rarity-album-sort';
-const CACHE_PREFIX = 'wordday-';
-const APP_ENTRY = './index.html';
-const VOCAB_ENTRY = './vocabulary-index.json';
-self.addEventListener('install', event => event.waitUntil((async()=>{const c=await caches.open(CACHE_NAME);try{await c.addAll([APP_ENTRY,VOCAB_ENTRY,'./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.ico','./wildwords.js','./wildwords.css','./wordday26.css','./wordday26.js'])}catch(e){}await self.skipWaiting()})()));
-self.addEventListener('activate', event => event.waitUntil((async()=>{const names=await caches.keys();await Promise.all(names.filter(n=>n.startsWith(CACHE_PREFIX)&&n!==CACHE_NAME).map(n=>caches.delete(n)));await self.clients.claim()})()));
-self.addEventListener('message',e=>{if(e.data?.type==='SKIP_WAITING')self.skipWaiting()});
-self.addEventListener('fetch',event=>{const r=event.request;if(r.method!=='GET')return;const u=new URL(r.url);if(u.origin!==self.location.origin)return;event.respondWith((async()=>{const c=await caches.open(CACHE_NAME);if(r.mode==='navigate'){try{const fresh=await fetch(r,{cache:'no-store'});if(fresh?.ok){await c.put(r,fresh.clone());await c.put(APP_ENTRY,fresh.clone())}return fresh}catch(e){return(await c.match(r))||(await c.match(APP_ENTRY))||Response.error()}}try{const fresh=await fetch(r);if(fresh?.ok)await c.put(r,fresh.clone());return fresh}catch(e){return(await c.match(r))||Response.error()}})())});
+/* WORDDAY 2.7: atomic offline app shell. */
+const CACHE_NAME='wordday-v2.7.0-lexicon-1';
+const ASSETS=['./index.html','./vocabulary-index.json','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.ico','./favicon.png','./wildwords.js','./wildwords.css','./wordday26.css','./wordday26.js','./lexicon.js','./wordday27.js','./wordday27.css'];
+self.addEventListener('install',event=>event.waitUntil((async()=>{
+ const cache=await caches.open(CACHE_NAME);
+ // Never activate an incomplete release; the previous worker keeps working.
+ await cache.addAll(ASSETS.map(path=>new Request(path,{cache:'reload'})));
+ await self.skipWaiting();
+})()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+ for(const name of await caches.keys())if(name.startsWith('wordday-')&&name!==CACHE_NAME)await caches.delete(name);
+ await self.clients.claim();
+})()));
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
+self.addEventListener('fetch',event=>{
+ const request=event.request;if(request.method!=='GET'||new URL(request.url).origin!==self.location.origin)return;
+ event.respondWith((async()=>{
+  const cache=await caches.open(CACHE_NAME);
+  // HTML and its scripts come from the same installed release, even offline.
+  const cached=await cache.match(request.mode==='navigate'?'./index.html':request,{ignoreSearch:true});
+  if(cached)return cached;
+  return fetch(request);
+ })());
+});

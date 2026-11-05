@@ -1,0 +1,34 @@
+{
+  "version": "2.7.0",
+  "count": 8100,
+  "source": "https://github.com/skywind3000/ECDICT",
+  "source_sha256": "d1ecbdf9ee2b920afb6f430ca6b6bb9f559588cf0dff86e04bd255f9390843cc",
+  "notice": "全部词头含中文释义；词典数据自动匹配并做完整性检查，不代表逐条人工审校。考试标签来自词典或原有分类，不表示真题出处。",
+  "chinese_meanings": 8100,
+  "english_definitions": 8015,
+  "phonetics": 6842,
+  "parts_of_speech": 7873,
+  "examples": 122,
+  "learnable": 7859,
+  "editorial_supplements": [
+    "marya",
+    "vous",
+    "klapp",
+    "metivier",
+    "troyka",
+    "macewen",
+    "mindedly",
+    "morphin",
+    "angio",
+    "arbat",
+    "habeas"
+  ],
+  "categories": {
+    "CET-4": 2422,
+    "CET-6": 224,
+    "IELTS": 1044,
+    "专名与构词": 241,
+    "基础词汇": 474,
+    "通用拓展": 3695
+  }
+}
