@@ -5,9 +5,9 @@ const prefKey='wordday_26_preferences';let prefs={ambient:false,volume:12,reduce
 const savePrefs=()=>{try{localStorage.setItem(prefKey,JSON.stringify(prefs))}catch{}};
 const personal=$('personal');const shortcuts=$('personalShortcuts');
 const settings=document.createElement('section');settings.id='wd26Settings';settings.className='panel wd26-settings';settings.hidden=true;
-settings.innerHTML='<div class="panel-head"><h2>设置 <span class="wd26-english">/ SETTINGS</span></h2><button class="secondary" id="wd26SettingsBack">← 返回个人</button></div><div id="wd26SettingsContent"></div>';
+settings.innerHTML='<div class="panel-head"><h2>设置 <span class="wd26-english">/ SETTINGS</span></h2><button class="secondary" id="wd26SettingsBack" aria-label="返回个人" title="返回个人">←</button></div><div id="wd26SettingsContent"></div>';
 shortcuts?.after(settings);
-const settingsButton=document.createElement('button');settingsButton.className='secondary';settingsButton.id='wd26SettingsOpen';settingsButton.textContent='⚙ 设置';shortcuts?.querySelector('.profile-shortcuts')?.append(settingsButton);
+const settingsButton=document.createElement('button');settingsButton.className='secondary';settingsButton.id='wd26SettingsOpen';settingsButton.textContent='⚙ 设置';const settingsEntry=document.createElement('div');settingsEntry.className='wd263-settings-entry';settingsEntry.append(settingsButton);shortcuts?.after(settingsEntry);
 const settingsContent=$('wd26SettingsContent');
 function movePanel(el,title){if(!el)return;const wrap=document.createElement('div');wrap.className='wd26-setting-group';wrap.innerHTML=`<h3>${title}</h3>`;settingsContent.append(wrap);wrap.append(el)}
 const themePanel=document.querySelector('[data-theme-choice]')?.closest('.panel');
@@ -83,5 +83,47 @@ const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6.2 · 
     primary.start(at);secondary.start(at);primary.stop(at+dur+.02);secondary.stop(at+dur+.02);
    });
   }catch(e){console.warn('Feedback unavailable',e)}
+ };
+})();
+
+/* 2.6.3: dedicated full-screen test page; existing test engine unchanged. */
+(()=>{
+ const quiz=document.getElementById('quiz');if(!quiz)return;
+ const header=document.createElement('div');header.className='wd263-quiz-header';
+ header.innerHTML='<button class="secondary" id="wd263QuizBack" aria-label="返回" title="返回">←</button><span>WORDDAY / TEST</span><span aria-hidden="true">✦</span>';
+ quiz.querySelector('.panel')?.prepend(header);
+ const leave=()=>{document.body.classList.remove('wd263-quiz-page','wd26-quiz-focus');};
+ const open=()=>{document.body.classList.add('wd263-quiz-page');window.scrollTo(0,0);quiz.scrollTop=0;};
+ document.getElementById('wd263QuizBack').onclick=()=>{
+  const active=window.quizSession&&document.getElementById('quizPlay')?.style.display!=='none';
+  if(active&&!window.confirm('退出测试？已作答进度将保留。'))return;
+  leave();
+ };
+ document.querySelectorAll('[data-tab="quiz"]').forEach(b=>b.addEventListener('click',()=>setTimeout(open,0)));
+ // Main navigation tabs leave the test surface when navigated via code.
+ document.querySelectorAll('[data-tab]:not([data-tab="quiz"])').forEach(b=>b.addEventListener('click',leave));
+})();
+/* 2.6.3: 2.5-era combo oscillator sound, no additional per-answer tones. */
+(()=>{
+ const previous=playFeedback;
+ playFeedback=function(kind){
+  if(kind!=='combo')return previous.apply(this,arguments);
+  if(!state.audioEnabled)return;
+  try{
+   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+   const context=window.__wd263ComboContext||(window.__wd263ComboContext=new AC());
+   if(context.state==='suspended')context.resume();
+   const soundThemes={wood:{type:'triangle',duration:.10,volume:.09},bell:{type:'sine',duration:.48,volume:.07},piano:{type:'triangle',duration:.30,volume:.075},ambient:{type:'sawtooth',duration:.18,volume:.035}};
+   const t=soundThemes[state.audioTheme]||soundThemes.wood;
+   const vol=Math.max(0,Math.min(1,Number(state.audioVolume??35)/100));
+   [660,820,990].forEach((hz,i)=>{
+    const at=context.currentTime+i*.10,o=context.createOscillator(),g=context.createGain();
+    o.type=t.type;o.frequency.setValueAtTime(hz,at);
+    if(state.audioTheme==='piano')o.frequency.exponentialRampToValueAtTime(hz*.996,at+.15);
+    g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(Math.max(.0002,t.volume*vol),at+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,at+t.duration);
+    o.connect(g).connect(context.destination);o.start(at);o.stop(at+t.duration+.03);
+   });
+  }catch(err){console.warn('Combo sound unavailable',err)}
  };
 })();

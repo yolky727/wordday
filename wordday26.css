@@ -14,3 +14,40 @@ body.wd26-quiz-focus #quiz>.panel{min-height:calc(100dvh - 170px);padding:clamp(
 .wd26-reduced *, .wd26-reduced *::before,.wd26-reduced *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 @media(max-width:540px){.wild-atelier-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wd26-setting-group{padding:15px 0}.wd26-intro-card{border-radius:19px}}
 @media(prefers-reduced-motion:reduce){.bottom-nav,button{transition:none!important}}
+
+/* WORDDAY 2.6.3 — Swiss typography refinement, preserving all themes and glass */
+:root{--wd263-space:clamp(16px,4.2vw,28px)}
+body{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC","Noto Sans CJK SC",sans-serif;letter-spacing:-.012em}
+.hero h1,.wd-splash-title,.panel-head h2,.quiz-question,.wd-term,.stat strong{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang SC",sans-serif;letter-spacing:-.055em;line-height:1.12;font-weight:720}
+.hero h1{font-size:clamp(30px,7vw,58px)}.panel-head h2{font-size:clamp(19px,4.5vw,25px)}
+.eyebrow,.wd-eyebrow,.wd-splash-monogram i{font-size:10px;letter-spacing:.19em;font-weight:700}
+.panel{padding:var(--wd263-space);border-radius:clamp(17px,4vw,25px);backdrop-filter:blur(26px) saturate(1.35);-webkit-backdrop-filter:blur(26px) saturate(1.35);box-shadow:0 16px 48px #00000012,inset 0 1px 0 #ffffff69}
+.panel-head{align-items:baseline;gap:14px}.panel-head .sub{font-size:11px;line-height:1.45}
+.stats strong,.hero-stat strong{font-variant-numeric:tabular-nums;letter-spacing:-.065em}
+.smallnote{font-size:12px;line-height:1.6}.tools{gap:10px}
+button{font-weight:600;letter-spacing:-.015em}
+#wdSplash .wd-splash-panel{padding:clamp(28px,8vw,54px);text-align:left}
+#wdSplash .wd-splash-title{font-size:clamp(49px,14vw,88px);font-weight:760;letter-spacing:-.09em;line-height:1}
+#wdSplash .wd-splash-tagline{font-size:11px;letter-spacing:.19em;font-weight:700;margin:25px 0 35px}
+#wdSplash .wd-splash-monogram{margin-bottom:clamp(28px,7vh,64px)}
+#wdSplash .wd-splash-enter{letter-spacing:.035em}
+#wdSplash .wd-splash-skip{font-size:12px;opacity:.75}
+#wdSplash .wd-splash-foot,#wdSplash .wd-splash-overline{display:none!important}
+.wd263-settings-entry{margin:14px 0 22px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.wd263-settings-entry button{width:100%;text-align:left;padding:15px 17px;background:color-mix(in srgb,var(--paper) 75%,transparent);border:1px solid var(--line);border-radius:15px}
+#wd26SettingsBack,[data-personal-back]{min-width:44px;min-height:44px;font-size:21px;padding:6px 13px}
+.wd263-quiz-settings{margin:14px 0 20px;border:1px solid var(--line);border-radius:17px;background:color-mix(in srgb,var(--paper) 62%,transparent);overflow:hidden}
+.wd263-quiz-settings>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:15px 17px;font-weight:650;font-size:13px}
+.wd263-quiz-settings>summary::-webkit-details-marker{display:none}
+.wd263-quiz-settings[open]>summary span{transform:rotate(180deg)}
+.wd263-quiz-settings>.panel{box-shadow:none;background:transparent;border:0;padding:10px 15px 17px}
+body.wd263-quiz-page #quiz{display:block!important;position:fixed;inset:0;z-index:1500;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 25px) max(16px,env(safe-area-inset-left,0px));-webkit-overflow-scrolling:touch}
+body.wd263-quiz-page #quiz>.panel{max-width:760px;min-height:calc(100dvh - 55px);margin:0 auto;padding:clamp(18px,5vw,34px)}
+body.wd263-quiz-page #quiz .panel-head{display:flex!important}
+body.wd263-quiz-page #quiz .quiz-question-card{min-height:40dvh}
+body.wd263-quiz-page{overflow:hidden}
+.wd263-quiz-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px}
+.wd263-quiz-header button{min-width:44px;min-height:44px;border-radius:13px;font-size:21px}
+.wd263-quiz-header span{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--muted)}
+body.wd263-quiz-page .bottom-nav{visibility:hidden!important}
+@media(max-width:540px){.hero h1{letter-spacing:-.06em}.panel-head h2{letter-spacing:-.045em}}

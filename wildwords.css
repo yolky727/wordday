@@ -89,3 +89,10 @@
 @keyframes wd262Float{50%{transform:translateY(-8px) scale(1.06)}}
 @keyframes wd262Gold{50%{filter:brightness(1.5);text-shadow:0 0 8px #d7a54b}}
 @media(prefers-reduced-motion:reduce){.wild-inspect-face .wild-card::before,.wild-inspect-face .wild-card .wild-emoji,.wild-inspect-face .wild-card .wild-id{animation:none!important}}
+
+/* 2.6.3: real double-sided 3D card; never hide a face with visibility. */
+.wild-inspect-rotor{isolation:auto!important;transform-style:preserve-3d!important;-webkit-transform-style:preserve-3d!important}
+.wild-inspect-face{position:absolute;inset:0;display:block!important;visibility:visible!important;opacity:1!important;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;transform-style:preserve-3d!important;-webkit-transform-style:preserve-3d!important}
+.wild-inspect-front{transform:rotateY(0deg) translateZ(1px)!important;-webkit-transform:rotateY(0deg) translateZ(1px)!important}
+.wild-inspect-rear{transform:rotateY(180deg) translateZ(1px)!important;-webkit-transform:rotateY(180deg) translateZ(1px)!important}
+.wild-inspect-face>.wild-card{backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;transform:translateZ(0)!important;-webkit-transform:translateZ(0)!important}

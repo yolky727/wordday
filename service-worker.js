@@ -1,5 +1,5 @@
 /* WORDDAY 2.4.1 · theme, profile and achievements */
-const CACHE_NAME = 'wordday-v2.6.2-card-fix-no-ambient';
+const CACHE_NAME = 'wordday-v2.6.3-swiss-quiz-combo-card';
 const CACHE_PREFIX = 'wordday-';
 const APP_ENTRY = './index.html';
 const VOCAB_ENTRY = './vocabulary-index.json';
