@@ -1,4 +1,4 @@
-/* WORDDAY 2.6: progressive UI enhancements, preserving existing localStorage keys. */
+/* WORDDAY 2.6.1: progressive UI enhancements, preserving existing localStorage keys. */
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const prefKey='wordday_26_preferences';let prefs={ambient:false,volume:12,reduced:false};try{prefs={...prefs,...JSON.parse(localStorage.getItem(prefKey)||'{}')}}catch{}
@@ -53,5 +53,42 @@ $('wd26IntroSave').onclick=()=>finish(true);$('wd26IntroSkip').onclick=()=>finis
 const quiz=$('quiz');const quizPlay=$('quizPlay');const quizResult=$('quizResult');const quizReady=$('quizReady');
 if(quiz){const exit=document.createElement('button');exit.className='secondary wd26-quiz-exit';exit.textContent='← 返回测试中心';quizPlay?.prepend(exit);exit.onclick=()=>{if(!confirm('返回测试中心？可以使用“保存并退出测试”保留当前进度。'))return;quizPlay.style.display='none';quizReady.style.display='block';document.body.classList.remove('wd26-quiz-focus')};const observer=new MutationObserver(()=>{const active=quizPlay?.style.display==='block'||quizResult?.style.display==='block';document.body.classList.toggle('wd26-quiz-focus',active&&quiz.classList.contains('active'));soundscape.apply()});observer.observe(quizPlay,{attributes:true,attributeFilter:['style']});observer.observe(quizResult,{attributes:true,attributeFilter:['style']});document.querySelectorAll('[data-tab],[data-main-tab]').forEach(b=>b.addEventListener('click',()=>{if(!quiz.classList.contains('active'))document.body.classList.remove('wd26-quiz-focus')}))}
 // Keep floating navigation behavior; smooth transitions are CSS-only.
-const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6 · Swiss Glass';document.querySelector('.brand small')?.replaceChildren(document.createTextNode('2.6 · WILDWORDS'));
+const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6.1 · Swiss Glass';document.querySelector('.brand small')?.replaceChildren(document.createTextNode('2.6 · WILDWORDS'));
+})();
+
+/* 2.6.1 · refined tactile feedback; preserve original ocean bell */
+(()=>{
+ if(typeof playFeedback!=='function')return;
+ const oceanFeedback=playFeedback;
+ let ctx;
+ const scores={
+  forest:{tap:[523],known:[523,659],correct:[587,784],wrong:[392,349],finish:[523,659,784],achievement:[659,784,1047]},
+  vintage:{tap:[440],known:[440,554],correct:[523,659],wrong:[330,294],finish:[440,523,659],achievement:[523,659,880]},
+  midnight:{tap:[392],known:[392,587],correct:[494,659],wrong:[294,262],finish:[392,494,587],achievement:[494,587,784]}
+ };
+ playFeedback=function(kind){
+  if(!state.audioEnabled)return;
+  const theme=state.theme||'forest';
+  if(theme==='ocean')return oceanFeedback(kind);
+  try{
+   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+   ctx=ctx||new AC();if(ctx.state==='suspended')ctx.resume();
+   const notes=(scores[theme]||scores.forest)[kind]||(scores[theme]||scores.forest).tap;
+   const vol=Math.max(0,Math.min(1,Number(state.audioVolume??35)/100));
+   notes.forEach((hz,i)=>{
+    const at=ctx.currentTime+i*.092;
+    const dur=theme==='midnight'?.28:theme==='vintage'?.23:.17;
+    const primary=ctx.createOscillator(),secondary=ctx.createOscillator();
+    const g=ctx.createGain(),filter=ctx.createBiquadFilter();
+    primary.type=theme==='vintage'?'triangle':'sine';primary.frequency.setValueAtTime(hz,at);
+    secondary.type='sine';secondary.frequency.setValueAtTime(hz*2,at);
+    filter.type='lowpass';filter.frequency.value=theme==='forest'?1450:theme==='vintage'?2200:1200;
+    g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(Math.max(.00015,vol*.065),at+.018);
+    g.gain.exponentialRampToValueAtTime(.0001,at+dur);
+    const g2=ctx.createGain();g2.gain.value=.085;
+    primary.connect(filter);secondary.connect(g2).connect(filter);filter.connect(g).connect(ctx.destination);
+    primary.start(at);secondary.start(at);primary.stop(at+dur+.02);secondary.stop(at+dur+.02);
+   });
+  }catch(e){console.warn('Feedback unavailable',e)}
+ };
 })();

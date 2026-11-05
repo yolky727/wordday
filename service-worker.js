@@ -1,5 +1,5 @@
 /* WORDDAY 2.4.1 · theme, profile and achievements */
-const CACHE_NAME = 'wordday-v2.6-swiss-glass';
+const CACHE_NAME = 'wordday-v2.6.1-melodic-cards';
 const CACHE_PREFIX = 'wordday-';
 const APP_ENTRY = './index.html';
 const VOCAB_ENTRY = './vocabulary-index.json';
