@@ -719,4 +719,30 @@ const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd
 // Initial render after enhancement.
 renderAchievements();renderResume();
 })();
+
+/* 2.6.2: restore progressive combo sound during tests, independent of theme feedback. */
+(function(){
+ let previousSession=null,previousCount=0;
+ function comboTone(streak){
+  if(!state.audioEnabled||streak<2)return;
+  try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+   const ctx=window.__wd262ComboContext||(window.__wd262ComboContext=new AC());
+   if(ctx.state==='suspended')ctx.resume();
+   const v=Math.min(.08,Math.max(.005,Number(state.audioVolume??35)/100*.065));
+   const level=Math.min(streak,12),notes=[523.25,587.33,659.25,783.99,880,1046.5];
+   const hz=notes[(level-2)%notes.length]*Math.pow(2,Math.floor((level-2)/notes.length)*.18);
+   [hz,hz*1.25].forEach((freq,i)=>{const t=ctx.currentTime+i*.075,o=ctx.createOscillator(),g=ctx.createGain();o.type=state.theme==='ocean'?'sine':'triangle';o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v*(i?.58:1),t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+.19);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+.2)});
+  }catch(e){console.warn('combo audio',e)}
+ }
+ const base=submitQuizAnswer;
+ submitQuizAnswer=function(value,button){
+  const session=quizSession,count=session?.answers?.length||0;
+  const result=base.apply(this,arguments);
+  if(quizSession&&quizSession.answers?.length>count){
+   const answer=quizSession.answers[quizSession.index];
+   if(answer?.ok)comboTone(Number(quizSession.streak)||0);
+  }
+  return result;
+ };
+})();
 </script><script src="wildwords.js"></script><script src="wordday26.js"></script></body></html>

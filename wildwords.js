@@ -43,7 +43,13 @@ function inspectCard(a){
  `<div class="wild-inspect-copy">↔ 拖动旋转 · ↕ 调整视角 · 轻点翻面</div><div class="wild-inspect-stage"><div class="wild-inspect-rotor" id="wildRotor"><div class="wild-inspect-face wild-inspect-front">${card(a,false,advanced,'')}</div><div class="wild-inspect-face wild-inspect-rear">${backFace(a)}</div></div></div><div class="wild-inspect-controls"><button class="secondary" id="wildFlipView" aria-label="翻转卡牌">↻ 翻面</button><button class="secondary" id="wildResetView" aria-label="重置角度">◎ 复位</button><button class="secondary" id="wildReturnAlbum">← 图鉴</button></div><p class="wild-inspect-foot">${esc(a.cn)} · ${tcn[a.rarity]} · ${advanced?'ADVANCED':'ORIGINAL'} · NO. ${String(a.id+1).padStart(3,'0')}</p>`);
  wireClose();
  const stage=document.querySelector('.wild-inspect-stage'),rotor=$('wildRotor');let y=0,x=-7,drag=false,startX=0,startY=0,oldY=0,oldX=0,moved=false;
- function paint(){rotor.style.transform=`rotateX(${x}deg) rotateY(${y}deg)`}
+ function paint(){
+  rotor.style.transform=`rotateX(${x}deg) rotateY(${y}deg)`;
+  // Safari: explicitly hide the opposite face to prevent mirrored back text bleeding through.
+  const angle=((y%360)+360)%360,frontVisible=angle<=90||angle>=270;
+  const front=rotor.querySelector('.wild-inspect-front'),rear=rotor.querySelector('.wild-inspect-rear');
+  if(front&&rear){front.style.visibility=frontVisible?'visible':'hidden';rear.style.visibility=frontVisible?'hidden':'visible';}
+ }
  function begin(e){drag=true;moved=false;startX=e.clientX;startY=e.clientY;oldY=y;oldX=x;stage.setPointerCapture?.(e.pointerId);rotor.classList.add('dragging')}
  function move(e){if(!drag)return;const dx=e.clientX-startX,dy=e.clientY-startY;if(Math.abs(dx)+Math.abs(dy)>5)moved=true;y=oldY+dx*.75;x=Math.max(-35,Math.min(35,oldX-dy*.35));paint()}
  function end(e){if(!drag)return;drag=false;rotor.classList.remove('dragging');if(!moved){y+=180;paint()}}

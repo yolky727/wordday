@@ -66,3 +66,26 @@
 @keyframes wd261EpicPulse{50%{box-shadow:0 0 36px #a38aca99,0 24px 48px #0003}}
 @keyframes wd261MythicPulse{50%{box-shadow:0 0 42px #d7ae65b8,0 24px 48px #0003}}
 @media(prefers-reduced-motion:reduce){.wild-inspect-trigger .wild-card,.wild-inspect-trigger .wild-card:after,.wild-inspect-stage .wild-card,.wild-inspect-stage .wild-card:after,.wild-inspect-stage .wild-card .wild-emoji{animation:none!important}}
+
+/* 2.6.2: Safari 3D faces + stronger Epic/Mythic collector effects */
+.wild-inspect-rotor{transform-style:preserve-3d;-webkit-transform-style:preserve-3d;isolation:isolate}
+.wild-inspect-face{backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;transform-style:flat;-webkit-transform-style:flat;overflow:visible}
+.wild-inspect-front{transform:translateZ(1px);-webkit-transform:translateZ(1px)}
+.wild-inspect-rear{transform:rotateY(180deg) translateZ(1px);-webkit-transform:rotateY(180deg) translateZ(1px)}
+.wild-inspect-face>.wild-card{transform:none!important;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.wild-inspect-stage .wild-inspect-face>.wild-card{animation:none!important}
+.wild-inspect-stage .wild-inspect-face .wild-emoji{animation:wd262Float 3.8s ease-in-out infinite}
+.wild-inspect-stage .wild-inspect-face>.wild-card[data-rarity='2']{box-shadow:0 0 18px #a886ddaa,0 0 48px #9970d555,0 24px 48px #0003;}
+.wild-inspect-stage .wild-inspect-face>.wild-card[data-rarity='3']{box-shadow:0 0 24px #e8c16bbb,0 0 65px #e8c16b77,0 24px 48px #0003;}
+.wild-inspect-face .wild-card[data-rarity='2']::before,.wild-inspect-face .wild-card[data-rarity='3']::before{content:'';pointer-events:none;position:absolute;inset:0;border-radius:inherit;z-index:2;background:linear-gradient(115deg,transparent 15%,#ffffff00 31%,#ffffff85 49%,#ffffff00 63%,transparent 80%);background-size:240% 100%;animation:wd262Holo 4.8s ease-in-out infinite;mix-blend-mode:screen}
+.wild-inspect-face .wild-card[data-rarity='3']::before{background:linear-gradient(115deg,transparent 12%,#f7d88311 27%,#fff6ca99 48%,#ffe39a33 58%,transparent 77%);background-size:260% 100%;animation-duration:3.8s}
+.wild-inspect-face .wild-card[data-rarity='2'] .wild-tier,.wild-inspect-face .wild-card[data-rarity='3'] .wild-tier{text-shadow:0 0 12px var(--rare)}
+.wild-inspect-face .wild-card[data-rarity='2'] .wild-emoji{filter:drop-shadow(0 0 12px #a887d9bb)}
+.wild-inspect-face .wild-card[data-rarity='3'] .wild-emoji{filter:drop-shadow(0 0 17px #f4d17bcc)}
+.wild-inspect-face .wild-card[data-rarity='3'] .wild-id{animation:wd262Gold 2.7s ease-in-out infinite}
+.wild-inspect-trigger .wild-card[data-rarity='2']{box-shadow:0 0 14px #b28ce955}
+.wild-inspect-trigger .wild-card[data-rarity='3']{box-shadow:0 0 20px #e6b75b77}
+@keyframes wd262Holo{0%,100%{background-position:130% 0}55%{background-position:-130% 0}}
+@keyframes wd262Float{50%{transform:translateY(-8px) scale(1.06)}}
+@keyframes wd262Gold{50%{filter:brightness(1.5);text-shadow:0 0 8px #d7a54b}}
+@media(prefers-reduced-motion:reduce){.wild-inspect-face .wild-card::before,.wild-inspect-face .wild-card .wild-emoji,.wild-inspect-face .wild-card .wild-id{animation:none!important}}
