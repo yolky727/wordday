@@ -1,6 +1,6 @@
 /* WORDDAY 2.7: atomic offline app shell. */
-const CACHE_NAME='wordday-v2.7.0-lexicon-1';
-const ASSETS=['./index.html','./vocabulary-index.json','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.ico','./favicon.png','./wildwords.js','./wildwords.css','./wordday26.css','./wordday26.js','./lexicon.js','./wordday27.js','./wordday27.css'];
+const CACHE_NAME='wordday-v2.7.1-design-1';
+const ASSETS=['./index.html','./vocabulary-index.json','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.ico','./favicon.png','./wildwords.js','./wildwords.css','./wordday26.css','./wordday26.js','./lexicon.js','./wordday27.js','./wordday27.css','./wordday271.js','./wordday271.css'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE_NAME);
  // Never activate an incomplete release; the previous worker keeps working.

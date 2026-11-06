@@ -57,7 +57,7 @@ const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6.4 · 
  const scores={
   forest:{tap:[523],known:[523,659],correct:[587,784],wrong:[392,349],finish:[523,659,784],achievement:[659,784,1047]},
   vintage:{tap:[440],known:[440,554],correct:[523,659],wrong:[330,294],finish:[440,523,659],achievement:[523,659,880]},
-  midnight:{tap:[392],known:[392,587],correct:[494,659],wrong:[294,262],finish:[392,494,587],achievement:[494,587,784]}
+  midnight:{combo:[392,493.88,587.33,783.99],tap:[392],known:[392,587],correct:[494,659],wrong:[294,262],finish:[392,494,587],achievement:[494,587,784]}
  };
  playFeedback=function(kind){
   if(!state.audioEnabled)return;
@@ -95,9 +95,10 @@ const version=$('wd24Version');if(version)version.textContent='WORDDAY 2.6.4 · 
  const leave=()=>{document.body.classList.remove('wd263-quiz-page','wd26-quiz-focus');};
  const open=()=>{document.body.classList.add('wd263-quiz-page');window.scrollTo(0,0);quiz.scrollTop=0;};
  document.getElementById('wd263QuizBack').onclick=()=>{
-  const active=window.quizSession&&document.getElementById('quizPlay')?.style.display!=='none';
+  const active=typeof quizSession!=='undefined'&&quizSession&&document.getElementById('quizPlay')?.style.display!=='none';
   if(active&&!window.confirm('退出测试？已作答进度将保留。'))return;
-  leave();
+  if(typeof quizSession!=='undefined'&&quizSession){document.getElementById('quizSave')?.click()}
+  leave();switchTab('learn');
  };
  document.querySelectorAll('[data-tab="quiz"]').forEach(b=>b.addEventListener('click',()=>setTimeout(open,0)));
  // Main navigation tabs leave the test surface when navigated via code.
