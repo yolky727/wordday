@@ -13,7 +13,7 @@ let store=readStore();store.daily??={};store.total??={games:0,wins:0,points:0,sk
 function save(){store.active=game;localStorage.setItem(key,JSON.stringify(store))}
 function record(){if(!game?.finished||game.recorded)return;const day=dateKey();const d=store.daily[day]??={games:0,wins:0,points:0,skills:0};for(const entry of [d,store.total]){entry.finals=(entry.finals||0)+Number(game.round===5&&game.score[0]>game.score[1]);entry.games++;entry.wins+=Number(game.score[0]>game.score[1]);entry.points+=game.score[0];entry.skills+=Number(!!game.spent[0])}game.recorded=true;save();document.dispatchEvent(new Event('wd28badges'))}
 const dialog=document.createElement('dialog');dialog.id='wd28Dialog';dialog.setAttribute('aria-labelledby','wd28Title');document.body.append(dialog);
-let scene='lobby',selection=[],skillPanel=false,chosenSkill=null,chosenSlot=null,taskTab='day',returnFocus=null,claiming=false;
+let scene='lobby',selection=[],skillPanel=false,chosenSkill=null,chosenSlot=null,taskTab='day',returnFocus=null,claiming=false,rewardCard=null;
 const text=s=>esc(s),btn=(action,label,cls='secondary',disabled=false)=>'<button type="button" class="'+cls+'" data-b="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
 function show(){returnFocus=document.activeElement;if(!dialog.open)dialog.showModal();paint()}
 function close(){dialog.close();returnFocus?.focus?.()}
@@ -24,7 +24,7 @@ function fighter(n){return text(en(n))}
 function lobby(){
  const found=owned(),up=advanced(),locked=found.length<4;
  selection=selection.filter(n=>up.includes(n));const picks=up.map(n=>btn('pick:'+n,fighter(n)+(selection.includes(n)?' ✓':''),selection.includes(n)?'b28-evolved':'secondary b28-evolved',!selection.includes(n)&&selection.length===4)).join('');
- frame('卡牌战斗', '<p class="b28-lede">集齐 4 种萌物，即可与系统进行四回合对战。</p><section><h3>选择进阶卡 <small>'+selection.length+' / 4</small></h3><p>可手选任意稀有度的进阶卡。空位从已发现的萌物中随机补齐。</p><div class="b28-grid">'+(picks||'<p>暂无进阶卡，可使用已发现的卡牌随机组队。</p>')+'</div></section>'+btn('start',locked?'已发现 '+found.length+' / 4 种':'组队开战','',locked)+rules());
+ frame('灵宠对战', '<p class="b28-lede">集齐 4 种萌物，即可与系统进行四回合对战。</p><section><h3>选择进阶卡 <small>'+selection.length+' / 4</small></h3><p>可手选任意稀有度的进阶卡。空位从已发现的萌物中随机补齐。</p><div class="b28-grid">'+(picks||'<p>暂无进阶卡，可使用已发现的卡牌随机组队。</p>')+'</div></section>'+btn('start',locked?'已发现 '+found.length+' / 4 种':'组队开战','',locked)+rules());
 }
 function ecologyNote(a,b){
  const note={'豹/熊猫':'此条关系对应豹对大熊猫幼体的捕食。','狗/考拉':'此条关系对应野犬与考拉。','海豹/企鹅':'海豹卡在此代表豹海豹。','虎鲸/水獭':'此条关系对应有记录的部分虎鲸种群与海獭。','虎鲸/鲨鱼':'不同虎鲸种群食性不同，此处采用捕食鲨鱼的种群。'};
@@ -57,20 +57,21 @@ function panel(){
  if(chosenSkill){html+='<p>发动后将消耗本场唯一机会。</p>'+btn('confirm','确认发动 · '+text(labelOption(chosenSkill)),'')}
  return html+btn('skills','收起技能')+'</div>';
 }
-function face(n,side=''){return '<div class="a-face '+side+'"><small>'+text(B.style(n)||'')+'</small><strong>'+fighter(n)+'</strong></div>'}
+function art(n,enemy=false){const a=byName.get(n);if(!a)return '<div class="wild-card small a-concealed"><span class="wild-en">'+fighter(n)+'</span></div>';return W.card(a,true,!enemy&&advanced().includes(n),'')}
+function face(n,side=''){return '<div class="a-face '+side+'">'+art(n,side==='opponent')+'</div>'}
 function fight(){
  const g=game;if(!g){scene='lobby';return lobby()}
  const last=g.history.at(-1),report=['report','end'].includes(g.phase),reveal=report||g.phase==='show';
  const round=g.round===5?'决胜局':'回合 '+g.round+' / 4';
  const tally='<div class="a-score"><span>我方 <b>'+g.score[0]+'</b></span><strong>'+round+'</strong><span><b>'+g.score[1]+'</b> 系统</span></div>';
- const history='<details class="a-log"><summary>对战记录</summary>'+g.history.map(h=>'<p>'+h.round+' · '+h.names.map(fighter).join(' / ')+' · '+(['我方获胜','系统获胜'][h.winner]||'平局')+'<br><small>'+text(h.reason||'2.8 规则')+' '+text(h.notes.join('；'))+'</small></p>').join('')+'</details>';
+ const history='<details class="a-log"><summary>对战记录</summary>'+g.history.map(h=>'<p>'+h.round+' · '+h.names.map(fighter).join(' / ')+' · '+(['我方获胜','失败'][h.winner]||'平局')+'<br><small>'+text(h.reason||'2.8 规则')+' '+text(h.notes.join('；'))+'</small></p>').join('')+'</details>';
  if(g.finished&&finalVisible){
    const win=g.score[0]>g.score[1],draw=g.score[0]===g.score[1];
-   frame('对战结算','<div class="a-final '+(win?'win':draw?'tie':'loss')+'" role="status"><small>'+ (win?'VICTORY':draw?'DRAW':'DEFEAT')+'</small><h3>'+ (win?'你赢了':draw?'平局':'系统获胜')+'</h3><b>'+g.score.join(' : ')+'</b><p>'+g.history.length+' 回合 · 战绩已保存</p></div>'+history+'<div class="b28-actions">'+btn('again','再战一场','')+btn('close','返回妙想')+'</div>');return
+   frame('对战结算','<div class="a-final '+(win?'win':draw?'tie':'loss')+'" role="status"><small>'+ (win?'VICTORY':draw?'DRAW':'DEFEAT')+'</small><h3>'+ (win?'你赢了':draw?'平局':'失败')+'</h3><b>'+g.score.join(' : ')+'</b><p>'+g.history.length+' 回合 · 战绩已保存</p></div>'+history+'<div class="b28-actions">'+btn('again','再战一场','')+btn('close','返回妙想')+'</div>');return
  }
  let html=tally+'<div class="b28-oplabel">系统手牌</div><div class="b28-hand">'+g.hands[1].map((n,i)=>{
   const used=g.played[1].includes(i),current=i===g.cards[1],known=g.intel[0][i];const shown=used||current&&reveal?n:current&&g.lead===1?B.displayedLead(g,0):known?.name;
-  return '<div class="b28-opcard '+(used?'b28-played':'')+'"><small>'+String(i+1).padStart(2,'0')+'</small><b>'+ (shown?fighter(shown):'W')+'</b></div>'}).join('')+'</div>';
+  return '<div class="b28-opcard '+(used?'b28-played':'')+'">'+(shown?art(shown,true):'<div class="wild-card small a-concealed"><span class="wild-tier">WILDWORDS</span><span class="wild-en">W</span><span class="wild-id">'+String(i+1).padStart(2,'0')+'</span></div>')+'</div>'}).join('')+'</div>';
  const enemy=g.cards[1]===null?'':reveal?g.hands[1][g.cards[1]]:g.lead===1?B.displayedLead(g,0):'';
  html+='<div id="aDrop" class="a-field '+(reveal?'revealed':'')+'" aria-label="出牌区">'+(enemy?face(enemy,'opponent'):'<div class="a-placeholder">系统牌位</div>')+'<span class="a-vs">VS</span>'+(g.cards[0]!==null?face(g.hands[0][g.cards[0]],'player'):'<div class="a-placeholder mine">拖到这里出牌</div>');
  if(report&&last){html+='<div class="a-flash '+(last.winner===0?'win':last.winner===1?'loss':'tie')+'" role="status"><small>'+round+'</small><strong>'+ (last.winner===0?'胜出':last.winner===1?'落败':'平局')+'</strong><span>'+text(last.reason||'回合结束')+'</span></div>'}
@@ -81,14 +82,14 @@ function fight(){
   if(reveal){const pred=B.matchup(g.hands[0][g.cards[0]],g.hands[1][g.cards[1]]);html+='<p class="a-hint">'+pred.kind+' · '+(pred.delta>0?'我方占优':pred.delta<0?'系统占优':'双方持平')+'</p>'}
   if(g.actor===0&&!g.interrupt&&['lead','reply','duel'].includes(g.phase)){
     const legal=B.available(g,0);
-    html+='<div class="a-hand">'+g.hands[0].map((n,i)=>btn('slot:'+i,'<small>'+text(B.style(n))+'</small><strong>'+fighter(n)+'</strong>','secondary a-card '+(advanced().includes(n)?'b28-evolved':''),!legal.includes(i))).join('')+'</div><small class="a-hint">拖入出牌区，或轻点手牌直接打出。</small>';
+    html+='<div class="a-hand">'+g.hands[0].map((n,i)=>btn('slot:'+i,art(n),'secondary a-card '+(advanced().includes(n)?'b28-evolved':''),!legal.includes(i))).join('')+'</div><small class="a-hint">拖入出牌区，或轻点手牌直接打出。</small>';
   }
  }
  html+='<div class="b28-actions">'+btn('skills',g.spent[0]?'技能已使用':'选择技能','secondary',!!g.spent[0]||report||g.actor===1)+(g.spent[0]?'<small>第 '+g.spent[0].round+' 回合 · '+fighter(g.spent[0].name)+' · '+text(g.spent[0].skill)+'</small>':'')+'</div>';
  if(skillPanel&&!report&&!g.spent[0])html+=panel();
  if(!report&&g.actor===0&&(g.interrupt||skillPanel&&g.phase==='show'))html+=btn('pass',g.interrupt?'允许侦察':'跳过技能');
  if(Object.keys(g.intel[0]).length)html+='<p class="b28-alert">已侦察：'+Object.entries(g.intel[0]).map(([i,v])=>'#'+(+i+1)+' '+fighter(v.name)).join(' · ')+'</p>';
- html+=history;frame('卡牌战斗',html);plan();tick(false)
+ html+=history;frame('灵宠对战',html);plan();tick(false)
 }
 function tasks(){
  const days=taskTab==='day'?[dateKey()]:weekDates(),prefix=(taskTab==='day'?'D':'W')+days[0]+'/',uniqueWords=days.reduce((c,d)=>c+new Set(state.daily[d]||[]).size,0),studyDays=days.filter(d=>state.daily[d]?.length).length;
@@ -98,14 +99,14 @@ function tasks(){
  return specs.map(([label,n,max],i)=>({label,n,max,id:prefix+i}));
 }
 function taskPage(){const rows=tasks(),claims=W.data.taskClaims||{};
- frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div><p>'+ (taskTab==='day'?'每天 2 项，按本地日期更新。':'每周一开始，共 7 项。')+'每项完成可领取一张随机卡，重复卡进入库存。</p>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+Math.min(r.n,r.max)+' / '+r.max+'</small></div>'+btn('claim:'+i,claims[r.id]?'已领取':r.n>=r.max?'抽取 1 张':'进行中',r.n>=r.max&&!claims[r.id]?'':'secondary',!!claims[r.id]||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
+ frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div><p>'+ (taskTab==='day'?'每天 2 项，按本地日期更新。':'每周一开始，共 7 项。')+'每项完成可领取一张随机卡，重复卡进入库存。</p>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+Math.min(r.n,r.max)+' / '+r.max+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?'抽取 1 张':'进行中',r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary',!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
 async function claim(index){
- if(claiming)return;claiming=true;
+ if(claiming)return;claiming=true;rewardCard=null;
  try{const r=tasks()[index];if(!r||r.n<r.max)return;
  const grant=()=>{const raw=JSON.parse(localStorage.getItem('wordday_wildwords_25')||'null')||JSON.parse(JSON.stringify(W.data));
- raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id))return;const a=W.randomCard();raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;raw.taskClaims[r.id]=a.id;
- localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='获得 '+a.cn+' · '+a.name;document.dispatchEvent(new Event('wd28badges'))};
- if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();taskPage();
+ raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const a=W.randomCard();raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;raw.taskClaims[r.id]=a.id;
+ localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='获得 '+a.cn+' · '+a.name;rewardCard=a;document.dispatchEvent(new Event('wd28badges'))};
+ if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){frame('获得灵宠卡牌','<div class="task-reveal">'+W.card(rewardCard,false,!!W.data.advanced[rewardCard.id],'')+'</div><p class="a-hint">已加入图鉴与库存</p>'+btn('rewardBack','返回任务',''))}else taskPage();
  }catch{toast('保存奖励失败，请重试')}finally{claiming=false}
 }
 function paint(){if(!dialog.open)return;if(scene==='fight')fight();else if(scene==='tasks')taskPage();else lobby()}
@@ -137,7 +138,7 @@ dialog.addEventListener('pointerup',ev=>{
 dialog.addEventListener('click',ev=>{if(performance.now()<suppressClickUntil){ev.preventDefault();ev.stopImmediatePropagation()}},true);
 dialog.addEventListener('pointercancel',clearDrag);dialog.addEventListener('close',clearDrag);
 dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b||b.disabled)return;const [op,arg]=b.dataset.b.split(':');
- if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];return lobby()}
+ if(op==='rewardBack'){rewardCard=null;return taskPage()}if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];return lobby()}
  if(op==='day'||op==='week'){taskTab=op;return taskPage()}if(op==='claim')return claim(+arg);
  if(!game)return;if(game.deadline&&Date.now()>=game.deadline){tick();return}
  if(op==='again'){scene='lobby';selection=[];return lobby()}if(op==='next'){B.advance(game);return step()}
@@ -147,7 +148,7 @@ dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b
 });
 setInterval(tick,300);
 const home=document.createElement('section');home.className='panel';home.id='battleHome';const rewards=document.createElement('section');rewards.className='panel';rewards.id='rewardHome';rewards.innerHTML='<div class="panel-head"><h2>任务与奖励</h2></div><p class="smallnote">每日 2 项 · 每周 7 项，每完成一项可抽一张卡。</p><button id="enterTasks28">查看任务</button>';
-function homeContent(){const count=owned().length;home.innerHTML='<div class="panel-head"><h2>萌物对战</h2><span class="sub">已发现 '+count+' / 74 种</span></div><p class="smallnote">'+(count<4?'再发现 '+(4-count)+' 种萌物即可解锁战斗。':'从进阶卡中挑选队员，或随机组建四张牌的阵容。')+'</p><div class="b28-actions"><button id="enterBattle28" '+(count<4?'disabled':'')+'>'+(game&&!game.finished?'继续对战':'进入战斗')+'</button></div>';
+function homeContent(){const count=owned().length;home.innerHTML='<div class="panel-head"><h2>灵宠对战</h2><span class="sub">已发现 '+count+' / 74 种</span></div><p class="smallnote">'+(count<4?'再发现 '+(4-count)+' 种萌物即可解锁战斗。':'从进阶卡中挑选队员，或随机组建四张牌的阵容。')+'</p><div class="b28-actions"><button id="enterBattle28" '+(count<4?'disabled':'')+'>'+(game&&!game.finished?'继续对战':'进入战斗')+'</button></div>';
  $('enterBattle28').onclick=()=>{if(owned().length<4)return;scene=game&&!game.finished?'fight':'lobby';show();if(scene==='fight')tick()};$('enterTasks28').onclick=()=>{scene='tasks';store.message='';show()}}
 $('wildInline').after(home,rewards);homeContent();document.addEventListener('wd28badges',homeContent);
 document.querySelector('[data-main-tab="ideas"]')?.addEventListener('click',homeContent);
@@ -157,5 +158,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY 2.8.1 · 萌物竞技场';document.querySelector('.brand small').textContent='THE DAILY PRACTICE · 2.8.1';
+$('wd24Version').textContent='WORDDAY 2.8.2 · 萌物竞技场';document.querySelector('.brand small').textContent='THE DAILY PRACTICE · 2.8.2';
 })();
