@@ -201,5 +201,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY 2.8.5 · 灵宠竞技场';document.querySelector('.brand small').textContent='THE DAILY PRACTICE · 2.8.5';
+$('wd24Version').textContent='WORDDAY 2.8.5 修正版 · 灵宠竞技场';document.querySelector('.brand small').textContent='THE DAILY PRACTICE · 2.8.5';
 })();

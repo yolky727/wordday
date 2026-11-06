@@ -16,7 +16,7 @@ function credit(g){return locked(()=>{
 function claim(id){return locked(()=>{
  const raw=read(),r=raw.battleRewards285;if(Object.hasOwn(r.claimed,id))return{already:true};
  const index=r.queue.findIndex(t=>t.id===id);if(index<0)return null;
- const ticket=r.queue[index],a=W.animals.find(a=>a.id===ticket.enemies[Math.floor(Math.random()*ticket.enemies.length)]);if(!a)throw Error('卡牌不存在');
+ const ticket=r.queue[index],pickedId=ticket.enemies[Math.floor(Math.random()*ticket.enemies.length)],a=W.animals.find(a=>a.id===pickedId);if(!a)throw Error('卡牌不存在');
  raw.discovered??={};raw.inventory??={};raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;
  r.claimed[id]=a.id;r.queue.splice(index,1);write(raw);document.dispatchEvent(new Event('wd28badges'));
  return{animal:a,ticket};

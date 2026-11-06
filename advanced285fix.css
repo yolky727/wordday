@@ -1,0 +1,4 @@
+/* Preserve 2.8.3 advanced artwork. Freeze only its midnight underlay. */
+.wild-card.advanced,.wild-inspect-stage .wild-inspect-face>.wild-card.advanced{
+ background-color:#2b3734;
+}
