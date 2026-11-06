@@ -52,31 +52,16 @@ const land=n=>!has(n,'marine')&&!has(n,'flight')&&!['水獭','青蛙','鳄鱼','
 const food={
  '狗':'考拉','猫':'老鼠 大鼠 麻雀 小鸡','狐狸':'兔子 老鼠 大鼠 松鼠 鸡','熊':'鹿','水獭':'螃蟹 虾 青蛙','青蛙':'蝴蝶 瓢虫','猫头鹰':'老鼠 大鼠 兔子 仓鼠','老虎':'鹿 野猪 水牛','狮子':'斑马','狼':'鹿 驼鹿 野牛 兔子','章鱼':'螃蟹 龙虾 虾','海豹':'鱿鱼 章鱼 企鹅','浣熊':'螃蟹 青蛙','獾':'老鼠 兔子','臭鼬':'老鼠','豹':'鹿 猴子 野猪 熊猫','北极熊':'海豹','海豚':'鱿鱼','虎鲸':'海豹 海豚 鲨鱼 鱿鱼 企鹅 水獭','鲨鱼':'海豹 鱿鱼','螃蟹':'虾','火烈鸟':'虾','鹰':'兔子 老鼠 鸭子','野猪':'老鼠','变色龙':'蝴蝶','鳄鱼':'斑马 鹿 野猪','企鹅':'虾 鱿鱼'};
 const eats=(a,b)=>(food[a]||'').split(' ').includes(b);
-// Fictional matchup styles. Each style beats the next two and loses to the previous two.
-const styleNames=['Rush','Feint','Ambush','Guard','Reach'];
-const rosters=[
- '狗 马 斑马 野牛 狮子 老虎 鲨鱼 狼 袋鼠 水牛 驼鹿 野猪 猪 豹 海豚',
- '猫 兔子 水獭 仓鼠 猴子 松鼠 浣熊 蝴蝶 蝙蝠 老鼠 大鼠 小丑鱼 变色龙 虾 鹿',
- '狐狸 青蛙 猫头鹰 章鱼 蜜蜂 臭鼬 獾 虎鲸 鱿鱼 鳄鱼 瓢虫 鸡 小鸡 螃蟹 水母',
- '熊 熊猫 考拉 奶牛 乌龟 海豹 刺猬 大象 河马 犀牛 海狸 树懒 龙虾 河豚 绵羊',
- '企鹅 鸭子 山羊 长颈鹿 北极熊 鲸 火烈鸟 天鹅 鹅 孔雀 鹦鹉 鹰 羊驼 骆驼'];
-const styleByName=new Map(rosters.flatMap((row,i)=>row.split(' ').map(name=>[name,i])));
-const specialEdges={'老鼠/大象':'钻隙','大鼠/大象':'钻隙','刺猬/狼':'棘阵','蜜蜂/犀牛':'蜂扰'};
-const abilityCounter=(a,b)=>!!specialEdges[a+'/'+b];
-function matchup(a,b){
- const special=Number(abilityCounter(a,b))-Number(abilityCounter(b,a));if(special)return {delta:special,kind:'特性克制 · '+(specialEdges[a+'/'+b]||specialEdges[b+'/'+a])};
- const food=Number(eats(a,b))-Number(eats(b,a));if(food)return {delta:food,kind:'捕食关系'};
- const diff=(styleByName.get(b)-styleByName.get(a)+5)%5;
- return {delta:diff===0?0:diff<=2?1:-1,kind:diff===0?'同型平局':'战术克制'};
-}
-const style=n=>styleNames[styleByName.get(n)];
+// Explicit user decisions take precedence over editorial comprehensive ratings.
+const matchup=(a,b)=>root.WDBattleRules.match(a,b);
+const style=()=>'';
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function shuffled(arr){arr=arr.slice();for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 function newGame(pool,owned,advanced,chosen=[]){
  const legal=new Set(pool),own=[...new Set(owned)].filter(n=>legal.has(n));if(own.length<4)throw Error('需发现至少 4 种萌物');
  if(chosen.length>4||new Set(chosen).size!==chosen.length||chosen.some(n=>!own.includes(n)||!advanced.includes(n)))throw Error('手选卡必须是已进阶的不同萌物');
  const hands=[[...chosen,...shuffled(own.filter(n=>!chosen.includes(n)))].slice(0,4),shuffled(pool).slice(0,4)];
- const g={id:Date.now()+'-'+Math.random(),hands,spent:[null,null],played:[[],[]],score:[0,0],history:[],round:0,first:pick([0,1]),intel:[{},{}],bless:[{},{}],copiable:[],finished:false};
+ const g={rulesVersion:'2.8.3',id:Date.now()+'-'+Math.random(),hands,spent:[null,null],played:[[],[]],score:[0,0],history:[],round:0,first:pick([0,1]),intel:[{},{}],bless:[{},{}],copiable:[],finished:false};
  begin(g);return g;
 }
 function begin(g){for(const seen of g.intel)for(const [j,v] of Object.entries(seen))if(v.until>0&&v.until<=g.round)delete seen[j];g.round++;g.lead=g.round===5?-1:(g.first+g.round-1)%2;g.actor=g.lead<0?0:g.lead;g.phase=g.lead<0?'duel':'lead';g.cards=[null,null];g.fx={};g.notes=[];g.draw=false;g.wins=[false,false];g.reviewed=[false,false];g.interrupt=null;if(g.round===5){g.played=[[],[]];g.cards[1]=pick([0,1,2,3])}clock(g)}
@@ -84,55 +69,45 @@ function clock(g){g.deadline=Date.now()+20000}
 const available=(g,s)=>[0,1,2,3].filter(i=>!g.played[s].includes(i)&&!(g.fx.ban?.side===s&&g.fx.ban.slot===i));
 const rest=(g,s)=>available(g,s).filter(i=>i!==g.cards[s]);
 const nameAt=(g,s)=>g.hands[s][g.cards[s]];
-function base(g,s){const a=nameAt(g,s),b=nameAt(g,1-s);return Number(abilityCounter(a,b))-Number(abilityCounter(b,a))||Number(eats(a,b))-Number(eats(b,a))}
+function base(g,s){return matchup(nameAt(g,s),nameAt(g,1-s)).delta}
 function displayedLead(g,viewer){const s=g.lead;if(s<0||g.cards[s]===null)return '';if(viewer===s||g.fx.echo)return nameAt(g,s);if(g.fx.hide)return '暗牌';if(g.fx.mask)return g.fx.mask;if(g.fx.pair)return g.fx.pair.join(' 或 ');return nameAt(g,s)}
-function afterCondition(n,g,s){
- const enemy=nameAt(g,1-s),own=base(g,s),forecast=matchup(nameAt(g,s),enemy).delta,lead=g.lead===s,reply=g.lead===1-s,last=g.history.at(-1),prev=last?.names[s],won=last?.winner===s;
- switch(n){
- case '熊猫':return forecast<0;case '企鹅':return lead&&own<0&&rest(g,s).length>0;case '鲸':return rest(g,s).length>0;
- case '虎鲸':return reply&&own===0&&forecast<=0&&g.history.some(h=>has(h.names[s],'marine'));
- case '熊':return reply&&own===0&&forecast<=0&&has(enemy,'mammal')&&land(enemy);case '水獭':return forecast<0&&!!prev&&(has(prev,'marine')||has(prev,'water'));case '考拉':return forecast<0&&land(enemy)&&!has(enemy,'climb');
- case '老虎':return reply&&own===0&&forecast<=0&&land(enemy)&&has(enemy,'herb')&&!has(enemy,'giant');case '狮子':return own===0&&forecast<=0&&won&&land(prev);
- case '章鱼':return reply&&forecast<0;case '海豹':return forecast<0&&land(enemy);case '鹿':return lead&&forecast<0&&land(enemy)&&has(enemy,'hunter');
- case '大象':return rest(g,s).some(i=>has(g.hands[s][i],'herb')&&land(g.hands[s][i]));case '犀牛':return lead&&own===0&&forecast<=0&&land(enemy)&&!has(enemy,'giant');
- case '袋鼠':return reply&&land(enemy);case '豹':return reply&&own===0&&forecast<=0&&has(enemy,'climb')&&!has(enemy,'giant');case '鲨鱼':return own===0&&forecast<=0&&won&&has(enemy,'marine');
- case '天鹅':return lead&&has(enemy,'bird');case '鹰':return reply&&own===0&&forecast<=0&&has(enemy,'bird')&&!['鹰','猫头鹰'].includes(enemy);
- case '驼鹿':return reply&&forecast<0&&land(enemy)&&has(enemy,'hunter');case '鳄鱼':return lead&&own===0&&forecast<=0&&land(enemy)&&has(enemy,'herb')&&!has(enemy,'giant');
- default:return true}
+// Skills work on every turn, including the simultaneous final round.
+const remap={hide:'guard',mask:'guard',pair:'guard',resist:'guard',echo:'scout',peek:'scout',look:'scout',track:'scout',sonar:'scout',copy:'scout',ban:'win'};
+for(const def of Object.values(byName)){
+ def[2]=remap[def[2]]||def[2];
+ def[1]=({guard:'本回合若落败，改为平局。',win:'本回合结果提升一级：失败变平局，平局变胜利。',draw:'将本回合直接保护为平局。',swap:'换另一张未出战手牌应战，本牌保留。',bless:'本回合免于失败，并庇护一张剩余手牌，使其下次失败变平局。',scout:'查看对方全部未出战手牌，本回合可见。',seal:'本回合封锁对方尚未发动的技能。'})[def[2]];
 }
+function afterCondition(){return true}
 function options(g,s){
- if(g.finished||g.spent[s]||g.actor!==s||g.fx.seal===1-s)return [];
- if(g.interrupt){const i=g.hands[s].indexOf('树懒');return i>=0?[{i,k:'resist'}]:[]}
- const opts=[];
+ if(g.finished||g.spent[s]||g.actor!==s||g.fx.seal===1-s||!['lead','reply','duel','show'].includes(g.phase))return [];
+ const result=[];
  for(const i of available(g,s)){
-  const n=g.hands[s][i],k=byName[n]?.[2];if(!k)continue;
-  const add=(target,mode)=>opts.push({i,k,...(target==null?{}:{target}),...(mode?{mode}:{})});
-  if(g.phase==='lead'&&['seal','hide','mask','pair','ban','peek'].includes(k)){
-   if(k==='mask'||k==='pair'){available(g,s).filter(j=>j!==i).forEach(j=>add(j))}
-   else if(k==='ban'){const ids=available(g,1-s);if(ids.length>1)ids.forEach(j=>add(j))}
-   else if(k==='peek')available(g,1-s).forEach(j=>add(j));else add();
-  }else if(g.phase==='reply'&&k==='echo'&&(g.fx.hide||g.fx.mask||g.fx.pair))add();
-  else if(g.phase==='show'&&g.cards[s]===i&&afterCondition(n,g,s)){
-   if(['guard','win','draw'].includes(k))add();
-   if(k==='swap'||k==='bless')rest(g,s).filter(j=>n!=='大象'||(has(g.hands[s][j],'herb')&&land(g.hands[s][j]))).forEach(j=>add(j));
-   const rivals=rest(g,1-s);
-   if(k==='track')rivals.forEach(j=>add(j));
-   if(['scout','look','sonar'].includes(k)&&rivals.length)add();
-   if(k==='copy'&&rivals.length)for(const mode of new Set(g.copiable)){if(['peek','track'].includes(mode))rivals.forEach(j=>add(j,mode));else add(null,mode)}
-  }
+  if(g.phase==='show'&&g.cards[s]!==i)continue;
+  const k=byName[g.hands[s][i]]?.[2];if(!k)continue;
+  if(k==='swap'||k==='bless'){
+   const targets=available(g,s).filter(j=>j!==i);
+   if(k==='bless'&&!targets.length)result.push({i,k,target:i});
+   else targets.forEach(target=>result.push({i,k,target}));
+  }else result.push({i,k});
  }
- return opts;
+ return result;
 }
 function reveal(g){g.phase='show';g.actor=g.lead<0?0:g.lead;clock(g)}
 function play(g,s,i){if(g.actor!==s||g.interrupt||!['lead','reply','duel'].includes(g.phase)||!available(g,s).includes(i))return false;g.cards[s]=i;
  if(g.phase==='lead'){g.phase='reply';g.actor=1-s;clock(g)}else reveal(g);return true}
-function settle(g){const a=base(g,0);let protect=g.draw;
- for(let s=0;s<2;s++){const b=g.bless[s][g.cards[s]];if(b&&matchup(nameAt(g,s),nameAt(g,1-s)).delta<0&&(b==='鲸'||(land(nameAt(g,1-s))&&has(nameAt(g,1-s),'hunter'))))protect=true;delete g.bless[s][g.cards[s]]}
- const predicted=matchup(nameAt(g,0),nameAt(g,1));const hasWin=g.wins[0]||g.wins[1];
- const delta=protect?0:hasWin?Number(g.wins[0])-Number(g.wins[1]):predicted.delta;
- const reason=protect?'平局保护':hasWin?'技能改判':predicted.kind;const winner=delta>0?0:delta<0?1:-1;
- if(winner>=0)g.score[winner]++;
- g.history.push({round:g.round,names:[nameAt(g,0),nameAt(g,1)],base:a,winner,reason,notes:g.notes.slice(),protect});
+function settle(g){
+ const predicted=matchup(nameAt(g,0),nameAt(g,1));let delta=predicted.delta;
+ // Each boost raises its owner's outcome by one tier; opposing boosts cancel.
+ delta=Math.max(-1,Math.min(1,delta+Number(g.wins[0])-Number(g.wins[1])));
+ let protectedResult=false;
+ for(let s=0;s<2;s++){
+  if((g.fx.guards?.[s]||g.bless[s][g.cards[s]])&&(s===0?delta<0:delta>0)){protectedResult=true}
+  delete g.bless[s][g.cards[s]];
+ }
+ if(g.draw||protectedResult)delta=0;
+ const reason=g.draw||protectedResult?'技能保护':g.wins.some(Boolean)?'技能改判':predicted.kind;
+ const winner=delta>0?0:delta<0?1:-1;if(winner>=0)g.score[winner]++;
+ g.history.push({round:g.round,names:[nameAt(g,0),nameAt(g,1)],base:predicted.delta,winner,reason,notes:g.notes.slice(),protect:g.draw||protectedResult});
  for(let s=0;s<2;s++){g.played[s].push(g.cards[s]);delete g.intel[1-s][g.cards[s]]}
  g.phase='report';g.actor=-1;g.deadline=0;
  if(g.round===5||(g.round===4&&g.score[0]!==g.score[1])){g.finished=true;g.phase='end'}
@@ -146,17 +121,16 @@ function finishScan(g,resisted){const q=g.interrupt;g.interrupt=null;g.actor=q.s
  if(q.pre)play(g,q.s,q.i);else pass(g,q.s);
 }
 function activate(g,s,choice){
- const o=options(g,s).find(v=>v.i===choice.i&&v.k===choice.k&&v.target===choice.target&&v.mode===choice.mode);if(!o)return false;
- const n=g.hands[s][o.i],k=o.k;g.spent[s]={round:g.round,name:n,skill:byName[n][0]};g.notes.push((s?'系统':'玩家')+'发动「'+byName[n][0]+'」');
- if(k==='resist'){finishScan(g,true);return true}
- if(['scout','peek','track','look','sonar','copy'].includes(k)){const mode=o.mode||k,pre=g.phase==='lead',others=pre?available(g,1-s):rest(g,1-s);
-  const slots=['peek','track'].includes(mode)?[o.target]:mode==='look'?shuffled(others).slice(0,2):mode==='sonar'?others.filter(j=>has(g.hands[1-s][j],'marine')):others;
-  g.interrupt={s,i:o.i,mode,slots,pre,copy:k==='copy'};if(!g.spent[1-s]&&g.fx.seal!==s&&slots.some(j=>g.hands[1-s][j]==='树懒')){g.actor=1-s;clock(g)}else finishScan(g,false);return true;
- }
- if(k==='seal')g.fx.seal=s;if(k==='hide')g.fx.hide=true;if(k==='mask')g.fx.mask=g.hands[s][o.target];if(k==='pair')g.fx.pair=shuffled([n,g.hands[s][o.target]]);if(k==='ban')g.fx.ban={side:1-s,slot:o.target};if(k==='echo')g.fx.echo=true;
- if(g.phase!=='show'){play(g,s,o.i);return true}
- if(k==='swap'){g.cards[s]=o.target;g.notes.push('企鹅换为'+nameAt(g,s))}
- if(k==='bless')g.bless[s][o.target]=n;if(k==='win')g.wins[s]=true;if(k==='draw'||k==='guard')g.draw=true;pass(g,s);return true;
+ const o=options(g,s).find(v=>v.i===choice.i&&v.k===choice.k&&v.target===choice.target);if(!o)return false;
+ const n=g.hands[s][o.i],k=o.k;g.spent[s]={round:g.round,name:n,skill:byName[n][0]};g.notes.push((s?'对手':'玩家')+'发动「'+byName[n][0]+'」');
+ if(k==='scout')for(const j of available(g,1-s))g.intel[s][j]={name:g.hands[1-s][j],until:g.round};
+ if(k==='seal')g.fx.seal=s;
+ if(k==='guard'||k==='bless'){g.fx.guards??=[false,false];g.fx.guards[s]=true}
+ if(k==='bless'&&o.target!==o.i)g.bless[s][o.target]=n;
+ if(k==='win')g.wins[s]=true;if(k==='draw')g.draw=true;
+ if(g.phase==='show'){if(k==='swap')g.cards[s]=o.target;pass(g,s)}
+ else play(g,s,k==='swap'?o.target:o.i);
+ return true;
 }
 function advance(g){if(g.phase!=='report'||g.finished)return false;begin(g);return true}
 function automatic(g,s,allowSkill=true){

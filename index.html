@@ -215,7 +215,8 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 #wdSplash .wd-splash-skip{display:block;width:100%;text-align:center}
 #wdSplash .wd-splash-foot{text-align:center;margin-top:19px;letter-spacing:2px;font-size:9px}
 @media(prefers-reduced-motion:reduce){#quiz .quiz-progress i{transition:none}}
-</style><link rel="stylesheet" href="wildwords.css"><link rel="stylesheet" href="wordday26.css"><link rel="stylesheet" href="wordday27.css"><link rel="stylesheet" href="wordday271.css"><link rel="stylesheet" href="wordday28.css"><link rel="stylesheet" href="arena281.css"><link rel="stylesheet" href="polish282.css"></head><body><div class="wrap">
+</style><link rel="stylesheet" href="wildwords.css"><link rel="stylesheet" href="wordday26.css"><link rel="stylesheet" href="wordday27.css"><link rel="stylesheet" href="wordday271.css"><link rel="stylesheet" href="wordday28.css"><link rel="stylesheet" href="arena281.css"><link rel="stylesheet" href="polish282.css">
+<link rel="stylesheet" href="refine283.css"></head><body><div class="wrap">
 <header class="top"><div class="brand">WORD<span>DAY</span> <small style="font-size:10px;color:var(--muted);font-weight:600">2.4.1 · Complete Repair</small> / Vocabulary Master</div><div class="date" id="today"></div></header>
 <section class="hero"><div><div class="eyebrow">A LITTLE EVERY DAY</div><h1>每天积累一点，<br>让英语成为习惯。</h1><p>为雅思与大学英语四级设计的词汇学习空间。学习、收藏、复习与测试，让每一次努力都留下记录。</p></div><div class="hero-stat"><strong id="streak">0</strong><span>连续打卡 · 天</span></div></section>
 <nav class="nav" aria-label="学习功能"><button class="active" data-tab="learn">今日学习</button><button data-tab="quiz">每日测试</button><button data-tab="review">智能复习 <span id="dueBadge"></span></button></nav>
@@ -716,7 +717,7 @@ document.addEventListener('click',ev=>{if(ev.target.closest('[data-action="revie
 const contrast={affect:['effect','affect 常作动词“影响”；effect 常作名词“效果”'],effect:['affect','effect 常作名词“效果”；affect 常作动词“影响”'],adapt:['adopt','adapt 适应/改编；adopt 采用/收养'],adopt:['adapt','adopt 采用/收养；adapt 适应/改编'],economic:['economical','economic 经济的；economical 节约的'],economical:['economic','economical 节约的；economic 经济的'],principal:['principle','principal 主要的/校长；principle 原则'],principle:['principal','principle 原则；principal 主要的/校长']};
 const oldDetail=showDetail;showDetail=function(word){oldDetail(word);const x=contrast[word?.toLowerCase()];if(x){const d=e('detailBody');d.insertAdjacentHTML('beforeend',`<h3>WORD CONTRAST · 易混词</h3><p><strong>${esc(word)} / ${esc(x[0])}</strong></p><p>${esc(x[1])}</p>`)}};
 // Splash respects iOS autoplay restrictions: sound only after explicit user tap.
-const splash=make('div','wdSplash',`<section class="wd-splash-panel" role="dialog" aria-modal="true" aria-label="欢迎来到 WORDDAY"><div class="wd-splash-monogram" aria-hidden="true"><span>W<span class="wd-splash-dot">.</span></span><i>THE ART OF SMALL PROGRESS</i></div><h2 class="wd-splash-title">WORDDAY</h2><p class="wd-splash-tagline">A LITTLE EVERY DAY.</p><div class="wd-splash-line"></div><button class="wd-splash-enter" id="wdEnter">开始 <span aria-hidden="true">↗</span></button><button id="wdSkip" class="wd-splash-skip">跳过</button></section>`);document.body.appendChild(splash);
+const splash=make('div','wdSplash',`<section class="wd-splash-panel" role="dialog" aria-modal="true" aria-label="欢迎来到 WORDDAY"><div class="wd-splash-monogram" aria-hidden="true"><span>W<span class="wd-splash-dot">.</span></span><i>THE ART OF SMALL PROGRESS</i></div><div class="splash283-kicker">A LITTLE EVERY DAY / 02.08.03</div><h2 class="wd-splash-title">Small steps.<br><em>Wild worlds.</em></h2><p class="wd-splash-tagline">每天一点，走向更广阔的世界。<br><span>WORDS · DISCOVERY · WONDER</span></p><div class="wd-splash-line"></div><button class="wd-splash-enter" id="wdEnter">开始 <span aria-hidden="true">↗</span></button><button id="wdSkip" class="wd-splash-skip">跳过</button></section>`);document.body.appendChild(splash);
 if(!sessionStorage.getItem('wd24Opened')){
   splash.classList.add('visible');
   const enter=()=>{playFeedback('finish');splash.classList.remove('visible');sessionStorage.setItem('wd24Opened','1')};
@@ -784,4 +785,5 @@ const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd
 renderAchievements();renderResume();
 })();
 
-</script><script src="wildwords.js"></script><script src="wordday26.js"></script><script src="wordday27.js"></script><script src="wordday271.js"></script><script src="card-feedback28.js"></script><script src="battle-engine.js"></script><script src="wordday28.js"></script><script src="review28.js"></script><script src="figures281.js"></script></body></html>
+</script><script src="wildwords.js"></script><script src="wordday26.js"></script><script src="wordday27.js"></script><script src="wordday271.js"></script><script src="card-feedback28.js"></script><script src="battle-rules283.js"></script>
+<script src="battle-engine.js"></script><script src="wordday28.js"></script><script src="review28.js"></script><script src="figures281.js"></script></body></html>

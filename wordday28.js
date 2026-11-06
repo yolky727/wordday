@@ -9,7 +9,7 @@ const dateKey=(d=new Date())=>[d.getFullYear(),String(d.getMonth()+1).padStart(2
 function weekDates(){const now=new Date(),start=new Date(now);start.setDate(start.getDate()-(start.getDay()+6)%7);return Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return dateKey(d)})}
 const key='wordday_battle28';
 function readStore(){try{return JSON.parse(localStorage.getItem(key))||{}}catch{return {}}}
-let store=readStore();store.daily??={};store.total??={games:0,wins:0,points:0,skills:0};let game=store.active||null;
+let store=readStore();store.daily??={};store.total??={games:0,wins:0,points:0,skills:0};let game=store.active||null;if(game&&!game.finished&&game.rulesVersion!=='2.8.3'){game=null;store.active=null;localStorage.setItem(key,JSON.stringify(store))}
 function save(){store.active=game;localStorage.setItem(key,JSON.stringify(store))}
 function record(){if(!game?.finished||game.recorded)return;const day=dateKey();const d=store.daily[day]??={games:0,wins:0,points:0,skills:0};for(const entry of [d,store.total]){entry.finals=(entry.finals||0)+Number(game.round===5&&game.score[0]>game.score[1]);entry.games++;entry.wins+=Number(game.score[0]>game.score[1]);entry.points+=game.score[0];entry.skills+=Number(!!game.spent[0])}game.recorded=true;save();document.dispatchEvent(new Event('wd28badges'))}
 const dialog=document.createElement('dialog');dialog.id='wd28Dialog';dialog.setAttribute('aria-labelledby','wd28Title');document.body.append(dialog);
@@ -17,7 +17,7 @@ let scene='lobby',selection=[],skillPanel=false,chosenSkill=null,chosenSlot=null
 const text=s=>esc(s),btn=(action,label,cls='secondary',disabled=false)=>'<button type="button" class="'+cls+'" data-b="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
 function show(){returnFocus=document.activeElement;if(!dialog.open)dialog.showModal();paint()}
 function close(){dialog.close();returnFocus?.focus?.()}
-function frame(title,body){dialog.innerHTML='<header class="b28-head"><h2 id="wd28Title">'+title+'</h2>'+btn('close','关闭')+'</header>'+body}
+function frame(title,body){dialog.classList.toggle('arena283',scene==='fight');dialog.innerHTML='<header class="b28-head"><h2 id="wd28Title">'+title+'</h2>'+btn('close','关闭')+'</header>'+body}
 function en(n){return byName.get(n)?.name||({'暗牌':'Hidden'}[n])||String(n||'').split(' 或 ').map(x=>byName.get(x)?.name||x).join(' / ')}
 function skill(n){return B.byName[n]}
 function fighter(n){return text(en(n))}
@@ -30,17 +30,26 @@ function ecologyNote(a,b){
  const note={'豹/熊猫':'此条关系对应豹对大熊猫幼体的捕食。','狗/考拉':'此条关系对应野犬与考拉。','海豹/企鹅':'海豹卡在此代表豹海豹。','虎鲸/水獭':'此条关系对应有记录的部分虎鲸种群与海獭。','虎鲸/鲨鱼':'不同虎鲸种群食性不同，此处采用捕食鲨鱼的种群。'};
  return note[a+'/'+b]||note[b+'/'+a]||'';
 }
-function rules(){return '<details><summary>对战规则</summary><p>首回合随机先手，之后轮流先手。系统从全部图鉴随机取 4 张。每次选择限时 20 秒，超时自动出牌或跳过技能。前四回合每张牌出战一次，比较胜场；平分进入决胜局，双方从原四张牌秘密选牌，同时揭晓。加赛仍平则整场平局。</p><p>双方各有一次整场技能机会，含决胜局。先手、后手技能在同时选牌时休眠。游戏特性优先：Mouse 与 Rat 的钻隙克制 Elephant，Hedgehog 的棘阵克制 Wolf，Bee 的蜂扰克制 Rhino。其次检查捕食关系。其余按战术环：Rush → Feint → Ambush → Guard → Reach → Rush。每类胜过顺序里的后两类，同类平局。没有特殊或直接捕食关系时，符合条件的改判技能可先于战术克制结算。平局保护优先于平局转胜。胜负不消耗库存。</p></details>'}
+function rules(){return '<details><summary>对战规则</summary><p>集齐 4 种灵宠可开战。首回合随机先手，之后轮流先手；每次选牌限时 20 秒，超时自动行动。前四回合每张牌出战一次，比较胜场；平分后从原四张牌中秘密选择一张决胜，仍平则整场平局。</p><p>你已确认的对阵结果优先，其次为老鼠对大象等特殊克制，其余综合体型、攻击手段、防御、食物链和特殊性。不同环境以双方均可行动的游戏场地比较，分值用于游戏平衡。</p><p>长按手牌约半秒发动技能；换牌和庇护再选目标。也可用“选择技能”按钮。亮牌后长按我方出战牌也可发动。每方整场仅一次技能机会，含决胜局；已发动的技能不会被追溯取消。胜负不消耗库存。</p></details>'}
 function start(){if(owned().length<4)return;game=B.newGame(pool,owned(),advanced(),selection);scene='fight';finalVisible=false;chosenSlot=null;step()}
 let autoTimer=0,autoPassAt=0,finalVisible=false;
 function clearTimers(){clearTimeout(autoTimer);autoTimer=0;autoPassAt=0}
 dialog.addEventListener('close',clearTimers);
-function step(){clearDrag();if(game?.finished)record();save();skillPanel=false;chosenSkill=null;chosenSlot=null;paint()}
+let feedbackSeen='';
+function battleSound(kind){window.WD28CardFX?.sound(kind)}
+function step(){clearDrag();
+ if(game){const stamp=game.id+':'+game.round+':'+game.phase+':'+game.cards.join(',')+':'+game.spent.filter(Boolean).length;
+ if(stamp!==feedbackSeen){const prior=store.feedback283||{};
+ if(prior.id===game.id&&game.spent.filter(Boolean).length>(prior.skills||0))battleSound('skill');
+ if(['report','end'].includes(game.phase))battleSound(game.history.at(-1)?.winner===0?'roundWin':game.history.at(-1)?.winner===1?'roundLoss':'roundDraw');
+ else if(game.cards.some((v,i)=>v!==null&&(prior.round!==game.round||prior.cards?.[i]!==v)))battleSound('play');
+ feedbackSeen=stamp;store.feedback283={id:game.id,round:game.round,cards:game.cards.slice(),skills:game.spent.filter(Boolean).length};}}
+if(game?.finished)record();save();skillPanel=false;chosenSkill=null;chosenSlot=null;paint()}
 function plan(){
  clearTimers();if(!dialog.open||scene!=='fight'||!game)return;
  const g=game,round=g.round,phase=g.phase,actor=g.actor;
  const later=(ms,action)=>{autoTimer=setTimeout(()=>{if(dialog.open&&scene==='fight'&&game===g&&g.round===round&&g.phase===phase&&g.actor===actor)action()},ms)};
- if(phase==='end'){if(!finalVisible)later(1350,()=>{finalVisible=true;paint()});return}
+ if(phase==='end'){if(!finalVisible)later(1350,()=>{finalVisible=true;battleSound(g.score[0]>g.score[1]?'matchWin':g.score[0]<g.score[1]?'matchLoss':'roundDraw');paint()});return}
  if(phase==='report'){later(1550,()=>{B.advance(g);step()});return}
  if(actor===1){later(600,()=>{B.automatic(g,1);step()});return}
  if(phase==='show'&&!g.interrupt&&!skillPanel){
@@ -52,13 +61,13 @@ function labelOption(o){const n=game.hands[0][o.i];let target='';if(o.target!=nu
 function panel(){
  const opts=B.options(game,0),cards=game.hands[0];let html='<div class="b28-skillbox"><h3>选择技能</h3>';
  cards.forEach((n,i)=>{const def=skill(n);if(!def)return;const local=opts.filter(o=>o.i===i);
- html+='<div class="b28-skillrow"><strong>'+fighter(n)+' · '+def[0]+'</strong><p>'+def[1]+'</p>'+(local.length?local.map(o=>btn('opt:'+opts.indexOf(o),text(labelOption(o)))).join(''):'<small>当前不能发动：'+(game.played[0].includes(i)?'本牌已出战':game.fx.seal===1?'本轮遭到封锁':'需满足上方时机与条件')+'</small>')+'</div>'});
+ html+='<div class="b28-skillrow"><strong>'+fighter(n)+' · '+def[0]+'</strong><p>'+def[1]+'</p>'+(local.length?local.map(o=>btn('opt:'+opts.indexOf(o),text(labelOption(o)))).join(''):'<small>当前不能发动：'+(game.played[0].includes(i)?'本牌已出战':game.fx.seal===1?'本轮遭到封锁':'请在自己选牌或亮牌时长按本牌')+'</small>')+'</div>'});
  if(!cards.some(skill))html+='<p>本次手牌没有特殊技能，可以直接出牌。</p>';
- if(chosenSkill){html+='<p>发动后将消耗本场唯一机会。</p>'+btn('confirm','确认发动 · '+text(labelOption(chosenSkill)),'')}
+ if(false&&chosenSkill){html+='<p>发动后将消耗本场唯一机会。</p>'+btn('confirm','确认发动 · '+text(labelOption(chosenSkill)),'')}
  return html+btn('skills','收起技能')+'</div>';
 }
 function art(n,enemy=false){const a=byName.get(n);if(!a)return '<div class="wild-card small a-concealed"><span class="wild-en">'+fighter(n)+'</span></div>';return W.card(a,true,!enemy&&advanced().includes(n),'')}
-function face(n,side=''){return '<div class="a-face '+side+'">'+art(n,side==='opponent')+'</div>'}
+function face(n,side=''){return '<div class="a-face '+side+'" '+(side==='player'?'data-hold="'+game.cards[0]+'" tabindex="0" role="button" aria-label="长按或按空格发动技能"':'')+'>'+art(n,side==='opponent')+'</div>'}
 function fight(){
  const g=game;if(!g){scene='lobby';return lobby()}
  const last=g.history.at(-1),report=['report','end'].includes(g.phase),reveal=report||g.phase==='show';
@@ -75,14 +84,15 @@ function fight(){
  const enemy=g.cards[1]===null?'':reveal?g.hands[1][g.cards[1]]:g.lead===1?B.displayedLead(g,0):'';
  html+='<div id="aDrop" class="a-field '+(reveal?'revealed':'')+'" aria-label="出牌区">'+(enemy?face(enemy,'opponent'):'<div class="a-placeholder">系统牌位</div>')+'<span class="a-vs">VS</span>'+(g.cards[0]!==null?face(g.hands[0][g.cards[0]],'player'):'<div class="a-placeholder mine">拖到这里出牌</div>');
  if(report&&last){html+='<div class="a-flash '+(last.winner===0?'win':last.winner===1?'loss':'tie')+'" role="status"><small>'+round+'</small><strong>'+ (last.winner===0?'胜出':last.winner===1?'落败':'平局')+'</strong><span>'+text(last.reason||'回合结束')+'</span></div>'}
+ if(!report&&g.spent[0]?.round===g.round)html+='<span class="a-skillstamp" role="status">'+text(g.spent[0].skill)+' · 已发动</span>';
  html+='</div>';
  if(!report){
-  const prompt=g.actor===1?'系统正在行动…':g.interrupt?'可用树懒拒绝侦察':g.phase==='show'?(B.options(g,0).length?'可发动技能 · 倒计时后自动结算':'正在结算'):g.phase==='duel'?'双方秘密选牌':g.phase==='reply'?'选择对策牌':'你先出牌';
+  const prompt=g.actor===1?'系统正在行动…':g.interrupt?'可用树懒拒绝侦察':g.phase==='show'?(B.options(g,0).length?'长按我方出战牌可发动技能':'正在结算'):g.phase==='duel'?'双方秘密选牌':g.phase==='reply'?'选择对策牌':'你先出牌';
   html+='<div class="b28-turn"><span>'+prompt+'</span><b id="b28Clock"></b></div>';
   if(reveal){const pred=B.matchup(g.hands[0][g.cards[0]],g.hands[1][g.cards[1]]);html+='<p class="a-hint">'+pred.kind+' · '+(pred.delta>0?'我方占优':pred.delta<0?'系统占优':'双方持平')+'</p>'}
   if(g.actor===0&&!g.interrupt&&['lead','reply','duel'].includes(g.phase)){
     const legal=B.available(g,0);
-    html+='<div class="a-hand">'+g.hands[0].map((n,i)=>btn('slot:'+i,art(n),'secondary a-card '+(advanced().includes(n)?'b28-evolved':''),!legal.includes(i))).join('')+'</div><small class="a-hint">拖入出牌区，或轻点手牌直接打出。</small>';
+    html+='<div class="a-hand">'+g.hands[0].map((n,i)=>btn('slot:'+i,art(n),'secondary a-card '+(advanced().includes(n)?'b28-evolved':''),!legal.includes(i))).join('')+'</div><small class="a-hint">拖入出牌区出牌 · 长按发动技能 · 也可轻点出牌</small>';
   }
  }
  html+='<div class="b28-actions">'+btn('skills',g.spent[0]?'技能已使用':'选择技能','secondary',!!g.spent[0]||report||g.actor===1)+(g.spent[0]?'<small>第 '+g.spent[0].round+' 回合 · '+fighter(g.spent[0].name)+' · '+text(g.spent[0].skill)+'</small>':'')+'</div>';
@@ -115,16 +125,29 @@ function tick(advance=true){
  const left=Math.max(0,Math.ceil((Math.min(game.deadline,autoPassAt||game.deadline)-Date.now())/1000));if($('b28Clock'))$('b28Clock').textContent=left+' 秒';
  if(advance&&!left&&game.actor===0){B.automatic(game,game.actor,false);step()}
 }
+function releaseSkill(slot){
+ if(!game||game.actor!==0)return;
+ if(game.spent[0]){toast('本场技能已使用');return}
+ const opts=B.options(game,0).filter(o=>o.i===slot);
+ if(!opts.length){toast(skill(game.hands[0][slot])?'本轮技能暂不可用':'这张卡没有特殊技能');return}
+ if(opts.length===1){if(B.activate(game,0,opts[0]))step();return}
+ skillPanel=true;paint();const box=dialog.querySelector('.b28-skillbox');
+ if(box){const rows=box.querySelectorAll('.b28-skillrow');rows.forEach(row=>{if(!row.textContent.includes(skill(game.hands[0][slot])[0]))row.hidden=true});box.querySelector('h3').textContent='选择技能目标';box.scrollIntoView({block:'nearest',behavior:'smooth'})}
+}
+dialog.addEventListener('contextmenu',ev=>{if(ev.target.closest('.a-card,[data-hold]'))ev.preventDefault()});
+dialog.addEventListener('keydown',ev=>{const face=ev.target.closest('[data-hold]');if(face&&(ev.key===' '||ev.key==='Enter')){ev.preventDefault();releaseSkill(+face.dataset.hold)}});
 let drag=null,suppressClickUntil=0;
-function clearDrag(){if(!drag)return;drag.ghost?.remove();$('aDrop')?.classList.remove('over');drag=null}
+function clearDrag(){if(!drag)return;clearTimeout(drag.holdTimer);drag.ghost?.remove();$('aDrop')?.classList.remove('over');drag=null}
 dialog.addEventListener('pointerdown',ev=>{
- const card=ev.target.closest('.a-card:enabled');if(!card||!ev.isPrimary||ev.button!==0)return;
- drag={card,slot:Number(card.dataset.b.split(':')[1]),id:ev.pointerId,x:ev.clientX,y:ev.clientY,round:game.round,phase:game.phase,gameId:game.id};
+ const card=ev.target.closest('.a-card:enabled,[data-hold]');if(!card||!ev.isPrimary||ev.button!==0)return;
+ drag={card,slot:Number(card.dataset.hold??card.dataset.b.split(':')[1]),id:ev.pointerId,x:ev.clientX,y:ev.clientY,round:game.round,phase:game.phase,gameId:game.id};
+ const d=drag;d.holdTimer=setTimeout(()=>{if(drag!==d||d.ghost)return;suppressClickUntil=performance.now()+700;clearDrag();releaseSkill(d.slot)},460);
  card.setPointerCapture?.(ev.pointerId)
 });
 dialog.addEventListener('pointermove',ev=>{
  if(!drag||ev.pointerId!==drag.id)return;const d=drag;
  if(!d.ghost&&Math.hypot(ev.clientX-d.x,ev.clientY-d.y)<7)return;
+ clearTimeout(d.holdTimer);if(!d.card.matches('.a-card'))return;
  if(!d.ghost){d.ghost=d.card.cloneNode(true);d.ghost.removeAttribute('data-b');d.ghost.classList.add('a-ghost');d.ghost.setAttribute('aria-hidden','true');dialog.append(d.ghost)}
  d.ghost.style.left=ev.clientX+'px';d.ghost.style.top=ev.clientY+'px';
  const r=$('aDrop')?.getBoundingClientRect();$('aDrop')?.classList.toggle('over',!!r&&ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom)
@@ -135,7 +158,7 @@ dialog.addEventListener('pointerup',ev=>{
  if(d.ghost)suppressClickUntil=performance.now()+400;clearDrag();
  if(valid&&game.id===d.gameId&&game.round===d.round&&game.phase===d.phase){if(game.deadline<=Date.now()){tick();return}if(B.play(game,0,d.slot))step()}
 });
-dialog.addEventListener('click',ev=>{if(performance.now()<suppressClickUntil){ev.preventDefault();ev.stopImmediatePropagation()}},true);
+dialog.addEventListener('click',ev=>{if(performance.now()<suppressClickUntil&&ev.target.closest('.a-card,[data-hold]')){ev.preventDefault();ev.stopImmediatePropagation()}},true);
 dialog.addEventListener('pointercancel',clearDrag);dialog.addEventListener('close',clearDrag);
 dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b||b.disabled)return;const [op,arg]=b.dataset.b.split(':');
  if(op==='rewardBack'){rewardCard=null;return taskPage()}if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];return lobby()}
@@ -143,7 +166,7 @@ dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b
  if(!game)return;if(game.deadline&&Date.now()>=game.deadline){tick();return}
  if(op==='again'){scene='lobby';selection=[];return lobby()}if(op==='next'){B.advance(game);return step()}
  if(op==='slot'){if(B.play(game,0,+arg))step();return}if(op==='skills'){skillPanel=!skillPanel;chosenSkill=null;return paint()}
- if(op==='opt'){chosenSkill=B.options(game,0)[+arg];return paint()}if(op==='confirm'){if(chosenSkill&&B.activate(game,0,chosenSkill))step();return}
+ if(op==='opt'){const o=B.options(game,0)[+arg];if(o&&B.activate(game,0,o))step();return}if(op==='confirm'){if(chosenSkill&&B.activate(game,0,chosenSkill))step();return}
  if(op==='pass'){B.pass(game,0);return step()}if(op==='play'&&chosenSlot!==null&&B.play(game,0,chosenSlot))step();
 });
 setInterval(tick,300);
@@ -158,5 +181,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY 2.8.2 · 萌物竞技场';document.querySelector('.brand small').textContent='THE DAILY PRACTICE · 2.8.2';
+$('wd24Version').textContent='WORDDAY 2.8.3 · 萌物竞技场';document.querySelector('.brand small').textContent='THE DAILY PRACTICE · 2.8.3';
 })();
