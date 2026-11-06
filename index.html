@@ -215,7 +215,7 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 #wdSplash .wd-splash-skip{display:block;width:100%;text-align:center}
 #wdSplash .wd-splash-foot{text-align:center;margin-top:19px;letter-spacing:2px;font-size:9px}
 @media(prefers-reduced-motion:reduce){#quiz .quiz-progress i{transition:none}}
-</style><link rel="stylesheet" href="wildwords.css"><link rel="stylesheet" href="wordday26.css"><link rel="stylesheet" href="wordday27.css"><link rel="stylesheet" href="wordday271.css"><link rel="stylesheet" href="wordday28.css"></head><body><div class="wrap">
+</style><link rel="stylesheet" href="wildwords.css"><link rel="stylesheet" href="wordday26.css"><link rel="stylesheet" href="wordday27.css"><link rel="stylesheet" href="wordday271.css"><link rel="stylesheet" href="wordday28.css"><link rel="stylesheet" href="arena281.css"></head><body><div class="wrap">
 <header class="top"><div class="brand">WORD<span>DAY</span> <small style="font-size:10px;color:var(--muted);font-weight:600">2.4.1 · Complete Repair</small> / Vocabulary Master</div><div class="date" id="today"></div></header>
 <section class="hero"><div><div class="eyebrow">A LITTLE EVERY DAY</div><h1>每天积累一点，<br>让英语成为习惯。</h1><p>为雅思与大学英语四级设计的词汇学习空间。学习、收藏、复习与测试，让每一次努力都留下记录。</p></div><div class="hero-stat"><strong id="streak">0</strong><span>连续打卡 · 天</span></div></section>
 <nav class="nav" aria-label="学习功能"><button class="active" data-tab="learn">今日学习</button><button data-tab="quiz">每日测试</button><button data-tab="review">智能复习 <span id="dueBadge"></span></button></nav>
@@ -549,7 +549,7 @@ const floatNav=$('floatingNav'),navGrip=$('navGrip'),navPill=$('navPill');let dr
 function updateNavPill(){navPill.textContent=(mainTab==='personal'?'◉ 个人':mainTab==='ideas'?'✧ 妙想':'▤ 单词')+' · 展开';navGrip.setAttribute('aria-label',floatNav.classList.contains('collapsed')?'展开底部导航':'折叠底部导航')}
 function setNavCollapsed(v){floatNav.classList.toggle('collapsed',v);navGrip.textContent=v?'⌃':'⌄';updateNavPill()}
 navGrip.addEventListener('click',()=>setNavCollapsed(!floatNav.classList.contains('collapsed')));navPill.addEventListener('click',()=>setNavCollapsed(false));
-floatNav.addEventListener('touchstart',e=>{dragStartY=e.touches[0]?.clientY??null},{passive:true});floatNav.addEventListener('touchend',e=>{if(dragStartY===null)return;const diff=(e.changedTouches[0]?.clientY??dragStartY)-dragStartY;dragStartY=null;if(Math.abs(diff)>28)setNavCollapsed(diff>0)},{passive:true});
+floatNav.addEventListener('touchstart',e=>{dragStartY=floatNav.classList.contains('collapsed')&&e.target.closest('#navPill')?null:e.touches[0]?.clientY??null},{passive:true});floatNav.addEventListener('touchend',e=>{if(dragStartY===null)return;const diff=(e.changedTouches[0]?.clientY??dragStartY)-dragStartY;dragStartY=null;if(Math.abs(diff)>28)setNavCollapsed(diff>0)},{passive:true});
 navGrip.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')dragStartY=e.clientY});navGrip.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse'||dragStartY===null)return;const diff=e.clientY-dragStartY;dragStartY=null;if(Math.abs(diff)>24)setNavCollapsed(diff>0)});
 document.querySelectorAll('[data-main-tab]').forEach(b=>b.addEventListener('click',()=>setTimeout(updateNavPill,0)));updateNavPill();
 
@@ -622,7 +622,18 @@ playFeedback=function(kind){if(!state.audioEnabled)return;try{const AC=window.Au
 // Navigation sphere: movable, position persists, drag distinct from tap.
 const nav=e('floatingNav'),ball=e('navPill');setNavCollapsed(true);nav.style.left='auto';nav.style.right='20px';nav.style.bottom='calc(20px + env(safe-area-inset-bottom))';
 function positionBall(){const pos=w23.navPosition;if(!pos||!nav.classList.contains('collapsed'))return;nav.style.left=Math.max(4,Math.min(window.innerWidth-56,pos.x))+'px';nav.style.top=Math.max(4,Math.min(window.innerHeight-60,pos.y))+'px';nav.style.right='auto';nav.style.bottom='auto'}
-const oldCollapse=setNavCollapsed;setNavCollapsed=function(v){oldCollapse(v);if(v)positionBall();else{nav.style.left='50%';nav.style.top='auto';nav.style.right='auto';nav.style.bottom='calc(10px + env(safe-area-inset-bottom))'}};positionBall();let pointer=null,suppress=false;
+const oldCollapse=setNavCollapsed;let navFlight=null;
+setNavCollapsed=function(collapsed){
+ if(nav.classList.contains('collapsed')===collapsed)return;
+ const from=nav.getBoundingClientRect();navFlight?.cancel();oldCollapse(collapsed);
+ if(collapsed){nav.style.left='auto';nav.style.top='auto';nav.style.right='20px';nav.style.bottom='calc(16px + env(safe-area-inset-bottom))';positionBall()}
+ else{nav.style.left='50%';nav.style.top='auto';nav.style.right='auto';nav.style.bottom='calc(12px + env(safe-area-inset-bottom))'}
+ const to=nav.getBoundingClientRect(),end=getComputedStyle(nav).transform;
+ if(from.width&&to.width&&nav.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!document.documentElement.classList.contains('wd26-reduced')){
+  const base=end==='none'?'':end;
+  navFlight=nav.animate([{transform:'translate('+(from.left-to.left)+'px,'+(from.top-to.top)+'px) '+base+' scale('+from.width/to.width+','+from.height/to.height+')'},{transform:end}],{duration:245,easing:'cubic-bezier(.22,.75,.18,1)'});
+ }
+};positionBall();let pointer=null,suppress=false;
 ball.addEventListener('pointerdown',ev=>{if(!nav.classList.contains('collapsed'))return;pointer={x:ev.clientX,y:ev.clientY,left:nav.getBoundingClientRect().left,top:nav.getBoundingClientRect().top,moved:false};ball.setPointerCapture?.(ev.pointerId)});
 ball.addEventListener('pointermove',ev=>{if(!pointer)return;let dx=ev.clientX-pointer.x,dy=ev.clientY-pointer.y;if(Math.hypot(dx,dy)>8)pointer.moved=true;if(!pointer.moved)return;nav.style.left=Math.max(4,Math.min(window.innerWidth-56,pointer.left+dx))+'px';nav.style.top=Math.max(4,Math.min(window.innerHeight-60,pointer.top+dy))+'px';nav.style.right='auto';nav.style.bottom='auto'});
 ball.addEventListener('pointerup',()=>{if(!pointer)return;if(pointer.moved){let r=nav.getBoundingClientRect(),x=r.left<window.innerWidth/2?8:window.innerWidth-60;nav.style.left=x+'px';w23.navPosition={x,y:r.top};nav.style.left=x+'px';nav.style.top=r.top+'px';persist();suppress=true;setTimeout(()=>suppress=false,100)}pointer=null});
@@ -741,7 +752,7 @@ showCelebration=function(kind,title,desc){if(kind==='combo'){let n=Number((title
 // Collapse badge collection by default, displaying up to four actually unlocked highest-tier badges.
 const wd24Grid=e('badgeGrid');const wd24Panel=wd24Grid.closest('.panel');wd24Panel.classList.add('wd24-badges-panel');
 const wd24Mini=make('div','wd24BadgeMini');wd24Grid.before(wd24Mini);const wd24Toggle=make('button','wd24BadgeToggle');wd24Toggle.className='secondary wd24-badges-toggle';wd24Grid.after(wd24Toggle);
-function wd24BadgeDisplay(){const unlocked=achievements.filter(a=>!!w23.badges[a[0]]).sort((a,b)=>b[3]-a[3]||String(w23.badges[a[0]]).localeCompare(String(w23.badges[b[0]]))).slice(0,4);wd24Mini.className='wd24-badges-summary';wd24Mini.innerHTML=unlocked.length?unlocked.map(a=>`<div class="wd24-badge-mini" title="${esc(a[1])} · ${esc(a[2])}">${['◆','◇','★','✦'][a[3]]}</div>`).join(''):'<span class="smallnote">尚未获得徽章，继续探索吧 ✦</span>';wd24Panel.classList.toggle('is-closed',!wd24.badgeOpen);wd24Toggle.textContent=wd24.badgeOpen?'收起全部成就 ↑':`展开成就图鉴 (${achievements.filter(a=>w23.badges[a[0]]).length}/32) ↓`}
+function wd24BadgeDisplay(){const unlocked=achievements.filter(a=>!!w23.badges[a[0]]).sort((a,b)=>b[3]-a[3]||String(w23.badges[a[0]]).localeCompare(String(w23.badges[b[0]]))).slice(0,4);wd24Mini.className='wd24-badges-summary';wd24Mini.innerHTML=unlocked.length?unlocked.map(a=>`<div class="wd24-badge-mini" title="${esc(a[1])} · ${esc(a[2])}">${['◆','◇','★','✦'][a[3]]}</div>`).join(''):'<span class="smallnote">尚未获得徽章，继续探索吧 ✦</span>';wd24Panel.classList.toggle('is-closed',!wd24.badgeOpen);wd24Toggle.textContent=wd24.badgeOpen?'收起全部成就 ↑':`展开成就图鉴 (${achievements.filter(a=>w23.badges[a[0]]).length}/${achievements.length}) ↓`}
 wd24Toggle.onclick=()=>{wd24.badgeOpen=!wd24.badgeOpen;persist();wd24BadgeDisplay()};
 const wd24OldAchievements=renderAchievements;renderAchievements=function(){wd24OldAchievements();wd24BadgeDisplay()};wd24BadgeDisplay();
 // Curated offline daily words: editorially chosen for multiple meanings / exam usefulness, no unverified frequency claim.
@@ -773,4 +784,4 @@ const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd
 renderAchievements();renderResume();
 })();
 
-</script><script src="wildwords.js"></script><script src="wordday26.js"></script><script src="wordday27.js"></script><script src="wordday271.js"></script><script src="card-feedback28.js"></script><script src="battle-engine.js"></script><script src="wordday28.js"></script><script src="review28.js"></script></body></html>
+</script><script src="wildwords.js"></script><script src="wordday26.js"></script><script src="wordday27.js"></script><script src="wordday271.js"></script><script src="card-feedback28.js"></script><script src="battle-engine.js"></script><script src="wordday28.js"></script><script src="review28.js"></script><script src="figures281.js"></script></body></html>

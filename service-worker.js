@@ -1,6 +1,6 @@
 /* WORDDAY 2.7: atomic offline app shell. */
-const CACHE_NAME='wordday-v2.8-battle-1';
-const ASSETS=['./index.html','./vocabulary-index.json','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.ico','./favicon.png','./wildwords.js','./wildwords.css','./wordday26.css','./wordday26.js','./lexicon.js','./wordday27.js','./wordday27.css','./wordday271.js','./wordday271.css','./wordday28.css','./battle-engine.js','./wordday28.js','./review28.js','./card-feedback28.js'];
+const CACHE_NAME='wordday-v2.8.1-arena-1';
+const ASSETS=['./index.html','./vocabulary-index.json','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.ico','./favicon.png','./wildwords.js','./wildwords.css','./wordday26.css','./wordday26.js','./lexicon.js','./wordday27.js','./wordday27.css','./wordday271.js','./wordday271.css','./wordday28.css','./battle-engine.js','./wordday28.js','./review28.js','./card-feedback28.js','./arena281.css','./figures281.js'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE_NAME);
  // Never activate an incomplete release; the previous worker keeps working.
