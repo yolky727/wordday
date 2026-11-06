@@ -1,19 +1,46 @@
+/* Full-card review stays in the study/quiz surface and never resubmits answers. */
 (()=>{'use strict';
-const $=id=>document.getElementById(id),dialog=document.createElement('dialog');dialog.className='wd28-review';dialog.setAttribute('aria-label','只读回看');document.body.append(dialog);
-let items=[],cursor=0,caller=null;
-function draw(){const x=items[cursor];dialog.innerHTML='<div class="b28-head"><span>回看 · '+(cursor+1)+' / '+items.length+'</span><button class="secondary" id="r28Close">返回当前进度</button></div><h2>'+esc(x.title)+'</h2><p>'+esc(x.body)+'</p><p class="smallnote">'+esc(x.note||'')+'</p><div class="b28-actions"><button class="secondary" id="r28Prev" aria-label="上一个" '+(cursor===0?'disabled':'')+'>←</button><button class="secondary" id="r28Next" aria-label="下一个">→</button></div>';
- $('r28Close').onclick=()=>dialog.close();$('r28Prev').onclick=()=>{cursor--;draw()};$('r28Next').onclick=()=>{if(cursor===items.length-1)dialog.close();else{cursor++;draw()}}}
-dialog.addEventListener('close',()=>caller?.isConnected&&caller.focus());
-function open(list){if(!list.length)return;items=list;cursor=list.length-1;caller=document.activeElement;draw();dialog.showModal()}
-function nav(mount,list,label,place='prepend'){const row=document.createElement('div');row.className='b28-reviewnav';row.innerHTML='<button class="secondary" aria-label="回看上一个'+label+'" '+(list.length?'':'disabled')+'>←</button><span>回看'+label+'</span><button class="secondary" aria-label="已在当前进度" disabled>→</button>';row.querySelector('button').onclick=()=>open(list);mount[place](row)}
-function study(stage){
- const names=state.daily[today]||[],list=names.map(n=>({title:n,body:findWord(n)?.[2]||'',note:state.wd23.history28?.[today]?.[n]||'当天已学习'}));
- const card=stage.querySelector('.study-card');if(!card)return;nav(card,list,'单词','append');
- if(!state.wd23.swipeGuide28&&$('swipeCard')){const tip=document.createElement('div');tip.className='b28-guide';tip.innerHTML='<strong>试试滑动词卡</strong><span>← 左滑：还需复习　　右滑：已掌握 →</span><small>两种操作都会保存进度，也可使用下方按钮。</small><button class="secondary">知道了</button>';card.prepend(tip);tip.querySelector('button').onclick=()=>{state.wd23.swipeGuide28=true;save();tip.remove()}}
+const $=id=>document.getElementById(id);
+let cursor=null,finished=null,finishedView=false,lastSession=null,drafts={};
+const renderBase=renderQuizQuestion;
+function reset(){cursor=null;finishedView=false;lastSession=null;drafts={}}
+function remember(){if(cursor===null&&!finishedView&&quizSession){const input=$('typedAnswer');if(input)drafts[quizSession.index]=input.value}}
+function draw(){
+ const live=quizSession,s=finishedView?finished:live;if(!s)return;
+ if(!finishedView&&lastSession!==live){cursor=null;drafts={};lastSession=live}
+ const actual=s.index,index=cursor??actual,review=finishedView||cursor!==null;
+ // Reuse the complete existing renderer, retaining all four question layouts.
+ quizSession=s;s.index=index;
+ try{renderBase()}finally{s.index=actual;quizSession=live}
+ const q=s.questions[index],a=s.answers[index],mount=$('quizPlay');
+ mount.querySelector('.b28-reviewnav')?.remove();mount.querySelector('.review284-return')?.remove();
+ mount.classList.toggle('review284-active',review);
+ if(a){
+  document.querySelectorAll('#quizOptions .quiz-option').forEach(b=>{b.disabled=true;const correct=normalizeQuizAnswer(b.dataset.answer)===normalizeQuizAnswer(a.correct),chosen=normalizeQuizAnswer(b.dataset.answer)===normalizeQuizAnswer(a.chosen);b.classList.toggle('correct',correct);b.classList.toggle('wrong',chosen&&!a.ok);b.setAttribute('aria-pressed',String(chosen))});
+  if($('typedAnswer')){$('typedAnswer').value=a.chosen;$('typedAnswer').disabled=true}
+  if($('submitTyped'))$('submitTyped').disabled=true;
+  $('quizFeedback').textContent=(a.ok?'回答正确':'你的答案：'+a.chosen)+' · 正确答案：'+a.correct;
+  $('quizFeedback').style.color=a.ok?'var(--green)':'var(--red)';
+ }else if(!review&&$('typedAnswer')&&Object.hasOwn(drafts,index))$('typedAnswer').value=drafts[index];
+ if(review){$('quizNext').disabled=true;$('quizNext').style.display='none'}
+ else{$('quizNext').style.display='';$('quizNext').disabled=!a}
+ $('quizSave').hidden=finishedView;
+ const fav=$('quizFav');fav.textContent=state.favorites.includes(q.word)?'★ 已收藏':'☆ 收藏本题单词';fav.onclick=()=>{toggleFavorite(q.word);fav.textContent=state.favorites.includes(q.word)?'★ 已收藏':'☆ 收藏本题单词'};
+ const end=finishedView?s.questions.length-1:actual;
+ const row=document.createElement('div');row.className='b28-reviewnav review284-nav';
+ row.innerHTML='<button class="secondary" id="quizPrevious284" aria-label="上一道完整题目" '+(index===0?'disabled':'')+'>←</button><span>'+(review?'回看原题 · ':'当前题目 · ')+(index+1)+' / '+s.questions.length+'</span><button class="secondary" id="quizForward284" aria-label="下一道题目或返回当前题目" '+(!review?'disabled':'')+'>→</button>';
+ mount.append(row);
+ $('quizPrevious284').onclick=()=>{remember();cursor=Math.max(0,index-1);draw();mount.scrollIntoView({block:'start'})};
+ $('quizForward284').onclick=()=>{if(finishedView&&index===end)return showResults();cursor=index+1>=end&&!finishedView?null:index+1;draw();mount.scrollIntoView({block:'start'})};
+ if(review){const back=document.createElement('button');back.className='secondary review284-return';back.textContent=finishedView?'返回测试结果':'回到当前题目';back.onclick=()=>{if(finishedView)return showResults();cursor=null;draw();mount.scrollIntoView({block:'start'})};mount.append(back)}
 }
-const previous=renderQuizQuestion;renderQuizQuestion=function(){previous();const mount=$('quizPlay');mount.querySelector('.b28-reviewnav')?.remove();if(!quizSession)return;const list=quizSession.answers.flatMap((a,i)=>a?[{title:quizSession.questions[i]?.prompt||a.word,body:'你的答案：'+a.chosen+'\n正确答案：'+a.correct,note:a.ok?'回答正确':'已记录错题'}]:[]);nav(mount,list,'已答题')};
-const oldSubmit=submitQuizAnswer;submitQuizAnswer=function(...args){const result=oldSubmit(...args);const mount=$('quizPlay');if(quizSession&&mount.style.display!=='none'){mount.querySelector('.b28-reviewnav')?.remove();nav(mount,quizSession.answers.flatMap((a,i)=>a?[{title:quizSession.questions[i]?.prompt||a.word,body:'你的答案：'+a.chosen+'\n正确答案：'+a.correct,note:a.ok?'回答正确':'已记录错题'}]:[]),'已答题')}return result};
-const priorFinish=finishDailyQuiz;
-finishDailyQuiz=function(){const before=state.quizHistory.length;const result=priorFinish();if(state.quizHistory.length>before){const record=state.quizHistory.at(-1);nav($('quizResult'),record.details.map(a=>({title:a.prompt||a.word,body:'你的答案：'+a.chosen+'\n正确答案：'+a.correct,note:a.ok?'回答正确':'已记录错题'})),'本次测试','append')}return result};
-window.WD28Review={study};
+function showResults(){finishedView=false;cursor=null;$('quizPlay').style.display='none';$('quizResult').style.display='block';$('quizSave').hidden=false}
+renderQuizQuestion=draw;
+const startBase=startMode;startMode=function(...args){reset();finished=null;return startBase(...args)};
+const submitBase=submitQuizAnswer;submitQuizAnswer=function(...args){if(cursor!==null||finishedView)return;const result=submitBase(...args);draw();return result};
+const finishBase=finishDailyQuiz;finishDailyQuiz=function(...args){const candidate=quizSession?JSON.parse(JSON.stringify(quizSession)):null,before=state.quizHistory.length;const result=finishBase(...args);if(state.quizHistory.length>before&&candidate){finished=candidate;const row=document.createElement('div');row.className='b28-reviewnav';row.innerHTML='<button class="secondary" id="quizFinishedReview284">← 回看完整试题</button>';$('quizResult').append(row);$('quizFinishedReview284').onclick=()=>{finishedView=true;cursor=finished.questions.length-1;$('quizResult').style.display='none';$('quizPlay').style.display='block';draw()}}return result};
+window.WD28Review={study(stage){
+ const card=stage.querySelector('#swipeCard');if(!card||card.querySelector('.review284-status'))return;
+ if(!state.wd23.swipeGuide28){const tip=document.createElement('div');tip.className='b28-guide';tip.innerHTML='<strong>试试滑动词卡</strong><span>← 左滑：还需复习　　右滑：已掌握 →</span><small>也可使用下方按钮；底部箭头可回看完整词卡。</small><button class="secondary">知道了</button>';card.prepend(tip);tip.querySelector('button').onclick=()=>{state.wd23.swipeGuide28=true;save();tip.remove()}}
+}};
 })();
