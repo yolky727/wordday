@@ -32,10 +32,10 @@ function top(label,title){return `<div class="wild-top"><div><div class="wild-ki
 function wireClose(){const b=$('wildClose');if(b)b.onclick=close}
 function card(a,small=false,advanced=false,cls=''){
  const classes=['wild-card',small?'small':'',advanced?'advanced':'',cls].filter(Boolean).join(' ');
- const count=advanced?(a.rarity===3?6:a.rarity===2?4:0):0;
- const sparks=count?'<span class="wild-rarity-sparks" aria-hidden="true">'+'<i></i>'.repeat(count)+'</span>':'';
- const arc=advanced&&a.rarity===3?'<svg class="wild-prism-arc" aria-hidden="true" focusable="false" viewBox="0 0 160 210" preserveAspectRatio="none"><path class="wild-prism-blue" d="M72 214 Q143 195 163 142 Q143 191 72 214Z"/><path class="wild-prism-rose" d="M78 214 Q147 197 163 151 Q144 198 78 214Z"/><path class="wild-prism-core" d="M72 214 Q146 194 163 145 Q144 194 72 214Z"/></svg>':'';
- return `<div class="${classes}" data-rarity="${a.rarity}">${arc}${sparks}<span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
+ const count=advanced?(a.rarity===3?16:a.rarity===2?10:0):0;
+ const sparks=count?'<span class="wild-rarity-sparks" aria-hidden="true">'+Array.from({length:count},(_,i)=>'<i style="--spark-index:'+i+'"></i>').join('')+'</span>':'';
+ const arc=advanced&&a.rarity===3?'<svg class="wild-prism-arc" aria-hidden="true" focusable="false" viewBox="0 0 160 210" preserveAspectRatio="none"><path class="wild-prism-blue" d="M58 214 Q140 192 163 126 Q146 192 58 214Z"/><path class="wild-prism-rose" d="M62 214 Q151 200 163 139 Q148 193 62 214Z"/><path class="wild-prism-core" d="M58 214 Q146 193 163 130 Q145 194 58 214Z"/></svg>':'';
+ return `<div class="${classes}" data-rarity="${a.rarity}">${arc}${arc.replace('wild-prism-arc','wild-prism-arc wild-prism-top')}${sparks}<span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
 }
 function award(a,withSound=true){if(withSound)window.WD28CardFX?.sound('acquire');data.discovered[a.id]=true;data.inventory[a.id]=qty(a.id)+1;persist();updateAvatars();document.dispatchEvent(new Event('wd28badges'))}
 let pending=null;

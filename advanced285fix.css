@@ -74,10 +74,10 @@
 
 .wild-rarity-sparks i {
   position: absolute;
-  width: clamp(5px, 1.8vw, 9px);
+  width: clamp(7px, 2.3vw, 12px);
   aspect-ratio: 1;
   color: var(--spark-color);
-  filter: drop-shadow(0 0 1.2px var(--spark-glow));
+  filter: drop-shadow(0 0 2px var(--spark-glow)) drop-shadow(0 0 4px var(--spark-glow));
   opacity: 0;
   animation: wildSpark293 5.3s ease-in-out infinite;
 }
@@ -97,10 +97,28 @@
 .wild-rarity-sparks i:nth-child(even) { width: clamp(4px, 1.2vw, 6px); animation-duration: 4.7s; }
 @keyframes wildSpark293 {
   0% { opacity: 0; transform: translate(-2px, 5px) scale(.4); }
-  18% { opacity: 1; transform: translate(0, 1px) scale(1); }
-  43%, 100% { opacity: 0; transform: translate(3px, -6px) scale(.5); }
+  28%, 38% { opacity: 1; transform: translate(0, 1px) scale(1); }
+  68%, 100% { opacity: 0; transform: translate(3px, -6px) scale(.5); }
 }
 .wd26-reduced .wild-rarity-sparks i { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .wild-rarity-sparks i { animation: none; }
 }
+
+/* Opposing arcs share one contour and a soft spectral fringe. */
+.wild-prism-top { transform: rotate(180deg); }
+.wild-prism-blue { fill: #91bfff; opacity: .9; filter: blur(1.8px); }
+.wild-prism-rose { fill: #eda3d9; opacity: .85; filter: blur(1.7px); }
+.wild-prism-core { fill: #ffffff; filter: drop-shadow(0 0 2px #fff9da) drop-shadow(0 0 5px #ffe3a7); }
+.wild-rarity-sparks i { animation-delay: calc(var(--spark-index) * -.73s); }
+.wild-rarity-sparks i:nth-child(even) { width: clamp(5px, 1.7vw, 9px); }
+.wild-rarity-sparks i:nth-child(7) { left: 9%; top: 55%; }
+.wild-rarity-sparks i:nth-child(8) { right: 10%; top: 18%; }
+.wild-rarity-sparks i:nth-child(9) { left: 32%; bottom: 18%; }
+.wild-rarity-sparks i:nth-child(10) { right: 8%; bottom: 46%; }
+.wild-rarity-sparks i:nth-child(11) { left: 29%; top: 13%; }
+.wild-rarity-sparks i:nth-child(12) { right: 30%; top: 17%; }
+.wild-rarity-sparks i:nth-child(13) { left: 8%; bottom: 12%; }
+.wild-rarity-sparks i:nth-child(14) { right: 33%; bottom: 9%; }
+.wild-rarity-sparks i:nth-child(15) { left: 19%; top: 34%; }
+.wild-rarity-sparks i:nth-child(16) { right: 19%; top: 47%; }
