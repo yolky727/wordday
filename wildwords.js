@@ -34,7 +34,8 @@ function card(a,small=false,advanced=false,cls=''){
  const classes=['wild-card',small?'small':'',advanced?'advanced':'',cls].filter(Boolean).join(' ');
  const count=advanced?(a.rarity===3?6:a.rarity===2?4:0):0;
  const sparks=count?'<span class="wild-rarity-sparks" aria-hidden="true">'+'<i></i>'.repeat(count)+'</span>':'';
- return `<div class="${classes}" data-rarity="${a.rarity}">${sparks}<span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
+ const arc=advanced&&a.rarity===3?'<svg class="wild-prism-arc" aria-hidden="true" focusable="false" viewBox="0 0 160 210" preserveAspectRatio="none"><path class="wild-prism-blue" d="M72 214 Q143 195 163 142 Q143 191 72 214Z"/><path class="wild-prism-rose" d="M78 214 Q147 197 163 151 Q144 198 78 214Z"/><path class="wild-prism-core" d="M72 214 Q146 194 163 145 Q144 194 72 214Z"/></svg>':'';
+ return `<div class="${classes}" data-rarity="${a.rarity}">${arc}${sparks}<span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
 }
 function award(a,withSound=true){if(withSound)window.WD28CardFX?.sound('acquire');data.discovered[a.id]=true;data.inventory[a.id]=qty(a.id)+1;persist();updateAvatars();document.dispatchEvent(new Event('wd28badges'))}
 let pending=null;
