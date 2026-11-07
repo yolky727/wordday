@@ -10,7 +10,7 @@ function weekDates(){const now=new Date(),start=new Date(now);start.setDate(star
 const key='wordday_battle28';
 function readStore(){try{return JSON.parse(localStorage.getItem(key))||{}}catch{return {}}}
 let store=readStore();store.daily??={};store.total??={games:0,wins:0,points:0,skills:0};let game=store.active||null;if(game&&!game.finished&&!['2.8.3','2.9'].includes(game.rulesVersion)){game=null;store.active=null;localStorage.setItem(key,JSON.stringify(store))}
-function save(){if(game){game.rulesVersion='2.9';game.rarity??=Object.fromEntries(W.animals.map(a=>[a.cn,a.rarity]))}store.active=game;localStorage.setItem(key,JSON.stringify(store))}
+function save(){if(game){game.evolved??=[advanced().filter(n=>game.hands[0].includes(n)),[]];game.rulesVersion='2.9';game.rarity??=Object.fromEntries(W.animals.map(a=>[a.cn,a.rarity]))}store.active=game;localStorage.setItem(key,JSON.stringify(store))}
 function record(){
  if(game?.finished)creditVictory(game);
  if(!game?.finished||game.recorded)return;
@@ -50,7 +50,7 @@ function ecologyNote(a,b){
  const note={'豹/熊猫':'此条关系对应豹对大熊猫幼体的捕食。','狗/考拉':'此条关系对应野犬与考拉。','海豹/企鹅':'海豹卡在此代表豹海豹。','虎鲸/水獭':'此条关系对应有记录的部分虎鲸种群与海獭。','虎鲸/鲨鱼':'不同虎鲸种群食性不同，此处采用捕食鲨鱼的种群。'};
  return note[a+'/'+b]||note[b+'/'+a]||'';
 }
-function rules(){return '<details><summary>对战规则</summary><p>集齐 4 种灵宠可开战。首回合随机先手，之后轮流先手；每次选牌限时 20 秒，超时自动行动。前四回合每张牌出战一次，比较胜场；平分后从原四张牌中秘密选择一张决胜，仍平则整场平局。</p><p>你已确认的对阵结果优先，其次为老鼠对大象等特殊克制，其余综合体型、攻击手段、防御、食物链和特殊性。不同环境以双方均可行动的游戏场地比较，分值用于游戏平衡。</p><p>长按手牌约半秒发动技能；换牌和庇护再选目标。也可用“选择技能”按钮。亮牌后长按我方出战牌也可发动。每方整场仅一次技能机会，含决胜局；已发动的技能不会被追溯取消。胜负不消耗库存。</p></details>'}
+function rules(){return '<details><summary>对战规则</summary><p>集齐 4 种灵宠可开战。首回合随机先手，之后轮流先手；每次选牌限时 20 秒，超时自动行动。前四回合每张牌出战一次，比较胜场；平分后从原四张牌中秘密选择一张决胜，仍平则整场平局。</p><p>你已确认的对阵结果优先，其次为老鼠对大象等特殊克制，其余综合体型、攻击手段、防御、食物链和特殊性。不同环境以双方均可行动的游戏场地比较，分值用于游戏平衡。</p><p>长按手牌约半秒发动技能；换牌和庇护再选目标。也可用“选择技能”按钮。亮牌后长按我方出战牌也可发动。每方整场仅一次技能机会，含决胜局；已发动的技能不会被追溯取消。同一动物对阵时，进阶卡优先获胜，进阶状态相同则基础判平；技能改判仍有效。胜负不消耗库存。</p></details>'}
 function start(){if(owned().length<4)return;game=B.newGame(pool,owned(),advanced(),selection,Object.fromEntries(W.animals.map(a=>[a.cn,a.rarity])));game.rewardEligible285=true;scene='fight';finalVisible=false;chosenSlot=null;step()}
 let autoTimer=0,autoPassAt=0,finalVisible=false;
 function clearTimers(){clearTimeout(autoTimer);autoTimer=0;autoPassAt=0}
@@ -124,9 +124,9 @@ function fight(){
     html+='<div class="a-hand">'+g.hands[0].map((n,i)=>btn('slot:'+i,art(n),'secondary a-card '+(advanced().includes(n)?'b28-evolved':''),!legal.includes(i))).join('')+'</div><small class="a-hint">拖入出牌区出牌 · 长按发动技能 · 也可轻点出牌</small>';
   }
  }
- html+='<div class="b28-actions">'+btn('skills',g.spent[0]?'技能已使用':'选择技能','secondary',!!g.spent[0]||report||g.actor===1)+(g.spent[0]?'<small>第 '+g.spent[0].round+' 回合 · '+fighter(g.spent[0].name)+' · '+text(g.spent[0].skill)+'</small>':'')+'</div>';
+ html+='<div class="b28-actions">'+btn('skills',g.spent[0]?'技能已使用':'选择技能','secondary',!!g.spent[0]||report||g.actor===1)+(!report&&g.actor===0&&!g.interrupt&&g.phase==='show'?btn('pass','跳过技能'): '')+(g.spent[0]?'<small>第 '+g.spent[0].round+' 回合 · '+fighter(g.spent[0].name)+' · '+text(g.spent[0].skill)+'</small>':'')+'</div>';
  if(skillPanel&&!report&&!g.spent[0])html+=panel();
- if(!report&&g.actor===0&&(g.interrupt||skillPanel&&g.phase==='show'))html+=btn('pass',g.interrupt?'允许侦察':'跳过技能');
+ if(!report&&g.actor===0&&g.interrupt)html+=btn('pass','允许侦察');
  if(Object.keys(g.intel[0]).length)html+='<p class="b28-alert">已侦察：'+Object.entries(g.intel[0]).map(([i,v])=>'#'+(+i+1)+' '+fighter(v.name)).join(' · ')+'</p>';
  html+='<p class="victory285-mini">胜利进度 '+window.WD285Rewards.view().progress+' / 3 · 每三胜可抽一张卡</p>';html+=history;frame('灵宠对战',html);plan();tick(false)
 }
@@ -224,5 +224,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.5';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.6';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

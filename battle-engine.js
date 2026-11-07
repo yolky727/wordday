@@ -63,7 +63,7 @@ function newGame(pool,owned,advanced,chosen=[],rarity={}){
  if(own.length<4)throw Error('需发现至少 4 种萌物');
  if(chosen.length>4||new Set(chosen).size!==chosen.length||chosen.some(n=>!own.includes(n)||!advanced.includes(n)))throw Error('手选卡必须是已进阶的不同萌物');
  const hands=[[...chosen,...shuffled(own.filter(n=>!chosen.includes(n)))].slice(0,4),shuffled(pool).slice(0,4)];
- const g={rulesVersion:'2.9',id:Date.now()+'-'+Math.random(),hands,rarity,spent:[null,null],played:[[],[]],score:[0,0],history:[],round:0,first:pick([0,1]),intel:[{},{}],bless:[{},{}],finished:false};
+ const g={rulesVersion:'2.9',id:Date.now()+'-'+Math.random(),hands,rarity,evolved:[advanced.filter(n=>hands[0].includes(n)),[]],spent:[null,null],played:[[],[]],score:[0,0],history:[],round:0,first:pick([0,1]),intel:[{},{}],bless:[{},{}],finished:false};
  begin(g);return g;
 }
 function begin(g){
@@ -88,7 +88,13 @@ function nameAt(g,s){
  return g.fx.mirror===s?names[1-s]:names[s];
 }
 function predicted(g){
- return root.WDBattleRules.match(nameAt(g,0),nameAt(g,1),{ignoreSpecial:g.fx.zebra===true});
+ const names=[nameAt(g,0),nameAt(g,1)];
+ const pair=root.WDBattleRules.match(names[0],names[1],{ignoreSpecial:g.fx.zebra===true});
+ if(names[0]===names[1]){
+  const delta=Number(!!g.evolved?.[0]?.includes(slotName(g,0)))-Number(!!g.evolved?.[1]?.includes(slotName(g,1)));
+  if(delta)return {...pair,delta,kind:'同牌进阶优势'};
+ }
+ return pair;
 }
 function base(g,s){return predicted(g).delta*(s===0?1:-1)}
 function displayedLead(g,viewer){
