@@ -13,6 +13,8 @@
   --advance-surface: #e9f5fc;
   --advance-edge: #398cca;
   --advance-light: #89d9ff;
+  --spark-color: #f2fbff;
+  --spark-glow: #59aff3;
 }
 .wild-card.advanced[data-rarity="2"] {
   --advance-surface: #f3ebfb;
@@ -122,3 +124,5 @@
 .wild-rarity-sparks i:nth-child(14) { right: 33%; bottom: 9%; }
 .wild-rarity-sparks i:nth-child(15) { left: 19%; top: 34%; }
 .wild-rarity-sparks i:nth-child(16) { right: 19%; top: 47%; }
+
+.wild-card.advanced[data-rarity="1"] .wild-rarity-sparks i { width: 6px; filter: drop-shadow(0 0 2px #59aff3); }

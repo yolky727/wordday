@@ -653,7 +653,7 @@ ball.addEventListener('pointerup',()=>{if(!pointer)return;if(pointer.moved){let 
 ball.addEventListener('click',ev=>{if(suppress){ev.stopImmediatePropagation();ev.preventDefault()}},true);
 window.addEventListener('resize',positionBall);
 // Avatars: preset animals and custom local photo. No external services.
-const avatars=['🐱','🐶','🐰','🦊','🐻','🐼','🐧','🦦','🐹','🐸','🐨','🦉','🐯','🦁','🐮','🐷','🐵','🐺','🦄','🐙','🦋','🐝','🐢','🦭','🌱','🌿','🍀','🌸','🌻','🌙','☀️','⭐','☁️','🪐','🌊','⛰️','✦','◈','◆','◎'];
+const avatars=['🐱','🐶','🐰','🦊','🐻','🐼','🐧','🦦','🐹','🐸','🐨','🦉','🐯','🦁','🐮','🐷','🐵','🐺','🦄','🐙','🦋','🐝','🐢','🦭','🌱','🌿','🍀','🌸','🌻','🌙','☀️','⭐','☁️','🪐','🌊','⛰️','✦','◈','◆','◎','🌵','🌴','🍁','🍄','🪷','🌷','🌺','🪻','🌈','❄️','☄️','🌌','🍋','🍊','🍓','🫐','🍒','🥑','☕','🍵','🎨','🎧','🎹','📚'];
 e('avatarChoices').innerHTML=avatars.map(a=>`<button type="button" data-avatar="${a}" class="secondary" aria-label="头像 ${a}">${a}</button>`).join('');
 e('avatarChoices').insertAdjacentHTML('afterend','<label class="smallnote" for="avatarUpload">或从相册上传自定义头像（图片仅保存在本机）</label><input id="avatarUpload" type="file" accept="image/*"><img id="avatarPreview" alt="自定义头像预览">');
 let uploadedAvatar=null;e('avatarUpload').addEventListener('change',ev=>{const f=ev.target.files[0];if(!f)return;if(f.size>12e6){toast('图片过大，请选择小于12MB的图片');return}const reader=new FileReader();reader.onload=()=>{const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');cv.width=cv.height=192;const ctx=cv.getContext('2d');const z=Math.min(im.width,im.height),sx=(im.width-z)/2,sy=(im.height-z)/2;ctx.drawImage(im,sx,sy,z,z,0,0,192,192);uploadedAvatar=cv.toDataURL('image/jpeg',.8);e('avatarPreview').src=uploadedAvatar;e('avatarPreview').style.display='block'};im.src=reader.result};reader.readAsDataURL(f)});

@@ -33,7 +33,7 @@ function creditVictory(g){if(!g.rewardEligible285||crediting.has(g.id))return;cr
 // Continue unfinished 2.8.4 matches; a recorded finished pre-upgrade match is not counted.
 if(game&&!game.finished){game.rewardEligible285=true;save()}
 const dialog=document.createElement('dialog');dialog.id='wd28Dialog';dialog.setAttribute('aria-labelledby','wd28Title');document.body.append(dialog);
-let scene='lobby',selection=[],skillPanel=false,chosenSkill=null,chosenSlot=null,taskTab='day',victoryReturnScene='lobby',victoryPrize=null,returnFocus=null,claiming=false,rewardCard=null;
+let scene='lobby',selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[],skillPanel=false,chosenSkill=null,chosenSlot=null,taskTab='day',victoryReturnScene='lobby',victoryPrize=null,returnFocus=null,claiming=false,rewardCard=null;
 const text=s=>esc(s),btn=(action,label,cls='secondary',disabled=false)=>'<button type="button" class="'+cls+'" data-b="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
 function show(){returnFocus=document.activeElement;if(!dialog.open)dialog.showModal();paint()}
 function close(){dialog.close();returnFocus?.focus?.()}
@@ -43,7 +43,7 @@ function skill(n){return B.byName[n]}
 function fighter(n){return text(en(n))}
 function lobby(){
  const found=owned(),up=advanced(),locked=found.length<4;
- selection=selection.filter(n=>up.includes(n));const picks=up.map(n=>btn('pick:'+n,fighter(n)+(selection.includes(n)?' ✓':''),selection.includes(n)?'b28-evolved':'secondary b28-evolved',!selection.includes(n)&&selection.length===4)).join('');
+ selection=selection.filter(n=>up.includes(n)).slice(0,4);const picks=up.map(n=>btn('pick:'+n,fighter(n)+(selection.includes(n)?' ✓':''),selection.includes(n)?'b28-evolved':'secondary b28-evolved',!selection.includes(n)&&selection.length===4)).join('');
  frame('灵宠对战', '<p class="b28-lede">集齐 4 种萌物，即可与沃尔德对战。常规四回合，平分则进入决胜局。</p><section><h3>选择进阶卡 <small>'+selection.length+' / 4</small></h3><p>可手选任意稀有度的进阶卡。空位从已发现的萌物中随机补齐。</p><div class="b28-grid">'+(picks||'<p>暂无进阶卡，可使用已发现的卡牌随机组队。</p>')+'</div></section>'+btn('start',locked?'已发现 '+found.length+' / 4 种':'组队开战','',locked)+victoryProgress()+rules());
 }
 function ecologyNote(a,b){
@@ -202,10 +202,10 @@ dialog.addEventListener('click',ev=>{if(performance.now()<suppressClickUntil&&ev
 dialog.addEventListener('pointercancel',clearDrag);dialog.addEventListener('close',clearDrag);
 dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b||b.disabled)return;const [op,arg]=b.dataset.b.split(':');
  if(op==='victoryClaim')return claimVictory(arg);if(op==='victoryBack'){scene=victoryReturnScene;victoryPrize=null;return paint()}
- if(op==='rewardBack'){rewardCard=null;return taskPage()}if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];return lobby()}
+ if(op==='rewardBack'){rewardCard=null;return taskPage()}if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];store.lineup=selection.slice();save();return lobby()}
  if(op==='day'||op==='week'){taskTab=op;return taskPage()}if(op==='claim')return claim(+arg);
- if(!game)return;if(game.deadline&&Date.now()>=game.deadline){tick();return}
- if(op==='again'){scene='lobby';selection=[];return lobby()}if(op==='next'){B.advance(game);return step()}
+ if(!game)return;if(!game.finished&&game.deadline&&Date.now()>=game.deadline){tick();return}
+ if(op==='again'){clearTimers();scene='lobby';return lobby()}if(op==='next'){B.advance(game);return step()}
  if(op==='slot'){if(B.play(game,0,+arg))step();return}if(op==='skills'){skillPanel=!skillPanel;chosenSkill=null;return paint()}
  if(op==='opt'){const o=B.options(game,0)[+arg];if(o&&B.activate(game,0,o))step();return}if(op==='confirm'){if(chosenSkill&&B.activate(game,0,chosenSkill))step();return}
  if(op==='pass'){B.pass(game,0);return step()}if(op==='play'&&chosenSlot!==null&&B.play(game,0,chosenSlot))step();
@@ -221,8 +221,8 @@ document.querySelector('[data-main-tab="ideas"]')?.addEventListener('click',home
 window.WD28Stats=()=>({found:owned().length,advanced:advanced().length,...store.total,battleRewards:Object.keys(window.WILDWORDS.data.battleRewards285?.claimed||{}).length});
 window.addEventListener('storage',event=>{
  if(event.key==='wordday_wildwords_25'&&event.newValue){try{Object.assign(W.data,JSON.parse(event.newValue));homeContent();if(dialog.open&&(scene==='tasks'||scene==='lobby'||scene==='fight'&&game?.finished&&finalVisible))paint()}catch{}}
- if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
+ if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.4';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.5';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();
