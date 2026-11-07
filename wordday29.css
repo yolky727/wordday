@@ -1,0 +1,98 @@
+/* Settlement lighting sits behind the score and never intercepts input. */
+.arena283 .wd29-final {
+  isolation: isolate;
+  overflow: hidden;
+  padding-top: 37px;
+  --result-light: #a9bdb8;
+}
+.arena283 .wd29-final.win { --result-light: #d5a756; }
+.arena283 .wd29-final.loss { --result-light: #93a6ce; }
+.wd29-result-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 4%, color-mix(in srgb, var(--result-light) 40%, transparent), transparent 70%);
+  animation: wd29-result-entry .9s ease-out both;
+}
+.wd29-result-light i {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  width: 2px;
+  height: 26%;
+  background: var(--result-light);
+  transform-origin: center top;
+  transform: rotate(calc(var(--ray) * 36deg));
+  opacity: 0;
+  animation: wd29-result-ray .75s ease-out both;
+  animation-delay: calc(var(--ray) * 22ms);
+}
+.wd29-final.tie .wd29-result-light i:nth-child(odd),
+.wd29-final.loss .wd29-result-light i { display: none; }
+.wd29-double {
+  position: absolute;
+  inset: 7px auto auto 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--muted);
+}
+@keyframes wd29-result-entry {
+  from { opacity: 0; transform: scale(.85); }
+  to { opacity: .9; transform: scale(1); }
+}
+@keyframes wd29-result-ray {
+  0%, 100% { opacity: 0; }
+  45% { opacity: .42; }
+}
+/* The achievement dialog participates in the same top layer as battle. */
+#wdCelebration {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+}
+#wdCelebration::backdrop { background: transparent; }
+#wdCelebration:not([open]) { display: none; }
+/* The upgrade reveal uses the same rarity hue as the finished card. */
+.wild-reveal:has(.wd28-fx.advance) { isolation: isolate; }
+.wild-reveal:has(.wd28-fx.advance) > .wild-card {
+  animation: wd29-advance-card .8s cubic-bezier(.2,.75,.2,1) both;
+}
+.wd28-fx.advance {
+  inset: 0;
+  overflow: visible;
+  --upgrade-light: #66ad80;
+}
+.wild-reveal:has([data-rarity="1"]) .wd28-fx.advance { --upgrade-light: #58a9df; }
+.wild-reveal:has([data-rarity="2"]) .wd28-fx.advance { --upgrade-light: #a67cde; }
+.wild-reveal:has([data-rarity="3"]) .wd28-fx.advance { --upgrade-light: #dbac53; }
+.wd28-fx.advance i:nth-child(n) {
+  inset: 0;
+  width: auto;
+  aspect-ratio: auto;
+  border-radius: 16px;
+  border: 2px solid var(--upgrade-light);
+  box-shadow: 0 0 15px var(--upgrade-light);
+  animation: wd29-advance-edge .85s ease-out both;
+}
+.wd28-fx.advance i:nth-child(2) { animation-delay: 70ms; }
+.wd28-fx.advance i:nth-child(3) { animation-delay: 140ms; }
+@keyframes wd29-advance-edge {
+  0% { opacity: 0; transform: scale(.91); }
+  40% { opacity: .95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+@keyframes wd29-advance-card {
+  0% { opacity: .4; transform: perspective(700px) rotateY(-24deg) scale(.92); }
+  66% { opacity: 1; transform: perspective(700px) rotateY(3deg) scale(1.025); }
+  100% { opacity: 1; transform: none; }
+}
+.wd26-reduced .wd29-result-light,
+.wd26-reduced .wd29-result-light i { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .wd29-result-light,.wd29-result-light i { animation: none; }
+}

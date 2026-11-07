@@ -1,6 +1,6 @@
 {
-  "name": "WORDDAY · 每日英语",
-  "short_name": "WORDDAY",
+  "name": "WORDDAY · 沃尔德",
+  "short_name": "沃尔德",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
