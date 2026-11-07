@@ -32,7 +32,9 @@ function top(label,title){return `<div class="wild-top"><div><div class="wild-ki
 function wireClose(){const b=$('wildClose');if(b)b.onclick=close}
 function card(a,small=false,advanced=false,cls=''){
  const classes=['wild-card',small?'small':'',advanced?'advanced':'',cls].filter(Boolean).join(' ');
- return `<div class="${classes}" data-rarity="${a.rarity}"><span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
+ const count=advanced?(a.rarity===3?6:a.rarity===2?4:0):0;
+ const sparks=count?'<span class="wild-rarity-sparks" aria-hidden="true">'+'<i></i>'.repeat(count)+'</span>':'';
+ return `<div class="${classes}" data-rarity="${a.rarity}">${sparks}<span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
 }
 function award(a,withSound=true){if(withSound)window.WD28CardFX?.sound('acquire');data.discovered[a.id]=true;data.inventory[a.id]=qty(a.id)+1;persist();updateAvatars();document.dispatchEvent(new Event('wd28badges'))}
 let pending=null;

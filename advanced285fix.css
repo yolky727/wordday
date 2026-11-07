@@ -18,11 +18,15 @@
   --advance-surface: #f3ebfb;
   --advance-edge: #8b58c5;
   --advance-light: #d1a4fb;
+  --spark-color: #bc99e2;
+  --spark-glow: #eedaff;
 }
 .wild-card.advanced[data-rarity="3"] {
   --advance-surface: #fff5dd;
-  --advance-edge: #bd842d;
-  --advance-light: #ffdb78;
+  --advance-edge: var(--rare);
+  --advance-light: #ffe3a1;
+  --spark-color: #e7b85d;
+  --spark-glow: #fff0bf;
 }
 .wild-card.advanced {
   background: var(--advance-surface) !important;
@@ -45,4 +49,37 @@
 @media (prefers-reduced-motion: reduce) {
   .wild-card.advanced .wild-emoji,
   .wild-inspect-stage .wild-card .wild-emoji { animation: none !important; }
+}
+
+/* The mythic rim uses the same gold as its base card. */
+.wild-card.advanced[data-rarity="3"] {
+  box-shadow: 0 0 6px #ffedb6, 0 0 15px #f6cf777d, 0 0 25px #f6cf7740 !important;
+}
+.wild-rarity-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.wild-rarity-sparks i {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--spark-color);
+  box-shadow: 0 0 5px 1px var(--spark-glow);
+  animation: wildSpark292 4.6s ease-in-out infinite;
+}
+.wild-rarity-sparks i:nth-child(1) { left: 12%; top: 26%; animation-delay: -1s; }
+.wild-rarity-sparks i:nth-child(2) { right: 13%; top: 34%; animation-delay: -2.6s; }
+.wild-rarity-sparks i:nth-child(3) { left: 15%; bottom: 24%; animation-delay: -3.8s; }
+.wild-rarity-sparks i:nth-child(4) { right: 13%; bottom: 30%; animation-delay: -.3s; }
+.wild-rarity-sparks i:nth-child(5) { left: 19%; top: 44%; animation-delay: -2s; }
+.wild-rarity-sparks i:nth-child(6) { right: 18%; bottom: 16%; animation-delay: -3.2s; }
+@keyframes wildSpark292 {
+  0%, 100% { opacity: .22; transform: translateY(2px); }
+  50% { opacity: .85; transform: translateY(-3px); }
+}
+.wd26-reduced .wild-rarity-sparks i { animation: none; opacity: .48; }
+@media (prefers-reduced-motion: reduce) {
+  .wild-rarity-sparks i { animation: none; opacity: .48; }
 }
