@@ -1,49 +1,51 @@
-/* Settlement lighting sits behind the score and never intercepts input. */
+/* Small stars are confined to the victory panel edges. */
 .arena283 .wd29-final {
   isolation: isolate;
   overflow: hidden;
   padding-top: 37px;
-  --result-light: #a9bdb8;
+  background: var(--paper);
 }
-.arena283 .wd29-final.win { --result-light: #d5a756; }
-.arena283 .wd29-final.loss { --result-light: #93a6ce; }
-.wd29-result-light {
+.arena283 .wd29-final.loss { animation: none !important; }
+.arena283 .wd29-final.loss h3 { color: var(--red, #d45656); }
+html[data-theme="midnight"] .arena283 .wd29-final.loss h3 { color: #ff8585; }
+.wd29-win-sparks {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  background: radial-gradient(ellipse at 50% 4%, color-mix(in srgb, var(--result-light) 40%, transparent), transparent 70%);
-  animation: wd29-result-entry .9s ease-out both;
+  color: #e9b65b;
 }
-.wd29-result-light i {
+.wd29-win-sparks i {
   position: absolute;
-  top: 28%;
-  left: 50%;
-  width: 2px;
-  height: 26%;
-  background: var(--result-light);
-  transform-origin: center top;
-  transform: rotate(calc(var(--ray) * 36deg));
+  left: var(--x);
+  top: var(--y);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
   opacity: 0;
-  animation: wd29-result-ray .75s ease-out both;
-  animation-delay: calc(var(--ray) * 22ms);
+  animation: wd29-spark 1.65s ease-out var(--delay) both;
 }
-.wd29-final.tie .wd29-result-light i:nth-child(odd),
-.wd29-final.loss .wd29-result-light i { display: none; }
+.wd29-win-sparks i:nth-child(5n) {
+  width: 6px;
+  height: 6px;
+  border-radius: 0;
+  clip-path: polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+}
+@keyframes wd29-spark {
+  0% { opacity: 0; transform: translateY(5px) scale(.55); }
+  30% { opacity: .9; }
+  55% { opacity: .4; }
+  70% { opacity: .7; }
+  100% { opacity: 0; transform: translateY(-12px) scale(1); }
+}
 .wd29-double {
   position: absolute;
   inset: 7px auto auto 50%;
   transform: translateX(-50%);
   font-size: 10px;
   color: var(--muted);
-}
-@keyframes wd29-result-entry {
-  from { opacity: 0; transform: scale(.85); }
-  to { opacity: .9; transform: scale(1); }
-}
-@keyframes wd29-result-ray {
-  0%, 100% { opacity: 0; }
-  45% { opacity: .42; }
 }
 /* The achievement dialog participates in the same top layer as battle. */
 #wdCelebration {
@@ -91,8 +93,7 @@
   66% { opacity: 1; transform: perspective(700px) rotateY(3deg) scale(1.025); }
   100% { opacity: 1; transform: none; }
 }
-.wd26-reduced .wd29-result-light,
-.wd26-reduced .wd29-result-light i { animation: none; }
+.wd26-reduced .wd29-win-sparks { display: none; }
 @media (prefers-reduced-motion: reduce) {
-  .wd29-result-light,.wd29-result-light i { animation: none; }
+  .wd29-win-sparks { display: none; }
 }

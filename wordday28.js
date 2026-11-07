@@ -99,8 +99,12 @@ function fight(){
  if(g.finished&&finalVisible){
    const win=g.score[0]>g.score[1],draw=g.score[0]===g.score[1];
    const result=win?'win':draw?'tie':'loss';
-   const lights=Array.from({length:10},(_,i)=>'<i style="--ray:'+i+'"></i>').join('');
-   frame('对战结算','<div class="a-final wd29-final '+result+'" role="status"><div class="wd29-result-light" aria-hidden="true">'+lights+'</div><small>'+(win?'VICTORY':draw?'DRAW':'DEFEAT')+'</small><h3>'+(win?'你赢了':draw?'平局':'失败')+'</h3><div class="result284-score"><div><span>我方</span><b>'+g.score[0]+'</b></div><i>:</i><div><span>沃尔德</span><b>'+g.score[1]+'</b></div></div><p>'+g.history.length+' 回合 · 战绩已保存</p></div>'+victoryProgress()+history+'<div class="b28-actions">'+btn('again','再战一场','')+btn('close','返回妙想')+'</div>');return
+   const sparks=win?'<div class="wd29-win-sparks" aria-hidden="true">'+Array.from({length:22},(_,i)=>{
+    const left=i%2===0?5+(i*13)%23:73+(i*11)%22;
+    const top=6+(i*29)%86;
+    return '<i style="--x:'+left+'%;--y:'+top+'%;--delay:'+(i%7)*90+'ms"></i>';
+   }).join('')+'</div>':'';
+   frame('对战结算','<div class="a-final wd29-final '+result+'" role="status">'+sparks+'<small>'+(win?'VICTORY':draw?'DRAW':'DEFEAT')+'</small><h3>'+(win?'你赢了':draw?'平局':'失败')+'</h3><div class="result284-score"><div><span>我方</span><b>'+g.score[0]+'</b></div><i>:</i><div><span>沃尔德</span><b>'+g.score[1]+'</b></div></div><p>'+g.history.length+' 回合 · 战绩已保存</p></div>'+victoryProgress()+history+'<div class="b28-actions">'+btn('again','再战一场','')+btn('close','返回妙想')+'</div>');return
  }
  let html=tally+'<div class="b28-oplabel">沃尔德手牌</div><div class="b28-hand">'+g.hands[1].map((n,i)=>{
   const used=g.played[1].includes(i),current=i===g.cards[1],known=g.intel[0][i];const shown=current&&reveal?B.nameAt(g,1):used?n:current&&g.lead===1?B.displayedLead(g,0):known?.name;
@@ -128,7 +132,7 @@ function fight(){
 }
 function victoryProgress(){
  const v=window.WD285Rewards.view(),full=v.pending>0,n=full?3:v.progress;
- return '<section class="victory285"><div class="victory285-head"><strong>胜利进度</strong><span>'+(full?'已满 · '+v.pending+' 次可抽':n+' / 3')+'</span></div><div class="victory285-track" role="progressbar" aria-label="战斗胜利进度" aria-valuemin="0" aria-valuemax="3" aria-valuenow="'+n+'"><i style="width:'+n/3*100+'%"></i></div><p>每胜 3 场抽 1 张 · 每日不限次'+(full?' · 下一轮 '+v.progress+' / 3':'')+'</p>'+(full?btn('victoryClaim:'+v.ticket.id,'从沃尔德阵容抽取 1 张','',claiming)+'<small>来自累计第 '+v.ticket.winNumber+' 胜时沃尔德的四张牌</small>':'<small>还需 '+(3-v.progress)+' 场胜利；失败和平局不会扣进度。</small>')+'</section>';
+ return '<section class="victory285"><div class="victory285-head"><strong>胜利进度</strong><span>'+(full?'已满 · '+v.pending+' 次可抽':n+' / 3')+'</span></div><div class="victory285-track" role="progressbar" aria-label="战斗胜利进度" aria-valuemin="0" aria-valuemax="3" aria-valuenow="'+n+'"><i style="width:'+n/3*100+'%"></i></div><p>每胜 3 场抽 1 张 · 四张各 25% · 每日不限次'+(full?' · 下一轮 '+v.progress+' / 3':'')+'</p>'+(full?btn('victoryClaim:'+v.ticket.id,'从沃尔德阵容抽取 1 张','',claiming)+'<small>来自累计第 '+v.ticket.winNumber+' 胜时沃尔德的四张牌</small>':'<small>还需 '+(3-v.progress)+' 场胜利；失败和平局不会扣进度。</small>')+'</section>';
 }
 function victoryReveal(){frame('胜利奖励','<div class="victory285-prize"><div class="victory285-kicker">VICTORY REWARD</div><div class="task-reveal">'+W.card(victoryPrize,false,!!W.data.advanced[victoryPrize.id],'')+'</div><p>获得 '+text(victoryPrize.cn)+' · '+text(victoryPrize.name)+'</p><small>已加入图鉴与库存 · 重复卡可用于进阶或融合</small></div>'+btn('victoryBack','返回胜利进度',''))}
 async function claimVictory(id){
@@ -220,5 +224,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.1';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

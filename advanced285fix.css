@@ -1,15 +1,13 @@
-/* Advanced cards retain the standard layout and use a brighter rarity edge. */
-.wild-card.advanced,
-.wild-inspect-stage .wild-inspect-face > .wild-card.advanced {
-  --advance-surface: #edf4ec;
-  --advance-edge: #54a36e;
-  --advance-light: #96dfab;
-  background: var(--advance-surface) !important;
-  border-color: var(--advance-edge) !important;
-  box-shadow: inset 0 0 0 3px #ffffffb8,
-              inset 0 0 12px color-mix(in srgb, var(--advance-light) 45%, transparent),
-              0 0 10px color-mix(in srgb, var(--advance-edge) 48%, transparent),
-              0 0 24px color-mix(in srgb, var(--advance-light) 42%, transparent) !important;
+/* One outer frame. Rarity tokens live on the card in every view. */
+.wild-card::before,
+.wild-card::after {
+  display: none !important;
+}
+.wild-inspect-trigger .wild-card { animation: none; }
+.wild-card.advanced {
+  --advance-surface: #e5efe5;
+  --advance-edge: #2f734b;
+  --advance-light: #76c994;
 }
 .wild-card.advanced[data-rarity="1"] {
   --advance-surface: #e9f5fc;
@@ -26,28 +24,25 @@
   --advance-edge: #bd842d;
   --advance-light: #ffdb78;
 }
-.wild-card.advanced::before,
-.wild-inspect-stage .wild-inspect-face > .wild-card.advanced::before {
+.wild-card.advanced {
+  background: var(--advance-surface) !important;
   border-color: var(--advance-edge);
-  border-radius: 11px;
-  opacity: .78;
+  box-shadow: 0 0 9px color-mix(in srgb, var(--advance-edge) 60%, transparent),
+              0 0 22px color-mix(in srgb, var(--advance-light) 58%, transparent) !important;
 }
-.wild-card.advanced::after,
-.wild-card.advanced .evolved-orbit {
-  display: none;
-}
-.wild-card.advanced .evolved-seal { color: var(--advance-edge); }
-.wild-card.advanced .wild-emoji {
-  animation: advanceFloat286 2.6s ease-in-out infinite !important;
+.wild-card.advanced .wild-emoji,
+.wild-inspect-stage .wild-card .wild-emoji {
+  animation: advanceFloat286 3.8s ease-in-out infinite !important;
 }
 @keyframes advanceFloat286 {
-  0%, 100% { transform: translateY(0) rotate(-3deg) scale(1); }
-  48% { transform: translateY(-9px) rotate(4deg) scale(1.12); }
-  73% { transform: translateY(-4px) rotate(0deg) scale(1.04); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
-.wd26-reduced .wild-card.advanced .wild-emoji {
+.wd26-reduced .wild-card.advanced .wild-emoji,
+.wd26-reduced .wild-inspect-stage .wild-card .wild-emoji {
   animation: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .wild-card.advanced .wild-emoji { animation: none !important; }
+  .wild-card.advanced .wild-emoji,
+  .wild-inspect-stage .wild-card .wild-emoji { animation: none !important; }
 }
