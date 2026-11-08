@@ -30,3 +30,60 @@
  .wild-card[data-luminous],.luminous-task,.luminous-fx path{animation:none!important}
 }
 body.wd26-reduced .wild-card[data-luminous],body.wd26-reduced .luminous-task,body.wd26-reduced .luminous-fx path{animation:none!important}
+
+/* Keep the card's 3D pose on the rotor and its visual effects on the face. */
+.wild-inspect-stage{overflow:visible}
+.wild-card[data-luminous="Dragon"] .luminous-fx.lightning{opacity:1}
+.wild-card[data-luminous="Dragon"] .luminous-fx.lightning path{
+ stroke:#007851;
+ stroke-width:2.2;
+ stroke-linecap:round;
+ stroke-linejoin:round;
+ filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 4px #26fcb3);
+ animation:wd298-lightning 2.9s ease-in-out infinite;
+}
+.wild-card[data-luminous="Dragon"] .luminous-fx.lightning path:nth-child(2){animation-delay:-1.4s}
+.wild-card[data-luminous="Dragon"] .luminous-fx.lightning path:nth-child(3){animation-delay:-.7s}
+@keyframes wd298-lightning{
+ 0%,100%{opacity:.5}
+ 12%,22%,54%{opacity:1;stroke:#008559}
+ 17%,36%,73%{opacity:.64}
+}
+.wild-card-back[data-luminous]{
+ --seal:#6851ac;
+ --paper-luminous:#e9ddff;
+}
+.wild-card-back[data-luminous="Dragon"]{--seal:#087450;--paper-luminous:#d8f5e6}
+.wild-card-back[data-luminous="Phoenix"]{--seal:#ba481e;--paper-luminous:#ffe3cd}
+.wild-card-back[data-luminous] .wild-back-top,
+.wild-card-back[data-luminous] .wild-back-name,
+.wild-card-back[data-luminous] .wild-back-bottom{position:relative;z-index:1;color:var(--seal)}
+.wild-card-back[data-luminous] .wild-back-art{color:var(--seal)}
+.wild-card-back[data-luminous] .wild-back-symbol{z-index:2;width:34%;display:grid;place-items:center}
+.wild-card-back[data-luminous] .wild-back-orbit,
+.wild-card-back[data-luminous] .wild-back-ring{border-color:color-mix(in srgb,var(--seal) 45%,transparent)}
+.luminous-seal{width:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 5px var(--halo))}
+.wild-card-back[data-luminous] .luminous-fx{opacity:.48}
+.wild-card-back.advanced[data-luminous] .luminous-fx{opacity:.76}
+.wild-card-abilities{margin-top:14px;border-top:1px solid var(--line);padding-top:10px;color:var(--muted);font-size:13px;line-height:1.5}
+.wild-card-abilities summary{cursor:pointer;color:var(--ink);font-weight:700}
+.wild-card-abilities p{margin:.55em 0}
+.achievement progress{display:block;width:100%;height:6px;margin-top:8px;accent-color:var(--green)}
+.victory285 .victory285-track{margin-bottom:10px}
+.wd-card-celebration .wd-medal{display:block;width:min(200px,57vw);height:auto;aspect-ratio:auto;margin:12px auto;border:0;background:none;box-shadow:none;border-radius:0;font-size:inherit}
+.wd-card-celebration .wild-reveal{margin:0}
+.wd-card-celebration .wild-reveal .wild-card{width:100%}
+.wd-card-celebration #wdCelebrateDesc{display:none}
+.wild-reveal:has(> [data-luminous]),.task-reveal:has(> [data-luminous]){
+ animation:wd298-reveal .56s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes wd298-reveal{
+ from{transform:perspective(650px) rotateY(-75deg) scale(.86);opacity:0}
+ to{transform:perspective(650px) rotateY(0) scale(1);opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+ .wild-card[data-luminous="Dragon"] .luminous-fx.lightning path,
+ .wild-reveal:has(> [data-luminous]),.task-reveal:has(> [data-luminous]){animation:none!important}
+}
+.wd26-reduced .wild-card[data-luminous="Dragon"] .luminous-fx.lightning path,
+.wd26-reduced .wild-reveal:has(> [data-luminous]),.wd26-reduced .task-reveal:has(> [data-luminous]){animation:none!important}

@@ -709,7 +709,7 @@ const badgeGoals28=[
  ['album4','初组小队','发现 4 种不同萌物','found',4,0],
  ['album16','自然观察者','发现 16 种不同萌物','found',16,1],
  ['album40','万物图鉴','发现 40 种不同萌物','found',40,2],
- ['album74','自然志典藏','发现全部 74 种萌物','found',74,3],
+ ['album74','自然志典藏','发现 74 种萌物','found',74,3],
  ['advance1','初次进阶','进阶 1 种萌物','advanced',1,0],
  ['advance4','精锐小队','进阶 4 种萌物','advanced',4,1],
  ['battle1','初次交锋','完成第一场卡牌战斗','games',1,0],
@@ -720,18 +720,52 @@ const badgeGoals28=[
  ['battle20','百战收藏家','赢得 20 场对战','wins',20,3],
  ['battleStreak3','乘胜追击','连续赢得 3 场对战','bestWinStreak',3,2],
  ['battleSave3','绝处逢生','3 场对战中发动技能，把劣势回合救成平局','skillSaves',3,2],
- ['battleSweep','四轮全胜','一场对战的四个普通回合全部获胜 · 奖励龙','sweeps',1,3],
+ ['battleSweep','四轮全胜','一场对战四轮全胜','sweeps',1,3],
  ['battleReward3','战利收藏家','领取 3 次对战胜利奖励','battleRewards',3,1]];
 achievements.push(...badgeGoals28.map(([id,n,desc,metric,goal,tier])=>[id,n,desc,tier,()=>Number(window.WD28Stats?.()[metric]||0)>=goal]));
-achievements.push(['luminousCheckin','独角兽的约定','连续打卡 16 天 · 奖励独角兽',3,()=>Object.hasOwn(window.WILDWORDS?.data.luminousAwards||{},'unicorn')],['luminousQuiz','凤凰试炼','三场测试各达 20 连击 · 奖励凤凰',3,()=>Number(w23.events.luminousQuizRuns||0)>=3]);
+achievements.push(['luminousCheckin','十六日同行','连续打卡 16 天',3,()=>Object.hasOwn(window.WILDWORDS?.data.luminousAwards||{},'unicorn')],['luminousQuiz','连击试炼','三场测试各达 20 连击',3,()=>Number(w23.events.luminousQuizRuns||0)>=3]);
 document.addEventListener('wd28badges',()=>checkAchievements());
 const colors=['#a87555','#929ba4','#e3b744','#7774ce'],shapes=['M17 17H83L86 23L54 82H46L14 23Z','M46 8H54L92 46V54L54 92H46L8 54V46Z','M46 9H54L89 34L92 42L79 85L73 90H27L21 85L8 42L11 34Z','M28 9H72L78 13L94 44V56L78 87L72 91H28L22 87L6 56V44L22 13Z'];
 function badgeGlyph28(i){const icons=['M38 60V42Q46 38 50 44Q57 38 63 42V60Q56 56 50 62Q44 56 38 60ZM50 44V61','M39 54L48 61L64 39','M38 60L47 47L53 52L62 39','M38 42H62L56 53H44ZM50 53V60M43 61H57','M37 58L45 41L50 49L55 41L63 58Z','M37 50L50 39L63 50L50 61ZM45 50L50 46L55 50L50 54Z'];return icons[i>=38?3:i>=32?5:i%5]}
-function renderAchievements(){const grid=e('badgeGrid');grid.innerHTML=achievements.map((a,i)=>{let unlocked=!!w23.badges[a[0]],publicOne=i<4||i>=32,secret=i>=20&&i<32;return `<div class="achievement ${unlocked?'':'locked'}" title="${unlocked||publicOne?esc(a[2]):'探索中'}"><svg viewBox="0 0 100 100"><path d="${shapes[a[3]]}" fill="${unlocked?colors[a[3]]:'#9aa09c'}"/><path d="${shapes[a[3]]}" fill="none" stroke="white" stroke-opacity=".6" stroke-width="2" transform="translate(6,6) scale(.88)"/><path d="${badgeGlyph28(i)}" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="achievement-title">${unlocked||publicOne?esc(a[1]):secret?'???':esc(a[1])}</div><div class="smallnote">${unlocked||publicOne?esc(a[2]):secret?'神秘成就':'继续探索，解锁线索'}</div></div>`}).join('');let title=grid.parentElement.querySelector('.panel-head .sub');if(title)title.textContent=`已解锁 ${Object.keys(w23.badges).length} / ${achievements.length}`}
+const badgeSeries=[
+ ['词汇积累','掌握',()=>countKnown(),[['hundred',100],['fivehundred',500],['thousand',1000],['fivek',5000]]],
+ ['连续学习','天',()=>currentStreak(),[['seven',7],['luminousCheckin',16],['thirty',30],['secret90',90]]],
+ ['满分测试','场',()=>fullTests(),[['perfect',1],['secretperfect',10]]],
+ ['重拾错词','词',()=>Object.values(w23.memory).filter(x=>x.wasWrong&&x.level>=3).length,[['mistakes',10],['secretreturn',20]]],
+ ['萌物图鉴','种',()=>window.WD28Stats?.().found||0,[['album4',4],['album16',16],['album40',40],['album74',74]]],
+ ['卡牌进阶','种',()=>window.WD28Stats?.().advanced||0,[['advance1',1],['advance4',4]]],
+ ['对战胜利','场',()=>window.WD28Stats?.().wins||0,[['battleWin',1],['battle5',5],['battle20',20]]]
+];
+function badgeTiles(){
+ const seriesById=new Map(badgeSeries.flatMap(series=>series[3].map(([id])=>[id,series])));
+ return achievements.flatMap((a,i)=>{
+  const series=seriesById.get(a[0]);
+  if(!series){
+   const unlocked=!!w23.badges[a[0]],secret=i>=20&&i<32;
+   return [{name:secret&&!unlocked?'???':a[1],desc:secret&&!unlocked?'神秘成就':a[2],tier:a[3],unlocked,i}];
+  }
+  const [name,unit,metric,steps]=series;
+  if(steps[0][0]!==a[0])return [];
+  const level=steps.reduce((n,[id],j)=>w23.badges[id]?j+1:n,0);
+  const next=steps[Math.min(level,steps.length-1)][1];
+  const progress=Math.min(next,Math.max(metric(),level?steps[level-1][1]:0));
+  return [{name,desc:`${progress} / ${next} ${unit==='掌握'?'词':unit}`,tier:Math.max(0,level-1),unlocked:level>0,i,level,total:steps.length,progress:progress/next}];
+ });
+}
+function renderAchievements(){
+ const grid=e('badgeGrid'),tiles=badgeTiles();
+ grid.innerHTML=tiles.map(a=>`<div class="achievement ${a.unlocked?'':'locked'}" title="${esc(a.desc)}"><svg viewBox="0 0 100 100"><path d="${shapes[a.tier]}" fill="${a.unlocked?colors[a.tier]:'#9aa09c'}"/><path d="${badgeGlyph28(a.i)}" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="achievement-title">${esc(a.name)}</div><div class="smallnote">${a.total?`等级 ${a.level} / ${a.total} · `:''}${esc(a.desc)}</div>${a.total?`<progress max="1" value="${a.progress}" aria-label="${esc(a.name)}进度"></progress>`:''}</div>`).join('');
+ const label=grid.parentElement.querySelector('.panel-head .sub');
+ if(label)label.textContent=`${tiles.filter(a=>a.unlocked).length} / ${tiles.length}`;
+}
 renderBadges=renderAchievements;
 const modal=make('dialog','wdCelebration','<div class="wd-modal"><div class="wd-eyebrow" id="wdCelebrateEyebrow">ACHIEVEMENT UNLOCKED</div><div class="wd-medal" id="wdCelebrateIcon">✦</div><h2 id="wdCelebrateTitle"></h2><p id="wdCelebrateDesc"></p><button id="wdCelebrateClose">收下这份惊喜</button></div>');document.body.appendChild(modal);e('wdCelebrateClose').onclick=()=>modal.close();
 modal.addEventListener('close',()=>{modal.classList.remove('visible');nextCelebrate()});
 let celebrateQueue=[];
+document.addEventListener('wd298cardReveal',event=>{
+ for(const animal of event.detail)celebrateQueue.push({kind:'card',animal});
+ if(!modal.open)nextCelebrate();
+});
 function showCelebration(kind,title,desc){
  celebrateQueue.push({kind,title,desc});
  if(!modal.open)nextCelebrate();
@@ -739,15 +773,33 @@ function showCelebration(kind,title,desc){
 function nextCelebrate(){
  if(modal.open||!celebrateQueue.length)return;
  const x=celebrateQueue.shift();
- e('wdCelebrateEyebrow').textContent='ACHIEVEMENT UNLOCKED';
- e('wdCelebrateIcon').textContent='✦';
- e('wdCelebrateTitle').textContent=x.title;e('wdCelebrateDesc').textContent=x.desc;
- modal.classList.add('visible');modal.showModal();playFeedback('achievement');
+ const card=x.kind==='card';
+ modal.classList.toggle('wd-card-celebration',card);
+ e('wdCelebrateEyebrow').textContent=card?'WILDWORDS':'ACHIEVEMENT UNLOCKED';
+ const icon=e('wdCelebrateIcon');
+ if(card)icon.innerHTML='<div class="wild-reveal">'+window.WILDWORDS.card(x.animal,false,!!window.WILDWORDS.data.advanced[x.animal.id])+'</div>';
+ else icon.textContent='✦';
+ e('wdCelebrateTitle').textContent=card?'获得 '+x.animal.cn:x.title;
+ e('wdCelebrateDesc').textContent=card?'':x.desc;
+ e('wdCelebrateClose').textContent=card?'收下卡牌':'完成';
+ modal.classList.add('visible');modal.showModal();
+ if(card)window.WD28CardFX?.sound('acquire');else playFeedback('achievement');
 }
 function checkAchievements(items=achievements){
  const unlocked=items.filter(a=>!w23.badges[a[0]]&&a[4]());
  for(const a of unlocked)w23.badges[a[0]]=new Date().toISOString();
- if(unlocked.length){persist();unlocked.forEach(a=>showCelebration('badge',a[1],a[2]))}
+ if(unlocked.length){
+  persist();
+  const notices=new Map();
+  for(const a of unlocked){
+   const series=badgeSeries.find(row=>row[3].some(([id])=>id===a[0]));
+   if(!series){notices.set(a[0],[a[1],a[2]]);continue}
+   const level=series[3].findIndex(([id])=>id===a[0])+1;
+   const prior=notices.get(series[0]);
+   if(!prior||level>prior[2])notices.set(series[0],[series[0]+' · 等级 '+level,a[2],level]);
+  }
+  for(const [name,desc] of notices.values())showCelebration('badge',name,desc);
+ }
  renderAchievements();
 }
 // Accurate event hooks for new achievements; older unproven events are not fabricated.
@@ -794,7 +846,14 @@ showCelebration=function(kind,title,desc){if(kind==='combo'){let n=Number((title
 // Collapse badge collection by default, displaying up to four actually unlocked highest-tier badges.
 const wd24Grid=e('badgeGrid');const wd24Panel=wd24Grid.closest('.panel');wd24Panel.classList.add('wd24-badges-panel');
 const wd24Mini=make('div','wd24BadgeMini');wd24Grid.before(wd24Mini);const wd24Toggle=make('button','wd24BadgeToggle');wd24Toggle.className='secondary wd24-badges-toggle';wd24Grid.after(wd24Toggle);
-function wd24BadgeDisplay(){const unlocked=achievements.filter(a=>!!w23.badges[a[0]]).sort((a,b)=>b[3]-a[3]||String(w23.badges[a[0]]).localeCompare(String(w23.badges[b[0]]))).slice(0,4);wd24Mini.className='wd24-badges-summary';wd24Mini.innerHTML=unlocked.length?unlocked.map(a=>`<div class="wd24-badge-mini" title="${esc(a[1])} · ${esc(a[2])}">${['◆','◇','★','✦'][a[3]]}</div>`).join(''):'<span class="smallnote">尚未获得徽章，继续探索吧 ✦</span>';wd24Panel.classList.toggle('is-closed',!wd24.badgeOpen);wd24Toggle.textContent=wd24.badgeOpen?'收起全部成就 ↑':`展开成就图鉴 (${achievements.filter(a=>w23.badges[a[0]]).length}/${achievements.length}) ↓`}
+function wd24BadgeDisplay(){
+ const tiles=badgeTiles(),unlocked=tiles.filter(a=>a.unlocked).sort((a,b)=>b.tier-a.tier);
+ wd24Mini.className='wd24-badges-summary';
+ wd24Mini.innerHTML=unlocked.slice(0,4).map(a=>`<div class="wd24-badge-mini" title="${esc(a.name)}">${['◆','◇','★','✦'][a.tier]}</div>`).join('');
+ wd24Panel.classList.toggle('is-closed',!wd24.badgeOpen);
+ wd24Toggle.textContent=wd24.badgeOpen?'收起成就 ↑':`查看成就 (${unlocked.length}/${tiles.length}) ↓`;
+ wd24Toggle.setAttribute('aria-expanded',String(wd24.badgeOpen));
+}
 wd24Toggle.onclick=()=>{wd24.badgeOpen=!wd24.badgeOpen;persist();wd24BadgeDisplay()};
 const wd24OldAchievements=renderAchievements;renderAchievements=function(){wd24OldAchievements();wd24BadgeDisplay()};wd24BadgeDisplay();
 // Curated offline daily words: editorially chosen for multiple meanings / exam usefulness, no unverified frequency claim.
