@@ -24,3 +24,7 @@
 
 #wdSplash .wd-splash-panel:before{content:'WORDDAY / A NEW CHAPTER'}
 .a-skillstamp{position:absolute;inset-inline:10px;bottom:6px;text-align:center;font-size:10px;letter-spacing:1px;color:var(--green);animation:aBurst .35s ease-out;pointer-events:none}
+
+/* The arena scrolls vertically without drawing a scrollbar over the hand. */
+#wd28Dialog.arena283{overflow-x:hidden;scrollbar-width:none}
+#wd28Dialog.arena283::-webkit-scrollbar{display:none;width:0;height:0}

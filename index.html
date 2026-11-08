@@ -678,7 +678,7 @@ const achievements=[
 ['seven','七日成诗','连续7天学习',0,()=>currentStreak()>=7],
 ['fivehundred','词海漫游者','掌握500个不同单词',1,()=>countKnown()>=500],
 ['thousand','知识筑塔者','掌握1000个不同单词',2,()=>countKnown()>=1000],
-['fivek','万词远征','掌握5000个不同单词',3,()=>countKnown()>=5000],
+['known7000','万词远征','掌握 7000 个不同单词',3,()=>countKnown()>=7000],
 ['collect50','词汇收藏家','收藏50个不同单词',1,()=>state.favorites.length>=50],
 ['tenDays','晨光同行','累计10个不同学习日',0,()=>days().length>=10],
 ['thirty','习惯养成家','连续30天学习',2,()=>currentStreak()>=30],
@@ -701,7 +701,7 @@ const achievements=[
 ['secretdetective','词语侦探','连续正确辨析10组易混词',2,()=>w23.events.contrastStreak>=10],
 ['secrettime','时光胶囊','30天后再次正确复习同一单词',1,()=>w23.events.longReview>=1],
 ['secretall','全能选手','四种测试模式均有至少20题且90%正确率的记录',2,()=>['choice','spelling','sentence','mixed'].every(mode=>testRecords().some(h=>h.mode===mode&&h.correct/h.total>=.9))],
-['secret90','长跑冠军','连续90天学习',3,()=>currentStreak()>=90],
+['streak120','长跑冠军','连续学习 120 天',3,()=>currentStreak()>=120],
 ['secretdual','双面学者','四级和雅思优先模式各完成15个学习日',2,()=>['cet','ielts'].every(x=>new Set((w23.events.mixDays||{})[x]||[]).size>=15)],
 ['secretlast','最后一颗星','20题以上测试全对且最后一题正确',2,()=>testRecords().some(h=>h.correct===h.total&&h.details?.at(-1)?.ok)]
 ];
@@ -709,7 +709,7 @@ const badgeGoals28=[
  ['album4','初组小队','发现 4 种不同萌物','found',4,0],
  ['album16','自然观察者','发现 16 种不同萌物','found',16,1],
  ['album40','万物图鉴','发现 40 种不同萌物','found',40,2],
- ['album74','自然志典藏','发现 74 种萌物','found',74,3],
+ ['album90','自然志典藏','发现 90 种萌物','found',90,3],
  ['advance1','初次进阶','进阶 1 种萌物','advanced',1,0],
  ['advance4','精锐小队','进阶 4 种萌物','advanced',4,1],
  ['battle1','初次交锋','完成第一场卡牌战斗','games',1,0],
@@ -727,14 +727,25 @@ achievements.push(['luminousCheckin','十六日同行','连续打卡 16 天',3,(
 document.addEventListener('wd28badges',()=>checkAchievements());
 const colors=['#a87555','#929ba4','#e3b744','#7774ce'],shapes=['M17 17H83L86 23L54 82H46L14 23Z','M46 8H54L92 46V54L54 92H46L8 54V46Z','M46 9H54L89 34L92 42L79 85L73 90H27L21 85L8 42L11 34Z','M28 9H72L78 13L94 44V56L78 87L72 91H28L22 87L6 56V44L22 13Z'];
 function badgeGlyph28(i){const icons=['M38 60V42Q46 38 50 44Q57 38 63 42V60Q56 56 50 62Q44 56 38 60ZM50 44V61','M39 54L48 61L64 39','M38 60L47 47L53 52L62 39','M38 42H62L56 53H44ZM50 53V60M43 61H57','M37 58L45 41L50 49L55 41L63 58Z','M37 50L50 39L63 50L50 61ZM45 50L50 46L55 50L50 54Z'];return icons[i>=38?3:i>=32?5:i%5]}
+achievements.push(
+ ['perfect5','满分测试','取得 5 场满分',1,()=>fullTests()>=5],
+ ['perfect30','满分测试','取得 30 场满分',3,()=>fullTests()>=30],
+ ['mistakes40','重拾错词','重新掌握 40 个错词',2,()=>recoveredMistakes()>=40],
+ ['mistakes80','重拾错词','重新掌握 80 个错词',3,()=>recoveredMistakes()>=80],
+ ['advance12','卡牌进阶','进阶 12 种萌物',2,()=>battleMetric('advanced')>=12],
+ ['advance30','卡牌进阶','进阶 30 种萌物',3,()=>battleMetric('advanced')>=30],
+ ['battle75','对战胜利','赢得 75 场对战',3,()=>battleMetric('wins')>=75]
+);
+function recoveredMistakes(){return Object.values(w23.memory).filter(x=>x.wasWrong&&x.level>=3).length}
+function battleMetric(key){return window.WD28Stats?.()[key]||0}
 const badgeSeries=[
- ['词汇积累','掌握',()=>countKnown(),[['hundred',100],['fivehundred',500],['thousand',1000],['fivek',5000]]],
- ['连续学习','天',()=>currentStreak(),[['seven',7],['luminousCheckin',16],['thirty',30],['secret90',90]]],
- ['满分测试','场',()=>fullTests(),[['perfect',1],['secretperfect',10]]],
- ['重拾错词','词',()=>Object.values(w23.memory).filter(x=>x.wasWrong&&x.level>=3).length,[['mistakes',10],['secretreturn',20]]],
- ['萌物图鉴','种',()=>window.WD28Stats?.().found||0,[['album4',4],['album16',16],['album40',40],['album74',74]]],
- ['卡牌进阶','种',()=>window.WD28Stats?.().advanced||0,[['advance1',1],['advance4',4]]],
- ['对战胜利','场',()=>window.WD28Stats?.().wins||0,[['battleWin',1],['battle5',5],['battle20',20]]]
+ ['词汇积累','掌握',()=>countKnown(),[['hundred',100],['fivehundred',500],['thousand',1000],['known7000',7000]]],
+ ['连续学习','天',()=>currentStreak(),[['seven',7],['luminousCheckin',16],['thirty',30],['streak120',120]]],
+ ['满分测试','场',()=>fullTests(),[['perfect',1],['perfect5',5],['secretperfect',10],['perfect30',30]]],
+ ['重拾错词','词',()=>Object.values(w23.memory).filter(x=>x.wasWrong&&x.level>=3).length,[['mistakes',10],['secretreturn',20],['mistakes40',40],['mistakes80',80]]],
+ ['萌物图鉴','种',()=>window.WD28Stats?.().found||0,[['album4',4],['album16',16],['album40',40],['album90',90]]],
+ ['卡牌进阶','种',()=>window.WD28Stats?.().advanced||0,[['advance1',1],['advance4',4],['advance12',12],['advance30',30]]],
+ ['对战胜利','场',()=>window.WD28Stats?.().wins||0,[['battleWin',1],['battle5',5],['battle20',20],['battle75',75]]]
 ];
 function badgeTiles(){
  const seriesById=new Map(badgeSeries.flatMap(series=>series[3].map(([id])=>[id,series])));
