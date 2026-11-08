@@ -90,3 +90,14 @@ body.wd26-reduced .wild-card[data-luminous],body.wd26-reduced .luminous-task,bod
 .wild-card-back[data-luminous="Phoenix"] .luminous-seal{
  stroke:#bd431f;filter:drop-shadow(0 0 6px #ff9c58);
 }
+
+#wd28Dialog button.luminous-task{
+ color:#fff!important;opacity:1;
+}
+#wd28Dialog button.luminous-task:disabled{
+ color:#d9dcef!important;opacity:1;
+}
+#wd28Dialog button.mythic-task{
+ --a:#e6a42e;--b:#fff0a2;--c:#b87918;--halo:#e9b447;--paper-luminous:#53340d;
+}
+#wd28Dialog button.mythic-task:disabled{color:#ffedb7!important}

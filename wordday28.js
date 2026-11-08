@@ -141,15 +141,15 @@ async function claimVictory(id){
  victoryReturnScene=origin;victoryPrize=result.animal;scene='victoryReward';window.WD28CardFX?.sound('acquire');victoryReveal();
  }catch{toast('奖励保存失败，请重试')}finally{claiming=false}
 }
-function luminousWeek(week){
+function challengeRoll(period){
  const key='wordday_luminous_profile';
  let seed=localStorage.getItem(key);
  if(!seed){seed=String(Math.random());localStorage.setItem(key,seed)}
  let hash=2166136261;
- for(const c of seed+'/'+week)hash=Math.imul(hash^c.charCodeAt(0),16777619);
+ for(const c of seed+'/'+period)hash=Math.imul(hash^c.charCodeAt(0),16777619);
  hash=Math.imul(hash^(hash>>>16),0x7feb352d);
  hash=Math.imul(hash^(hash>>>15),0x846ca68b);
- return ((hash^(hash>>>16))>>>0)/4294967296<.2;
+ return ((hash^(hash>>>16))>>>0)/4294967296;
 }
 function tasks(){
  const days=taskTab==='day'?[dateKey()]:weekDates(),prefix=(taskTab==='day'?'D':'W')+days[0]+'/',uniqueWords=days.reduce((c,d)=>c+new Set(state.daily[d]||[]).size,0),studyDays=days.filter(d=>state.daily[d]?.length).length;
@@ -157,19 +157,23 @@ function tasks(){
  const specs=taskTab==='day'?[['学习 5 个单词',uniqueWords,5],['完成一次测试或一场对战',quizzes.length+sum('games'),1]]:[
  ['累计学习 15 词',uniqueWords,15],['累计学习 40 词',uniqueWords,40],['在 3 天留下学习记录',studyDays,3],['完成 3 次测试',quizzes.length,3],['测试累计答对 20 题',quizzes.reduce((n,r)=>n+(+r.correct||0),0),20],['完成 2 场对战',sum('games'),2],['赢得 3 个战斗回合',sum('points'),3]];
  const rows=specs.map(([label,n,max],i)=>({label,n,max,id:prefix+i}));
- if(taskTab==='week'&&luminousWeek(days[0])){
+ if(taskTab==='week'&&challengeRoll(days[0])<.2){
   const correct=quizzes.reduce((n,r)=>n+(+r.correct||0),0);
-  rows.push({label:'进阶挑战',n:Number(quizzes.length>=5)+Number(correct>=100),max:2,id:prefix+'luminous',luminous:true,progress:Math.min(quizzes.length,5)+' / 5 场 · '+Math.min(correct,100)+' / 100 题'});
+  rows.push({label:'进阶挑战',n:Number(quizzes.length>=5)+Number(correct>=100),max:2,id:prefix+'luminous',rewardTier:4,progress:Math.min(quizzes.length,5)+' / 5 场 · '+Math.min(correct,100)+' / 100 题'});
+ }
+ if(taskTab==='day'&&challengeRoll('daily/'+days[0])<.27){
+  const correct=quizzes.reduce((n,r)=>n+(+r.correct||0),0);
+  rows.push({label:'进阶挑战 · 今日测试答对 30 题',n:correct,max:30,id:prefix+'mythic',rewardTier:3});
  }
  return rows;
 }
 function taskPage(){const rows=tasks(),claims=W.data.taskClaims||{};
- frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+(r.progress||Math.min(r.n,r.max)+' / '+r.max)+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?'抽取 1 张':'进行中',(r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary')+(r.luminous?' luminous-task':''),!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
+ frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+(r.progress||Math.min(r.n,r.max)+' / '+r.max)+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?'抽取 1 张':'进行中',(r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary')+(r.rewardTier===4?' luminous-task':r.rewardTier===3?' luminous-task mythic-task':''),!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
 async function claim(index){
  if(claiming)return;claiming=true;rewardCard=null;
  try{const r=tasks()[index];if(!r||r.n<r.max)return;
  const grant=()=>{const raw=JSON.parse(localStorage.getItem('wordday_wildwords_25')||'null')||JSON.parse(JSON.stringify(W.data));
- raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const a=r.luminous?W.sample(4):W.randomCard();raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;raw.taskClaims[r.id]=a.id;
+ raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const a=r.rewardTier!=null?W.sample(r.rewardTier):W.randomCard();raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;raw.taskClaims[r.id]=a.id;
  localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='获得 '+a.cn+' · '+a.name;rewardCard=a;document.dispatchEvent(new Event('wd28badges'))};
  if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){frame('获得灵宠卡牌','<div class="task-reveal">'+W.card(rewardCard,false,!!W.data.advanced[rewardCard.id],'')+'</div><p class="a-hint">已加入图鉴与库存</p>'+btn('rewardBack','返回任务',''))}else taskPage();
  }catch{toast('保存奖励失败，请重试')}finally{claiming=false}
@@ -274,5 +278,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.9';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.9.1';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

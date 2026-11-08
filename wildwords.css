@@ -96,3 +96,6 @@
 .wild-inspect-front{transform:rotateY(0deg) translateZ(1px)!important;-webkit-transform:rotateY(0deg) translateZ(1px)!important}
 .wild-inspect-rear{transform:rotateY(180deg) translateZ(1px)!important;-webkit-transform:rotateY(180deg) translateZ(1px)!important}
 .wild-inspect-face>.wild-card{backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;transform:translateZ(0)!important;-webkit-transform:translateZ(0)!important}
+
+/* The tab bar clips overflow, so keep the entire badge inside the button. */
+.wild-entry .wild-paw{top:2px;right:2px;width:17px;height:17px;font-size:10px;pointer-events:none}

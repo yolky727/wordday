@@ -528,7 +528,24 @@ document.querySelectorAll('[data-theme-choice]').forEach(b=>b.addEventListener('
 $('heatYear').addEventListener('change',renderHeatmap);$('editProfile').addEventListener('click',()=>{$('nicknameInput').value=state.profile.name||'';$('profileModal').style.display='block'});$('closeProfile').addEventListener('click',()=>$('profileModal').style.display='none');let chosenAvatar=state.profile.avatar||'✦';$('avatarChoices').addEventListener('click',e=>{let b=e.target.closest('[data-avatar]');if(b){chosenAvatar=b.dataset.avatar;document.querySelectorAll('[data-avatar]').forEach(x=>x.style.outline=x===b?'2px solid var(--green)':'none')}});$('saveProfile').addEventListener('click',()=>{state.profile={name:$('nicknameInput').value.trim()||'WORDDAY 学习者',avatar:chosenAvatar};save();$('profileModal').style.display='none';renderPersonal();toast('个人资料已保存')});$('personalExport').addEventListener('click',()=>$('exportData').click());$('personalImport').addEventListener('click',()=>$('importBtn').click());
 
 renderOverview();renderWords();renderLists();renderQuizGate();renderPersonal();
-if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./service-worker.js',{updateViaCache:'none'});reg.update();reg.addEventListener('updatefound',()=>{const nw=reg.installing;nw?.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller){toast('WORDDAY 新版本已准备好，正在更新…');nw.postMessage({type:'SKIP_WAITING'})}})});let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!refreshing){refreshing=true;location.reload()}})}catch(e){console.warn('Service worker update check failed',e)}});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+ const hadController=!!navigator.serviceWorker.controller;
+ let refreshing=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{
+  if(!hadController||refreshing)return;
+  refreshing=true;
+  const busy=()=>document.querySelector('#wildOverlay.show,.wd26-intro');
+  if(!busy()){location.reload();return}
+  const observer=new MutationObserver(()=>{
+   if(!busy()){observer.disconnect();location.reload()}
+  });
+  observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+ });
+ window.addEventListener('load',async()=>{
+  try{const reg=await navigator.serviceWorker.register('./service-worker.js',{updateViaCache:'none'});await reg.update()}
+  catch(e){console.warn('Service worker update check failed',e)}
+ });
+}
 
 // 2.2.2 independent, honest English headword index (supplementary entries are NOT translated).
 let vocabularyIndex=[];let catalogShown=48;
