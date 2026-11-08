@@ -79,7 +79,7 @@ function plan(){
    const delay=eligible?5500:1050;autoPassAt=Date.now()+delay;later(delay,()=>{B.pass(g,0);step()});
  }
 }
-function labelOption(o){const n=game.hands[0][o.i];let target='';if(o.target!=null){const friendly=['mimic','swan','dolphin','bless','swap'].includes(o.k);target=friendly?' · '+en(game.hands[0][o.target]):' · 对方第 '+(o.target+1)+' 槽'}return skill(n)[0]+target+(o.mode?' · 复制侦察':'')}
+function labelOption(o){const n=game.hands[0][o.i];let target='';if(o.target!=null){const friendly=['mimic','swan','dolphin','bless','swap','phoenix','unicorn'].includes(o.k);target=friendly?' · '+en(game.hands[0][o.target]):o.k==='gorilla'?' · '+en(game.hands[1][o.target]):' · 对方第 '+(o.target+1)+' 槽'}if(o.k==='gorilla'&&o.target==null)target=' · 随机指定';return skill(n)[0]+target+(o.mode?' · 复制侦察':'')}
 function panel(){
  const opts=B.options(game,0),cards=game.hands[0];let html='<div class="b28-skillbox"><h3>选择技能</h3>';
  cards.forEach((n,i)=>{const def=skill(n);if(!def)return;const local=opts.filter(o=>o.i===i);
@@ -132,7 +132,7 @@ function fight(){
 }
 function victoryProgress(){
  const v=window.WD285Rewards.view(),full=v.pending>0,n=full?3:v.progress;
- return '<section class="victory285"><div class="victory285-head"><strong>胜利进度</strong><span>'+(full?'已满 · '+v.pending+' 次可抽':n+' / 3')+'</span></div><div class="victory285-track" role="progressbar" aria-label="战斗胜利进度" aria-valuemin="0" aria-valuemax="3" aria-valuenow="'+n+'"><i style="width:'+n/3*100+'%"></i></div><p>每胜 3 场抽 1 张 · 四张各 25% · 每日不限次'+(full?' · 下一轮 '+v.progress+' / 3':'')+'</p>'+(full?btn('victoryClaim:'+v.ticket.id,'从沃尔德阵容抽取 1 张','',claiming)+'<small>来自累计第 '+v.ticket.winNumber+' 胜时沃尔德的四张牌</small>':'<small>还需 '+(3-v.progress)+' 场胜利；失败和平局不会扣进度。</small>')+'</section>';
+ return '<section class="victory285"><div class="victory285-head"><strong>胜利进度</strong><span>'+(full?'已满 · '+v.pending+' 次可抽':n+' / 3')+'</span></div><div class="victory285-track" role="progressbar" aria-label="战斗胜利进度" aria-valuemin="0" aria-valuemax="3" aria-valuenow="'+n+'"><i style="width:'+n/3*100+'%"></i></div><p>每胜 3 场抽 1 张 · 排除流光 · 每日不限次'+(full?' · 下一轮 '+v.progress+' / 3':'')+'</p>'+(full?btn('victoryClaim:'+v.ticket.id,'从沃尔德阵容抽取 1 张','',claiming)+'<small>来自累计第 '+v.ticket.winNumber+' 胜时沃尔德的可领取卡牌</small>':'<small>还需 '+(3-v.progress)+' 场胜利；失败和平局不会扣进度。</small>')+'</section>';
 }
 function victoryReveal(){frame('胜利奖励','<div class="victory285-prize"><div class="victory285-kicker">VICTORY REWARD</div><div class="task-reveal">'+W.card(victoryPrize,false,!!W.data.advanced[victoryPrize.id],'')+'</div><p>获得 '+text(victoryPrize.cn)+' · '+text(victoryPrize.name)+'</p><small>已加入图鉴与库存 · 重复卡可用于进阶或融合</small></div>'+btn('victoryBack','返回胜利进度',''))}
 async function claimVictory(id){
@@ -141,24 +141,74 @@ async function claimVictory(id){
  victoryReturnScene=origin;victoryPrize=result.animal;scene='victoryReward';window.WD28CardFX?.sound('acquire');victoryReveal();
  }catch{toast('奖励保存失败，请重试')}finally{claiming=false}
 }
+function luminousWeek(week){
+ const key='wordday_luminous_profile';
+ let seed=localStorage.getItem(key);
+ if(!seed){seed=String(Math.random());localStorage.setItem(key,seed)}
+ let hash=2166136261;
+ for(const c of seed+'/'+week)hash=Math.imul(hash^c.charCodeAt(0),16777619);
+ hash=Math.imul(hash^(hash>>>16),0x7feb352d);
+ hash=Math.imul(hash^(hash>>>15),0x846ca68b);
+ return ((hash^(hash>>>16))>>>0)/4294967296<.2;
+}
 function tasks(){
  const days=taskTab==='day'?[dateKey()]:weekDates(),prefix=(taskTab==='day'?'D':'W')+days[0]+'/',uniqueWords=days.reduce((c,d)=>c+new Set(state.daily[d]||[]).size,0),studyDays=days.filter(d=>state.daily[d]?.length).length;
  const quizzes=(state.quizHistory||[]).filter(r=>days.includes(r.date)),sum=field=>days.reduce((n,d)=>n+(store.daily[d]?.[field]||0),0);
  const specs=taskTab==='day'?[['学习 5 个单词',uniqueWords,5],['完成一次测试或一场对战',quizzes.length+sum('games'),1]]:[
  ['累计学习 15 词',uniqueWords,15],['累计学习 40 词',uniqueWords,40],['在 3 天留下学习记录',studyDays,3],['完成 3 次测试',quizzes.length,3],['测试累计答对 20 题',quizzes.reduce((n,r)=>n+(+r.correct||0),0),20],['完成 2 场对战',sum('games'),2],['赢得 3 个战斗回合',sum('points'),3]];
- return specs.map(([label,n,max],i)=>({label,n,max,id:prefix+i}));
+ const rows=specs.map(([label,n,max],i)=>({label,n,max,id:prefix+i}));
+ if(taskTab==='week'&&luminousWeek(days[0])){
+  const correct=quizzes.reduce((n,r)=>n+(+r.correct||0),0);
+  rows.push({label:'流光任务 · 本周完成 5 次测试且答对 100 题',n:Number(quizzes.length>=5)+Number(correct>=100),max:2,id:prefix+'luminous',luminous:true,progress:Math.min(quizzes.length,5)+' / 5 场 · '+Math.min(correct,100)+' / 100 题'});
+ }
+ return rows;
 }
 function taskPage(){const rows=tasks(),claims=W.data.taskClaims||{};
- frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div><p>'+ (taskTab==='day'?'每天 2 项，按本地日期更新。':'每周一开始，共 7 项。')+'每项完成可领取一张随机卡，重复卡进入库存。</p>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+Math.min(r.n,r.max)+' / '+r.max+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?'抽取 1 张':'进行中',r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary',!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
+ frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div><p>'+ (taskTab==='day'?'每天 2 项，按本地日期更新。':'每周一更新，可能额外出现流光任务。')+'每项完成可领取一张随机卡，重复卡进入库存。</p>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+(r.progress||Math.min(r.n,r.max)+' / '+r.max)+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?'抽取 1 张':'进行中',(r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary')+(r.luminous?' luminous-task':''),!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
 async function claim(index){
  if(claiming)return;claiming=true;rewardCard=null;
  try{const r=tasks()[index];if(!r||r.n<r.max)return;
  const grant=()=>{const raw=JSON.parse(localStorage.getItem('wordday_wildwords_25')||'null')||JSON.parse(JSON.stringify(W.data));
- raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const a=W.randomCard();raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;raw.taskClaims[r.id]=a.id;
+ raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const a=r.luminous?W.sample(4):W.randomCard();raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;raw.taskClaims[r.id]=a.id;
  localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='获得 '+a.cn+' · '+a.name;rewardCard=a;document.dispatchEvent(new Event('wd28badges'))};
  if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){frame('获得灵宠卡牌','<div class="task-reveal">'+W.card(rewardCard,false,!!W.data.advanced[rewardCard.id],'')+'</div><p class="a-hint">已加入图鉴与库存</p>'+btn('rewardBack','返回任务',''))}else taskPage();
  }catch{toast('保存奖励失败，请重试')}finally{claiming=false}
 }
+async function luminousAchievements(){
+ const grant=()=>{
+  const key='wordday_wildwords_25',raw=JSON.parse(localStorage.getItem(key)||'null')||structuredClone(W.data);
+  const goals=[['dragon','龙',store.total.sweeps>0||!!state.wd23?.badges?.battleSweep],
+   ['unicorn','独角兽',hasCheckinRun(state.days||[],16)],
+   ['phoenix','凤凰',Number(state.wd23?.events?.luminousQuizRuns||0)>=3]];
+  raw.luminousAwards??={};
+  const awards=[];
+  for(const [id,name,ok] of goals){
+   if(!ok||Object.hasOwn(raw.luminousAwards,id))continue;
+   const a=byName.get(name);
+   raw.luminousAwards[id]=a.id;raw.discovered[a.id]=true;
+   raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;awards.push(a.cn);
+  }
+  if(awards.length){
+   localStorage.setItem(key,JSON.stringify(raw));Object.assign(W.data,raw);
+   W.refreshIdeas();homeContent();document.dispatchEvent(new Event('wd28badges'));toast('成就奖励：'+awards.join('、')+'已加入图鉴');
+  }
+ };
+ try{if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant()}catch(e){console.warn('流光成就奖励保存失败',e)}
+}
+function hasCheckinRun(days,goal){
+ let previous=null,run=0;
+ for(const day of [...new Set(days)].sort()){
+  const stamp=Date.parse(day);
+  if(!Number.isFinite(stamp))continue;
+  run=stamp-previous===86400000?run+1:1;
+  if(run>=goal)return true;
+  previous=stamp;
+ }
+ return false;
+}
+document.addEventListener('wd297achievements',luminousAchievements);
+document.addEventListener('wd28badges',luminousAchievements);
+queueMicrotask(luminousAchievements);
 function paint(){if(!dialog.open)return;if(scene==='victoryReward')return victoryReveal();if(scene==='fight')fight();else if(scene==='tasks')taskPage();else lobby()}
 function tick(advance=true){
  if(!dialog.open||scene!=='fight'||!game||['report','end'].includes(game.phase))return;
@@ -212,7 +262,7 @@ dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b
 });
 setInterval(tick,300);
 const home=document.createElement('section');home.className='panel';home.id='battleHome';const rewards=document.createElement('section');rewards.className='panel';rewards.id='rewardHome';rewards.innerHTML='<div class="panel-head"><h2>任务与奖励</h2></div><p class="smallnote">每日 2 项 · 每周 7 项，每完成一项可抽一张卡。</p><button id="enterTasks28">查看任务</button>';
-function homeContent(){const count=owned().length;home.innerHTML='<div class="panel-head"><h2>灵宠对战</h2><span class="sub">已发现 '+count+' / 74 种</span></div><p class="smallnote">'+(count<4?'再发现 '+(4-count)+' 种萌物即可解锁战斗。':'从进阶卡中挑选队员，或随机组建四张牌的阵容。')+'</p><div class="b28-actions"><button id="enterBattle28" '+(count<4?'disabled':'')+'>'+(game&&!game.finished?'继续对战':'进入战斗')+'</button></div>';
+function homeContent(){const count=owned().length;home.innerHTML='<div class="panel-head"><h2>灵宠对战</h2><span class="sub">已发现 '+count+' / '+W.animals.length+' 种</span></div><p class="smallnote">'+(count<4?'再发现 '+(4-count)+' 种萌物即可解锁战斗。':'从进阶卡中挑选队员，或随机组建四张牌的阵容。')+'</p><div class="b28-actions"><button id="enterBattle28" '+(count<4?'disabled':'')+'>'+(game&&!game.finished?'继续对战':'进入战斗')+'</button></div>';
  home.insertAdjacentHTML('beforeend',victoryProgress());home.querySelector('[data-b^="victoryClaim:"]')?.addEventListener('click',ev=>{scene='lobby';show();claimVictory(ev.currentTarget.dataset.b.slice('victoryClaim:'.length))});
  $('enterBattle28').onclick=()=>{if(owned().length<4)return;scene=game&&!game.finished?'fight':'lobby';show();if(scene==='fight')tick()};$('enterTasks28').onclick=()=>{scene='tasks';store.message='';show()}}
 $('wildInline').after(home,rewards);homeContent();document.addEventListener('wd28badges',homeContent);document.addEventListener('wd285rewards',()=>{homeContent();if(dialog.open&&(scene==='lobby'||scene==='fight'&&game?.finished&&finalVisible))paint()});
@@ -224,5 +274,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.6';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.7';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

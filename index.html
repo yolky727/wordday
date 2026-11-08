@@ -220,7 +220,7 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 <link rel="stylesheet" href="refine284.css">
 <link rel="stylesheet" href="victory285.css">
 <link rel="stylesheet" href="advanced285fix.css">
-<link rel="stylesheet" href="wordday29.css"></head><body><div class="wrap">
+<link rel="stylesheet" href="wordday29.css"><link rel="stylesheet" href="luminous297.css"></head><body><div class="wrap">
 <header class="top"><div class="brand">WORD<span>DAY</span> <small style="font-size:10px;color:var(--muted);font-weight:600">2.4.1 · Complete Repair</small></div><div class="date" id="today"></div></header>
 <section class="hero"><div><div class="eyebrow">A LITTLE EVERY DAY</div><h1>每天积累一点，<br>让英语成为习惯。</h1><p>为雅思与大学英语四级设计的词汇学习空间。学习、收藏、复习与测试，让每一次努力都留下记录。</p></div><div class="hero-stat"><strong id="streak">0</strong><span>连续打卡 · 天</span></div></section>
 <nav class="nav" aria-label="学习功能"><button class="active" data-tab="learn">今日学习</button><button data-tab="quiz">每日测试</button><button data-tab="review">智能复习 <span id="dueBadge"></span></button></nav>
@@ -383,7 +383,7 @@ let state=loadState();
 state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.mistakes=Array.isArray(state.mistakes)?state.mistakes:[];state.reviews=state.reviews&&typeof state.reviews==='object'?state.reviews:{};state.quizTotal=Number(state.quizTotal)||0;state.quizCorrect=Number(state.quizCorrect)||0;state.studyLog=state.studyLog&&typeof state.studyLog==='object'?state.studyLog:{};state.dailySets=state.dailySets&&typeof state.dailySets==='object'?state.dailySets:{};state.quizHistory=Array.isArray(state.quizHistory)?state.quizHistory:[];state.shownWords=Array.isArray(state.shownWords)?state.shownWords:[];state.profile=state.profile||{};state.theme=state.theme||'forest';Object.entries(state.daily||{}).forEach(([dt,words])=>{if(state.studyLog[dt]===undefined)state.studyLog[dt]=Array.isArray(words)?words.length:0});
 let current=[],tab='learn',shuffleNonce=0,quizSession=null,activeMode='choice';
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function save(){localStorage.setItem(key,JSON.stringify(state));renderOverview()}
+function save(){localStorage.setItem(key,JSON.stringify(state));renderOverview();document.dispatchEvent(new Event("wd297achievements"))}
 function allWords(){const custom=state.custom||[],names=new Set(custom.map(w=>w[0]));return baseWords.filter(w=>!names.has(w[0])).concat(custom)}
 function findWord(name){return (state.custom||[]).find(w=>w[0]===name)||baseWordMap.get(name)}
 function dayAdd(n){let d=new Date();d.setDate(d.getDate()+n);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
@@ -621,7 +621,14 @@ e('quizOptions').insertAdjacentHTML('afterend','<button class="secondary" id="qu
 e('quizFav').onclick=()=>{let q=quizSession?.questions[quizSession.index];if(q){toggleFavorite(q.word);e('quizFav').textContent=state.favorites.includes(q.word)?'★ 已收藏':'☆ 收藏本题单词'}};
 const oldStart=startMode;startMode=function(mode){oldStart(mode);if(quizSession){w23.quizDraft=quizSession;persist();updateStreak()}};
 const oldRenderQuiz=renderQuizQuestion;renderQuizQuestion=function(){oldRenderQuiz();if(quizSession){e('quizFav').textContent=state.favorites.includes(quizSession.questions[quizSession.index]?.word)?'★ 已收藏':'☆ 收藏本题单词';updateStreak()}};
-const oldAnswer=submitQuizAnswer;submitQuizAnswer=function(value,button){let previous=quizSession?.answers.length||0;oldAnswer(value,button);if(quizSession&&quizSession.answers.length>previous){let ok=quizSession.answers[quizSession.index]?.ok;quizSession.streak=ok?(quizSession.streak||0)+1:0;w23.events.quizStreakMax=Math.max(w23.events.quizStreakMax||0,quizSession.streak);w23.quizDraft=quizSession;persist();updateStreak();if(ok&&[3,5,7,10,13,15,17,20].includes(quizSession.streak)){const milestone=quizSession.streak;setTimeout(()=>showCelebration('combo',`${milestone} 连对！`,milestone>=20?'势不可挡！':milestone>=10?'状态火热！':'漂亮，继续保持！'),400)}checkAchievements()}};
+if(w23.events.luminousQuizRuns==null){
+ w23.events.luminousQuizRuns=(state.quizHistory||[]).filter(record=>{
+  let streak=0;
+  return Array.isArray(record.details)&&record.details.some(answer=>(streak=answer?.ok?streak+1:0)>=20);
+ }).length;
+ persist();
+}
+const oldAnswer=submitQuizAnswer;submitQuizAnswer=function(value,button){let previous=quizSession?.answers.length||0;oldAnswer(value,button);if(quizSession&&quizSession.answers.length>previous){let ok=quizSession.answers[quizSession.index]?.ok;quizSession.streak=ok?(quizSession.streak||0)+1:0;w23.events.quizStreakMax=Math.max(w23.events.quizStreakMax||0,quizSession.streak);if(quizSession.streak>=20&&!quizSession.luminousCounted){quizSession.luminousCounted=true;w23.events.luminousQuizRuns=(w23.events.luminousQuizRuns||0)+1;document.dispatchEvent(new Event('wd297achievements'))}w23.quizDraft=quizSession;persist();updateStreak();if(ok&&(quizSession.streak>20||[3,5,7,10,13,15,17,20].includes(quizSession.streak))){const milestone=quizSession.streak;setTimeout(()=>wd24ShowCombo(milestone),400)}checkAchievements()}};
 const oldNext=nextDailyQuiz;nextDailyQuiz=function(){oldNext();if(quizSession&&e('quizPlay').style.display!=='none'){w23.quizDraft=quizSession;persist()}};
 const oldFinish=finishDailyQuiz;finishDailyQuiz=function(){oldFinish();delete w23.quizDraft;quizSession=null;persist();checkAchievements()};
 function updateStreak(){e('quizStreak').textContent=`⚡ 连对 ${quizSession?.streak||0}`}
@@ -713,10 +720,11 @@ const badgeGoals28=[
  ['battle20','百战收藏家','赢得 20 场对战','wins',20,3],
  ['battleStreak3','乘胜追击','连续赢得 3 场对战','bestWinStreak',3,2],
  ['battleSave3','绝处逢生','3 场对战中发动技能，把劣势回合救成平局','skillSaves',3,2],
- ['battleSweep','四轮全胜','一场对战的四个普通回合全部获胜','sweeps',1,3],
+ ['battleSweep','四轮全胜','一场对战的四个普通回合全部获胜 · 奖励龙','sweeps',1,3],
  ['battleReward3','战利收藏家','领取 3 次对战胜利奖励','battleRewards',3,1]];
 achievements.push(...badgeGoals28.map(([id,n,desc,metric,goal,tier])=>[id,n,desc,tier,()=>Number(window.WD28Stats?.()[metric]||0)>=goal]));
-document.addEventListener('wd28badges',()=>checkAchievements(achievements.slice(-badgeGoals28.length)));
+achievements.push(['luminousCheckin','独角兽的约定','连续打卡 16 天 · 奖励独角兽',3,()=>Object.hasOwn(window.WILDWORDS?.data.luminousAwards||{},'unicorn')],['luminousQuiz','凤凰试炼','三场测试各达 20 连击 · 奖励凤凰',3,()=>Number(w23.events.luminousQuizRuns||0)>=3]);
+document.addEventListener('wd28badges',()=>checkAchievements());
 const colors=['#a87555','#929ba4','#e3b744','#7774ce'],shapes=['M17 17H83L86 23L54 82H46L14 23Z','M46 8H54L92 46V54L54 92H46L8 54V46Z','M46 9H54L89 34L92 42L79 85L73 90H27L21 85L8 42L11 34Z','M28 9H72L78 13L94 44V56L78 87L72 91H28L22 87L6 56V44L22 13Z'];
 function badgeGlyph28(i){const icons=['M38 60V42Q46 38 50 44Q57 38 63 42V60Q56 56 50 62Q44 56 38 60ZM50 44V61','M39 54L48 61L64 39','M38 60L47 47L53 52L62 39','M38 42H62L56 53H44ZM50 53V60M43 61H57','M37 58L45 41L50 49L55 41L63 58Z','M37 50L50 39L63 50L50 61ZM45 50L50 46L55 50L50 54Z'];return icons[i>=38?3:i>=32?5:i%5]}
 function renderAchievements(){const grid=e('badgeGrid');grid.innerHTML=achievements.map((a,i)=>{let unlocked=!!w23.badges[a[0]],publicOne=i<4||i>=32,secret=i>=20&&i<32;return `<div class="achievement ${unlocked?'':'locked'}" title="${unlocked||publicOne?esc(a[2]):'探索中'}"><svg viewBox="0 0 100 100"><path d="${shapes[a[3]]}" fill="${unlocked?colors[a[3]]:'#9aa09c'}"/><path d="${shapes[a[3]]}" fill="none" stroke="white" stroke-opacity=".6" stroke-width="2" transform="translate(6,6) scale(.88)"/><path d="${badgeGlyph28(i)}" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="achievement-title">${unlocked||publicOne?esc(a[1]):secret?'???':esc(a[1])}</div><div class="smallnote">${unlocked||publicOne?esc(a[2]):secret?'神秘成就':'继续探索，解锁线索'}</div></div>`}).join('');let title=grid.parentElement.querySelector('.panel-head .sub');if(title)title.textContent=`已解锁 ${Object.keys(w23.badges).length} / ${achievements.length}`}
@@ -780,7 +788,7 @@ const wd24OldFinish=finishDailyQuiz;
 finishDailyQuiz=function(){let snapshot=quizSession?{questions:quizSession.questions.slice(),exam:quizSession.exam||wd24.exam}:null;wd24OldFinish();if(snapshot&&e('quizResult').style.display!=='none'){let d=dateLocal(),words=snapshot.questions.map(q=>q.word);wd24.lastQuizWords[d]=[...new Set([...(wd24.lastQuizWords[d]||[]),...words])];words.forEach(w=>wd24.quizDates[w]=d);Object.keys(wd24.lastQuizWords).filter(k=>{let diff=(new Date(d)-new Date(k))/86400000;return diff>8}).forEach(k=>delete wd24.lastQuizWords[k]);let rec=state.quizHistory?.at(-1);if(rec){rec.exam=snapshot.exam;rec.source=wd24.source}persist()}};
 // Combo animations are non-modal and do not interrupt answering.
 const wd24Combo=make('div','wd24Combo');document.body.appendChild(wd24Combo);let wd24ComboTimer;
-function wd24ShowCombo(n){if(![3,5,7,10,13,15,17,20].includes(n))return;const words=n>=20?'UNSTOPPABLE!':n>=15?'AMAZING!':n>=10?'GREAT!':'NICE!';wd24Combo.dataset.tier=n>=20?"legend":n>=15?"epic":n>=10?"rare":"base";wd24Combo.innerHTML=`<strong>${n}×</strong><span>${words}</span>`+[...Array(9)].map((_,i)=>{const a=i*Math.PI*2/9;return `<i class="spark" style="left:50%;top:40%;--dx:${Math.round(Math.cos(a)*110)}px;--dy:${Math.round(Math.sin(a)*80)}px;--delay:${(i%3)*.05}s">✦</i>`}).join('');wd24Combo.classList.remove('active');void wd24Combo.offsetWidth;wd24Combo.classList.add('active');clearTimeout(wd24ComboTimer);wd24ComboTimer=setTimeout(()=>wd24Combo.classList.remove('active'),1400);playFeedback('combo')}
+function wd24ShowCombo(n){if(n<=20&&![3,5,7,10,13,15,17,20].includes(n))return;const words=n>=20?'UNSTOPPABLE!':n>=15?'AMAZING!':n>=10?'GREAT!':'NICE!';wd24Combo.dataset.tier=n>=20?"legend":n>=15?"epic":n>=10?"rare":"base";wd24Combo.innerHTML=`<strong>${n}×</strong><span>${words}</span>`+[...Array(9)].map((_,i)=>{const a=i*Math.PI*2/9;return `<i class="spark" style="left:50%;top:40%;--dx:${Math.round(Math.cos(a)*110)}px;--dy:${Math.round(Math.sin(a)*80)}px;--delay:${(i%3)*.05}s">✦</i>`}).join('');wd24Combo.classList.remove('active');void wd24Combo.offsetWidth;wd24Combo.classList.add('active');clearTimeout(wd24ComboTimer);wd24ComboTimer=setTimeout(()=>wd24Combo.classList.remove('active'),1400);playFeedback('combo')}
 const wd24OldCelebrate=showCelebration;
 showCelebration=function(kind,title,desc){if(kind==='combo'){let n=Number((title||'').match(/\d+/)?.[0]||0);wd24ShowCombo(n);return}wd24OldCelebrate(kind,title,desc)};
 // Collapse badge collection by default, displaying up to four actually unlocked highest-tier badges.

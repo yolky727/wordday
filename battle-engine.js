@@ -1,7 +1,9 @@
 /* Serializable battle rules. Indices address the four original slots throughout a match. */
 (function(root){
 'use strict';
+const passives={渡渡鸟:"永存 · 出战结算后回到可选手牌，次数不限。",独角兽:"净辉 · 在阵容中时，对方整场无法发动主动技能。",龙:"龙威 · 首次赢得回合后公开对方随机一张尚可出战的牌。",凤凰:"余烬 · 每场首次落败后回到可选手牌。"};
 const byName={
+"蛇":["伏击毒牙", "亮牌后，若基础判定落败且对手体型不大于自己，反转为胜。", "snake"],"蝎子":["尾针追偿", "发动后若落败，下一回合对方若落败，照常获得我方分数，并额外扣对方1分，最低为0。", "scorpion"],"大猩猩":["丛林点将", "先手指定对方未出战牌。优先自选可胜目标，其次自选平局目标，否则随机。", "gorilla"],"红毛猩猩":["雨林观察", "若本回合获胜，公开对方尚可出战的手牌。", "orangutan"],"鸽子":["逆风归航", "上一回合我方落败时，将当前结果提升一档。", "dove"],"独角兽":["棱光契约", "指定未出战队友，该牌下次平局为我方加1分。本回合独角兽落败时对方不得分。", "unicorn"],"龙":["逆鳞悬赏", "本回合胜方额外获得1分，平局照常。", "dragon"],"凤凰":["涅槃重生", "恢复一张已出战、当前不可选的队友牌，下回合起可再次出战。", "phoenix"],
 "熊猫":["竹林停战", "本回合判平，双方出战牌回手。", "truce"],
 "企鹅":["冰面滑行", "换一张未出战的己方手牌应战，企鹅留在手中。", "swap"],
 "浣熊":["偷换顺序", "己方先出牌时，把先手交给对方，之后再选择己方出战牌。", "turn"],
@@ -40,11 +42,11 @@ const byName={
 const groups={
  marine:'企鹅 章鱼 海豹 鲸 虎鲸 鲨鱼 水母 螃蟹 龙虾 虾 鱿鱼 河豚 海豚 小丑鱼',
  water:'水獭 青蛙 河马 海狸 鳄鱼 乌龟 天鹅 鸭子 鹅 火烈鸟',
- bird:'企鹅 鸭子 鸡 小鸡 火烈鸟 天鹅 鹅 孔雀 鹦鹉 鹰 猫头鹰',
+ bird:'企鹅 鸭子 鸡 小鸡 火烈鸟 天鹅 鹅 孔雀 鹦鹉 鹰 猫头鹰 火鸡 渡渡鸟 鸽子 凤凰',
  flight:'猫头鹰 蝙蝠 鹰 鸭子 火烈鸟 天鹅 鹅 孔雀 鹦鹉 蝴蝶 蜜蜂',
  herb:'兔子 熊猫 考拉 奶牛 鹿 绵羊 山羊 马 大象 长颈鹿 斑马 犀牛 袋鼠 树懒 海狸 羊驼 骆驼 野牛 水牛 驼鹿 河马',
  giant:'大象 犀牛 河马 长颈鹿 鲸',
- climb:'猫 熊 熊猫 浣熊 狐狸 考拉 猴子 树懒 豹 松鼠 变色龙',
+ climb:'猫 熊 熊猫 浣熊 狐狸 考拉 猴子 树懒 豹 松鼠 变色龙 红毛猩猩',
  mammal:'猫 狗 兔子 狐狸 熊 熊猫 仓鼠 考拉 老虎 狮子 奶牛 猪 猴子 狼 刺猬 鹿 松鼠 马 绵羊 山羊 大象 长颈鹿 斑马 河马 犀牛 袋鼠 树懒 海狸 獾 臭鼬 老鼠 大鼠 豹 北极熊 羊驼 骆驼 野牛 水牛 驼鹿 野猪',
  hunter:'猫 狗 狐狸 熊 猫头鹰 老虎 狮子 狼 豹 北极熊 鹰 鳄鱼 獾 浣熊'};
 const has=(name,tag)=>groups[tag].split(' ').includes(name);
@@ -117,6 +119,12 @@ function resolve(g){
  const pair=predicted(g),up=boosts(g,pair);
  let delta=Math.max(-1,Math.min(1,pair.delta+Number(up[0])-Number(up[1])));
  
+ for(let s=0;s<2;s++){
+  if(g.spent[s]?.round!==g.round)continue;
+  const sign=s===0?1:-1;
+  if(g.spent[s].kind==='snake'&&pair.delta*sign<0&&root.WDBattleRules.profiles[nameAt(g,1-s)][0]<=root.WDBattleRules.profiles['蛇'][0])delta=sign;
+  if(g.spent[s].kind==='dove')delta=Math.max(-1,Math.min(1,delta+sign));
+ }
  const protection=[false,false],retained=[false,false];
  for(let s=0;s<2;s++){
   const own=delta*(s===0?1:-1);
@@ -136,7 +144,7 @@ function resolve(g){
  return {pair,delta,protection,retained};
 }
 function options(g,s){
- if(g.finished||g.spent[s]||g.actor!==s||g.fx.seal===1-s||!['lead','reply','duel','show'].includes(g.phase))return [];
+ if(g.finished||g.hands[1-s].includes('独角兽')||g.spent[s]||g.actor!==s||g.fx.seal===1-s||!['lead','reply','duel','show'].includes(g.phase))return [];
  const results=[];
  const show=g.phase==='show',lead=g.phase==='lead',reply=g.phase==='reply';
  const enemy=show||reply&&(!g.fx.hide||g.fx.unhide)?nameAt(g,1-s):null;
@@ -162,7 +170,21 @@ function options(g,s){
   if(kind==='deer'&&enemy&&!eats(enemy,'鹿'))continue;
   if(kind==='shark'&&enemy&&!has(enemy,'marine'))continue;
   if(kind==='ban'&&available(g,1-s).length<2)continue;
+  if(['snake','scorpion','orangutan','dove','unicorn','dragon','phoenix'].includes(kind)&&!show)continue;
+  if(kind==='snake'&&(base(g,s)>=0||root.WDBattleRules.profiles[enemy][0]>root.WDBattleRules.profiles['蛇'][0]))continue;
+  if(kind==='dove'&&g.history.at(-1)?.winner!==1-s)continue;
+  if(['scorpion','orangutan','phoenix'].includes(kind)&&g.round>=5)continue;
   const add=(target)=>results.push(target===undefined?{i,k:kind}:{i,k:kind,target});
+  if(kind==='gorilla'){
+   if(!lead||g.lead!==s)continue;
+   const slots=available(g,1-s), weaker=slots.filter(j=>matchup('大猩猩',g.hands[1-s][j]).delta>0);
+   const equal=slots.filter(j=>matchup('大猩猩',g.hands[1-s][j]).delta===0);
+   if(weaker.length||equal.length)(weaker.length?weaker:equal).forEach(add);
+   else if(slots.length)add();
+   continue;
+  }
+  if(kind==='phoenix'){g.played[s].forEach(add);continue}
+  if(kind==='unicorn'){const allies=g.round<5?rest(g,s):[];if(allies.length)allies.forEach(add);else add();continue}
   if(kind==='peek'){available(g,1-s).forEach(add);continue}
   if(['swap','bless','mimic','swan','dolphin'].includes(kind)){
    const targets=available(g,s).filter(j=>j!==i);
@@ -188,19 +210,42 @@ function play(g,s,i){
 }
 function settle(g){
  const r=resolve(g),winner=r.delta>0?0:r.delta<0?1:-1;
- const points=winner<0?0:g.fx.double?2:1;
- if(winner>=0)g.score[winner]+=points;
- const reason=g.draw||r.protection.some(Boolean)?'技能保护':r.delta!==r.pair.delta?'技能改判':r.pair.kind;
  const entries=[0,1].map(s=>g.spent[s]?.round===g.round?g.spent[s].kind:null);
+ const previous=g.history.at(-1),adjustments=[0,0];
+ const points=winner<0||entries[1-winner]==='unicorn'?0:(g.fx.double?2:1)+Number(entries.includes('dragon'));
+ if(winner>=0){
+  g.score[winner]+=points;
+  if(previous?.scorpion===winner&&g.score[1-winner]>0){g.score[1-winner]--;adjustments[1-winner]--;g.notes.push('尾针追偿：落败方扣 1 分')}
+ }
+ for(const s of [0,1]){
+  if(g.pacts?.[s]===g.cards[s]){
+   if(winner<0){g.score[s]++;adjustments[s]++;g.notes.push('棱光契约：平局额外加 1 分')}
+   g.pacts[s]=null;
+  }
+ }
+ const reason=g.draw||r.protection.some(Boolean)?'技能保护':r.delta!==r.pair.delta?'技能改判':r.pair.kind;
  delete g.lionCarry;
  if(winner>=0&&entries[winner]==='lion')g.lionCarry=winner;
  for(let s=0;s<2;s++){
   if(r.protection[s]&&entries[s]==='otter'&&g.round<4)g.nextLead=1-s;
-  if(!r.retained[s]){g.played[s].push(g.cards[s]);delete g.intel[1-s][g.cards[s]]}
+  const name=slotName(g,s);
+  g.passiveUsed??=[{},{}];
+  const revive=name==='凤凰'&&winner===1-s&&!g.passiveUsed[s].phoenix;
+  if(revive){g.passiveUsed[s].phoenix=true;g.notes.push('余烬：凤凰回到手牌')}
+  if(!r.retained[s]&&name!=='渡渡鸟'&&!revive){g.played[s].push(g.cards[s]);delete g.intel[1-s][g.cards[s]]}
   delete g.bless[s][g.cards[s]];
  }
+ if(winner>=0){
+  const remaining=available(g,1-winner).filter(i=>i!==g.cards[1-winner]);
+  const reveal=i=>g.intel[winner][i]={name:g.hands[1-winner][i],until:0};
+  if(entries[winner]==='orangutan')remaining.forEach(reveal);
+  if(slotName(g,winner)==='龙'&&!g.passiveUsed[winner].dragon){
+   g.passiveUsed[winner].dragon=true;
+   if(remaining.length){reveal(pick(remaining));g.notes.push('龙威：公开一张对方手牌')}
+  }
+ }
  const savedBy=[0,1].filter(s=>winner<0&&r.pair.delta*(s===0?1:-1)<0&&(r.protection[s]||['truce','draw','sloth','mirror'].includes(entries[s])));
- g.history.push({savedBy,round:g.round,names:[nameAt(g,0),nameAt(g,1)],base:r.pair.delta,winner,points,reason,notes:g.notes.slice(),protect:g.draw||r.protection.some(Boolean)});
+ g.history.push({adjustments,scorpion:winner>=0&&entries[1-winner]==='scorpion'?1-winner:null,savedBy,round:g.round,names:[nameAt(g,0),nameAt(g,1)],base:r.pair.delta,winner,points,reason,notes:g.notes.slice(),protect:g.draw||r.protection.some(Boolean)});
  g.phase='report';g.actor=-1;g.deadline=0;
  if(g.round===5||g.round===4&&g.score[0]!==g.score[1]){g.finished=true;g.phase='end'}
 }
@@ -216,6 +261,11 @@ function activate(g,s,choice){
  const n=g.hands[s][o.i],k=o.k;
  g.spent[s]={round:g.round,name:n,skill:byName[n][0],kind:k};
  g.notes.push((s?'沃尔德':'玩家')+'发动「'+byName[n][0]+'」');
+ if(k==='gorilla'){
+  g.cards[s]=o.i;g.cards[1-s]=o.target??pick(available(g,1-s));reveal(g);return true;
+ }
+ if(k==='unicorn'&&o.target!==undefined){g.pacts??=[null,null];g.pacts[s]=o.target}
+ if(k==='phoenix')g.played[s]=g.played[s].filter(i=>i!==o.target);
  if(k==='turn'){g.lead=1-s;g.actor=1-s;clock(g);return true}
  if(k==='giraffe'){g.fx.unhide=true;clock(g);return true}
  if(k==='peek')g.intel[s][o.target]={name:g.hands[1-s][o.target],until:0};
@@ -255,7 +305,7 @@ function automatic(g,s,allowSkill=true){
     const after=(copy.phase==='show'?resolve(copy).delta:copy.history.at(-1).winner===s?1:copy.history.at(-1).winner<0?0:-1)*(copy.phase==='show'&&s===1?-1:1);
     return {o,score:after-current};
    }).sort((a,b)=>b.score-a.score)[0];
-   if(choice.score>0||choice.score===0&&g.round>=3&&['koala','lion','swan','bless'].includes(choice.o.k))return activate(g,s,choice.o);
+   if(choice.o.k==='dragon'&&current>0||choice.score>0||choice.score===0&&g.round>=3&&['koala','lion','swan','bless','scorpion','orangutan','phoenix','unicorn'].includes(choice.o.k))return activate(g,s,choice.o);
   }
   return pass(g,s);
  }
@@ -264,7 +314,7 @@ function automatic(g,s,allowSkill=true){
  const candidates=available(g,s);
  const score=n=>visible?4*matchup(n,seen).delta:0;
  const best=candidates.map(i=>({i,score:score(g.hands[s][i])+Math.random()})).sort((a,b)=>b.score-a.score)[0];
- const tactical=opts.filter(o=>['turn','hide','ban','peek','giraffe','seal','wolf','double','mimic'].includes(o.k));
+ const tactical=opts.filter(o=>['turn','hide','ban','peek','giraffe','seal','wolf','double','mimic','gorilla'].includes(o.k));
  if(tactical.length&&Math.random()<.28){
   const o=pick(tactical);
   const n=g.hands[s][o.k==='mimic'?o.target:o.i];
@@ -272,5 +322,5 @@ function automatic(g,s,allowSkill=true){
  }
  return play(g,s,best.i);
 }
-root.WDBattle={style,matchup,byName,newGame,available,rest,base,predicted,nameAt,options,activate,pass,play,advance,automatic,displayedLead,shuffled,eats};
+root.WDBattle={style,matchup,byName,passives,newGame,available,rest,base,predicted,nameAt,options,activate,pass,play,advance,automatic,displayedLead,shuffled,eats};
 })(typeof window==='undefined'?globalThis:window);

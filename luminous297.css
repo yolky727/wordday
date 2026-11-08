@@ -1,0 +1,32 @@
+@property --luminous-spin { syntax:'<angle>'; inherits:false; initial-value:0deg }
+.wild-card[data-luminous],.luminous-task{
+ --a:#47ceff;--b:#fb76cd;--c:#755cf8;--paper-luminous:#f3eaff;--halo:#c6a3ff;
+ border-color:transparent!important;
+ background:linear-gradient(var(--paper-luminous),var(--paper-luminous)) padding-box,
+ conic-gradient(from var(--luminous-spin),var(--a),var(--b),var(--c),var(--a)) border-box!important;
+ box-shadow:0 0 12px color-mix(in srgb,var(--halo) 53%,transparent)!important;
+ animation:luminous-rim 5s linear infinite!important;
+}
+.wild-card[data-luminous="Dragon"]{--a:#3cf1b2;--b:#9fffe0;--c:#008b67;--halo:#42f3ac;--paper-luminous:#e3fbef}
+.wild-card[data-luminous="Phoenix"]{--a:#ff4b48;--b:#ffd07a;--c:#fe7433;--halo:#ff9357;--paper-luminous:#ffeddf}
+.wild-card.advanced[data-luminous]{box-shadow:0 0 6px var(--halo),0 0 22px color-mix(in srgb,var(--halo) 66%,transparent)!important;animation-duration:3.6s!important}
+.wild-card[data-luminous] .wild-tier{font-size:clamp(5px,1.7vw,9px);letter-spacing:.1em}
+.wild-card[data-luminous] .wild-tier,.wild-card[data-luminous] .wild-id,.wild-card[data-luminous] .wild-emoji,.wild-card[data-luminous] .wild-en,.wild-card[data-luminous] .wild-cn{position:relative;z-index:1}
+.wild-card[data-luminous] .wild-rarity-sparks i{background:white;filter:drop-shadow(0 0 3px var(--halo));color:var(--halo)}
+.luminous-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.63}
+.advanced .luminous-fx{opacity:1}
+.luminous-task{--a:#4fa9fd;--b:#a17aff;--c:#6337c5;--paper-luminous:#24274a;color:#fff;border:2px solid transparent}
+@keyframes luminous-rim{to{--luminous-spin:360deg}}
+.luminous-fx.aurora path{fill:none;stroke-width:5;filter:blur(3px);animation:halo 4.5s ease-in-out infinite alternate;transform-origin:center}
+.luminous-fx.aurora path:nth-child(2){animation-delay:-2s}
+.luminous-fx.lightning path{fill:none;stroke:#f2fff7;stroke-width:1.8;filter:drop-shadow(0 0 2px #00b77b);animation:flash 4s linear infinite}
+.luminous-fx.lightning path:nth-child(2){animation-delay:-1.7s}.luminous-fx.lightning path:nth-child(3){animation-delay:-2.8s}
+.luminous-fx.flames path{fill:#ff784c;stroke:#ffd05e;stroke-width:1;filter:drop-shadow(0 0 3px #fa713f);transform-origin:bottom center;animation:flame 2.6s ease-in-out infinite alternate}
+.luminous-fx.flames path:nth-child(2){animation-delay:-1.3s;fill:#ff9b48}
+@keyframes halo{from{opacity:.42;transform:translateY(-4px)}to{opacity:.96;transform:translateY(5px)}}
+@keyframes flash{0%,15%,40%,100%{opacity:.23}18%,30%,35%{opacity:1}22%,33%{opacity:.48}}
+@keyframes flame{from{transform:scaleY(.73) skewX(-4deg);opacity:.6}to{transform:scaleY(1.08) skewX(3deg);opacity:.94}}
+@media(prefers-reduced-motion:reduce){
+ .wild-card[data-luminous],.luminous-task,.luminous-fx path{animation:none!important}
+}
+body.wd26-reduced .wild-card[data-luminous],body.wd26-reduced .luminous-task,body.wd26-reduced .luminous-fx path{animation:none!important}
