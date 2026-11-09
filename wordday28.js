@@ -243,7 +243,7 @@ function showTaskPack(){
     </svg></div>`;
  const sparks='<div class="ex-sparks" aria-hidden="true">'+Array.from({length:14},(_,i)=>'<i style="--i:'+i+'">✦</i>').join('')+'</div>';
  const card=last?W.card(last,false,!!W.data.advanced[last.id],''):'';
- frame('获得灵宠卡牌','<div class="ex-reveal '+(shown?'ex-flip':'')+'" style="text-align:center;min-height:290px;cursor:pointer" data-b="taskReveal" role="button" tabindex="0">'+(shown?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+card+'</div>'+sparks:art)+'</div><p class="a-hint">'+(shown?'第 '+shown+' / '+total+' 张 · 已加入图鉴与库存':'轻点卡包拆开 · '+total+' 张奖励卡')+'</p>'+(shown===total?'<details class="ex-reward-summary"><summary>本次获得 · '+total+' 张</summary><ul>'+rewardCard.map(a=>'<li><span class="ex-summary-emoji">'+text(a.emoji)+'</span><strong>'+text(a.cn)+'</strong></li>').join('')+'</ul></details>'+btn('rewardBack','返回任务',''):btn('taskReveal',shown?'翻开下一张':'拆开卡包','')));
+ frame('获得灵宠卡牌','<div class="ex-reveal '+(shown?'ex-flip':'')+'" style="text-align:center;min-height:290px;cursor:pointer" data-b="taskReveal" role="button" tabindex="0">'+(shown?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+card+'</div>'+sparks:(total===1?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+W.card(rewardCard[0],false,!!W.data.advanced[rewardCard[0].id],'')+'</div>':art))+'</div><p class="a-hint">'+(shown?'第 '+shown+' / '+total+' 张 · 已加入图鉴与库存':(total===1?'已加入图鉴与库存':'轻点卡包拆开 · '+total+' 张奖励卡'))+'</p>'+(shown===total?'<details class="ex-reward-summary"><summary>本次获得 · '+total+' 张</summary><ul>'+rewardCard.map(a=>'<li><span class="ex-summary-emoji">'+text(a.emoji)+'</span><strong>'+text(a.cn)+'</strong></li>').join('')+'</ul></details>'+btn('rewardBack','返回任务',''):''));
 }
 
 async function claim(index){
@@ -252,7 +252,7 @@ async function claim(index){
  const grant=()=>{const raw=JSON.parse(localStorage.getItem('wordday_wildwords_25')||'null')||JSON.parse(JSON.stringify(W.data));
  raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const awards=r.pack?(window.WDChestCards?window.WDChestCards().map(id=>W.animals.find(a=>a.id===id)).filter(Boolean):Array.from({length:3},()=>W.randomCard())):[r.rewardTier!=null?W.sample(r.rewardTier):W.randomCard()];for(const a of awards){raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;}raw.taskClaims[r.id]=awards.map(a=>a.id); 
  localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='已领取 '+awards.length+' 张卡牌';rewardCard=awards;document.dispatchEvent(new Event('wd28badges'))};
- if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){taskRevealStep=0;showTaskPack()}else taskPage();
+ if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){taskRevealStep=rewardCard.length===1?1:0;showTaskPack()}else taskPage();
  }catch{toast('保存奖励失败，请重试')}finally{claiming=false}
 }
 async function luminousAchievements(){
@@ -355,5 +355,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.1.8';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.1.9';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

@@ -277,9 +277,9 @@ function themeContent() {
   const question=run.questions[run.step], item=byId.get(question?.id||run.response);
   const label=question?({zh:'选中文意思',en:'选英文表达',main:'找出句子主干'})[question.field]:'场景回应';
   const prompt=question&&question.field!=='en'?item.en:item.zh;
-  return '<article class="ex-card"><small>第 '+(run.step+1)+' / '+relaySteps+' 步 · '+label+'</small><h3>'+esc(prompt)+'</h3>'+
+  return '<article class="ex-card"><small>第 '+(run.step+1)+' / '+relaySteps+' 步 · '+label+'</small><h3>'+esc(prompt)+'</h3>'+ (item?'<div class="ex-meta">'+button('relayFavorite',data.favorites[item.id]?'★ 已收藏':'☆ 收藏表达','secondary','data-id="'+esc(item.id)+'"')+'</div>':'')+
     (question?'<div class="ex-options">'+question.options.map((opt,i)=>button('themeChoice',esc(opt),'secondary','data-index="'+i+'"')).join('')+'</div><p role="status" id="exThemeFeedback"></p>':
-    '<form class="ex-reply"><label><span>在这个场景中写至少两句、共 12 个英文词。第一句回应提示，第二句补充理由、细节或一个后续问题。</span><textarea name="reply" class="field" required maxlength="500" placeholder="Write your response">'+esc(run.draft||'')+'</textarea></label><details><summary>查看一句参考表达</summary><p lang="en">'+esc(item.en)+'</p></details><p role="status"></p><button type="submit">完成接力</button></form>')+'</article>';
+    '<form class="ex-reply"><label><span>在这个场景中写至少两句、共 12 个英文词。第一句回应提示，第二句补充理由、细节或一个后续问题。</span><textarea name="reply" class="field" required maxlength="500" placeholder="Write your response">'+esc(run.draft||'')+'</textarea></label><details><summary>查看一句参考表达</summary><p lang="en">'+esc(item.en)+'</p>'+button('relayFavorite',data.favorites[item.id]?'★ 已收藏':'☆ 收藏表达','secondary','data-id="'+esc(item.id)+'"')+'</details><p role="status"></p><button type="submit">完成接力</button></form>')+'</article>';
 }
 const wordMap=[
   ['clarify','澄清','explain','解释','confuse','使困惑',23],
@@ -315,6 +315,7 @@ function openPage(next, back='home') {
   else if(!root.querySelector('.ex-test-window[open]')) root.querySelector('.ex-stage-heading')?.focus({preventScroll:true});
 }
 function render() {
+  const pageY=window.scrollY;
   const scroll=root.querySelector('.ex-stage')?.scrollTop||0;
   renderedDay=dayKey();
   const ready=Object.values(window.WILDWORDS?.data.encounters||{}).some(r=>r?.status==='ready');
@@ -332,6 +333,7 @@ function render() {
     root.innerHTML='<div class="ex-stage"><div class="ex-stage-inner'+(page==='test'?' ex-test-shell':'')+'"><header class="ex-stage-bar">'+button('home',returnPage==='notebook'?'← 素材本':returnPage==='wrong'?'← 错题本':'← 表达')+
       '<h2 class="ex-stage-heading" tabindex="-1">'+(page==='test'?'WORDDAY / TEST':titles[page])+'</h2>'+encounter+'</header>'+body+'</div></div>';
     root.querySelector('.ex-stage').scrollTop=scroll;
+    if(page==='p'||page==='s') { window.scrollTo(0,pageY); requestAnimationFrame(()=>window.scrollTo(0,pageY)); }
     return;
   }
   const entries=[
@@ -568,6 +570,7 @@ root.addEventListener('click',ev=>{
     }
     case 'rewardThree': case 'chest': if(themeRun().step>=relaySteps) rewards(b.dataset.ex); break;
     case 'favorite': if(c) tagDialog(c); break;
+    case 'relayFavorite': {const item=byId.get(b.dataset.id); if(item)tagDialog(item); break;}
     case 'tagSaved': tagDialog(byId.get(b.dataset.id)); break;
     case 'openSaved': {
       const saved=byId.get(b.dataset.id);
