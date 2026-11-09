@@ -102,7 +102,21 @@ function fusion(){
  wireClose();$('waBack').onclick=album;
  $('waAdvance').onclick=()=>{mode='advance';selected=[];render()};$('waFusion').onclick=()=>{mode='fusion';selected=[];render()};
  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{rarity=+b.dataset.r;selected=[];render()});
- document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const id=+b.dataset.pick;if(mode==='advance'){selected=[id]}else{const at=selected.indexOf(id);if(selected.length<required&&selected.filter(x=>x===id).length<spareCards(id))selected.push(id);else if(at>=0)selected.splice(at,1)}render()});
+ document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
+  const id=+b.dataset.pick;
+  if(mode==='advance'){selected=[id];render();return}
+  const at=selected.indexOf(id);
+  if(selected.length<required&&selected.filter(x=>x===id).length<spareCards(id))selected.push(id);
+  else if(at>=0)selected.splice(at,1);
+  const dialog=overlay.querySelector('.wild-dialog'), grid=b.closest('.wild-atelier-grid');
+  const dialogTop=dialog.scrollTop, gridTop=grid.scrollTop, overlayTop=overlay.scrollTop;
+  const hadFocus=document.activeElement===b;
+  render();
+  if(hadFocus)overlay.querySelector('[data-pick="'+id+'"]')?.focus({preventScroll:true});
+  overlay.querySelector('.wild-atelier-grid').scrollTop=gridTop;
+  dialog.scrollTop=dialogTop;
+  overlay.scrollTop=overlayTop;
+ });
  $('waGo').onclick=async()=>{const go=$('waGo');
  if(go.dataset.armed!=='1'){go.dataset.armed='1';go.textContent=mode==='advance'?'确认进阶 · 消耗三张基础卡':'确认融合 · 消耗 '+required+' 张重复卡';return}
  go.disabled=true;window.WD28CardFX?.prepare();if(mode==='advance'){
@@ -138,7 +152,13 @@ function fusion(){
  render();
 }
 function updateAvatars(){const el=$('avatarChoices');if(!el)return;el.querySelectorAll('[data-avatar]').forEach(b=>{const matches=animals.filter(a=>exactEmoji.has(a.name)&&a.emoji===b.dataset.avatar);if(matches.length!==1)return;const allowed=owned(matches[0].id);b.classList.toggle('wild-locked',!allowed);b.setAttribute('aria-label',allowed?`已解锁头像 ${b.dataset.avatar}`:`未解锁头像 ${b.dataset.avatar}，先收集对应萌物卡`);b.title=allowed?'已解锁':'获得对应萌物卡后解锁'});if(!el.dataset.wildProtected){el.dataset.wildProtected='1';el.addEventListener('click',ev=>{const b=ev.target.closest('[data-avatar]');if(b?.classList.contains('wild-locked')){ev.preventDefault();ev.stopImmediatePropagation();notify('先获得对应萌物卡牌才能解锁头像')}},true)}}
-function updateBadges(){document.querySelectorAll('.wild-paw').forEach(n=>n.remove());const active=Object.values(data.encounters).some(v=>v&&v.status==='ready');if(active){const b=document.querySelector('[data-tab="learn"]');if(b){b.classList.add('wild-entry');b.insertAdjacentHTML('beforeend','<span class="wild-paw" title="发现萌物奇遇">🐾</span>')}}}
+function updateBadges(){
+ const active=Object.values(data.encounters).some(v=>v?.status==='ready');
+ const paw=$('wildPawDraw');
+ if(paw)paw.hidden=!active;
+ const shortcut=$('wildOpenEncounter');
+ if(shortcut)shortcut.style.display=active?'inline-block':'none';
+}
 function encounter(){const keys=Object.keys(data.encounters).filter(k=>data.encounters[k]?.status==='ready');if(!keys.length){notify('继续学习，下一位萌物伙伴可能很快出现');return}const k=keys[0];data.encounters[k].status='claimed';persist();updateBadges();reveal(randomCard(),'encounter')}
 function install(){document.querySelector('.brand small')?.replaceChildren(document.createTextNode('2.6.1 · WILDWORDS'));const footer=$('wd24Version');if(footer)footer.textContent='WORDDAY 2.6.1 · WILDWORDS Edition';const splashFoot=document.querySelector('.wd-splash-foot');if(splashFoot)splashFoot.textContent='WILDWORDS · 2.9.9.1';const home=$('wildIdeasHome');if(home){home.innerHTML=`<section class="panel" id="wildInline"><div class="panel-head"><h2>萌物收藏 · Animal Collection</h2><span class="sub">${animals.length} 位萌物伙伴</span></div><p class="wild-muted">每天三次免费翻牌，学习中随机遇见萌物。收集萌物卡解锁头像，重复卡需完成英文拼写。</p><div class="wild-actions"><button id="wildOpenDaily">✦ 翻牌</button><button class="secondary" id="wildOpenAlbum">萌物图鉴</button><button class="secondary" id="wildOpenFusion">✧ 合成</button><button class="secondary" id="wildOpenEncounter" style="display:none">🐾 奇遇</button></div></section>`;$('wildOpenDaily').onclick=daily;$('wildOpenAlbum').onclick=album;$('wildOpenFusion').onclick=fusion;$('wildOpenEncounter').onclick=encounter}
 updateAvatars();updateBadges();
@@ -154,8 +174,7 @@ if(splash?.classList.contains('visible')){
 // Visible learning interactions, not idle page time, accumulate encounter eligibility.
 window.addEventListener('storage',ev=>{if(ev.key!==KEY||!ev.newValue)return;try{Object.assign(data,JSON.parse(ev.newValue));updateBadges()}catch{}});
 let lastActive=0;document.addEventListener('input',ev=>{if(ev.target.closest('#expressions'))lastActive=Date.now()});document.addEventListener("visibilitychange",()=>{if(document.hidden)lastActive=0});document.addEventListener('click',ev=>{const btn=ev.target.closest('button');if(!btn||overlay.classList.contains('show'))return;if(!btn.closest('#learn,#quiz,#review,#studyStage,#expressions'))return;lastActive=Date.now()},true);setInterval(()=>{if(document.hidden||!['learn','expressions'].includes(mainTab)||overlay.classList.contains('show')||document.querySelector('dialog[open]')||Date.now()-lastActive>45000)return;data.activeSeconds+=10;if(data.activeSeconds>=120){data.activeSeconds-=120;if(!Object.values(data.encounters).some(x=>x?.status==='ready')){data.encounters[today()]={status:'ready',created:Date.now()};notify('🐾 有萌物奇遇！');window.WDExpressions?.showEncounter()}}persist();updateBadges();const eb=$('wildOpenEncounter');if(eb)eb.style.display=Object.values(data.encounters).some(x=>x.status==='ready')?'inline-block':'none'},10000);
-const tab=document.querySelector('[data-tab="learn"]');tab?.addEventListener('click',ev=>{if(ev.target.closest('.wild-paw')){ev.stopPropagation();encounter()}});
-const eb=$('wildOpenEncounter');if(eb)eb.style.display=Object.values(data.encounters).some(x=>x.status==='ready')?'inline-block':'none';
+$('wildPawDraw')?.addEventListener('click',encounter);
 }
 install();window.WILDWORDS={animals,data,daily,album,fusion,randomCard,sample,card,encounter,refreshIdeas:updateBadges};
 })();

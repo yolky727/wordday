@@ -46,7 +46,11 @@ const opts = {
 };
 let tab = 'p', exam = '', source = '', query = '', sceneFilter = '', current = null, position = 0, context = [], quiz = data.quizDraft?.questions?.length ? data.quizDraft : null, quizError = '', busy = false, wordNode = 0, renderedDay = dayKey();
 let page = 'home', returnPage = 'home', settingsOpen = false;
-const quizPrefs = {exam:'', source:'', count:'10'};
+const quizPrefs = {exam:'', source:'', count:'10', ...data.quizPrefs};
+function restoreLearningFilters(kind) {
+  const saved=data.learningFilters?.[kind]||{};
+  exam=saved.exam||''; source=saved.source||''; query=saved.query||''; sceneFilter=saved.scene||'';
+}
 const testModes = [['p','短语测试'],['s','句子测试'],['mixed','综合测试']];
 const button = (action, label, cls='secondary', attrs='') => '<button type="button" data-ex="'+action+'" class="'+cls+'" '+attrs+'>'+label+'</button>';
 const select = (name, label, choices, value) => '<label><span>'+label+'</span><select class="field" name="'+name+'" data-filter="'+name+'">'+choices.map(([key,label])=>'<option value="'+esc(key)+'" '+(key===value?'selected':'')+'>'+esc(label)+'</option>').join('')+'</select></label>';
@@ -96,9 +100,10 @@ function cardView(c) {
 function learning() {
   const list = pool(tab,exam,source,query,sceneFilter);
   const c = byId.get(current) || list[Math.min(position,list.length-1)];
-  return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><div class="ex-controls">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...scenes.map(([name],i)=>[String(i),name])],sceneFilter)+
+  return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...scenes.map(([name],i)=>[String(i),name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
-    '<form class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit" class="secondary">查找</button></form></div></details>'+
+    '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form></details>'+
+    (source==='official'?'<p class="ex-official-links"><a href="https://cet.neea.edu.cn/html1/folder/16113/1588-1.htm" target="_blank" rel="noopener noreferrer">四六级官方样卷</a> · <a href="https://ielts.org/take-a-test/preparation-resources/sample-test-questions" target="_blank" rel="noopener noreferrer">IELTS 官方完整样题</a></p>':'')+
     (c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
       '<span>'+ (context.length?'关联表达':(position+1)+' / '+list.length)+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
       '<p class="ex-empty">这个范围暂无内容。试试换个筛选条件。</p>');
@@ -174,32 +179,49 @@ function notebook() {
   return '<div class="ex-notebook">'+(list.map(c=>'<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(data.favorites[c.id].join(' · '))+'</small></span>'+
     button('openSaved','查看','secondary','data-id="'+c.id+'"')+button('tagSaved','标签','secondary','data-id="'+c.id+'"')+'</div>').join('')||'<p class="ex-empty">在卡片上点 ☆，选好标签后即可收藏。</p>')+'</div>';
 }
+function relayQuestion(c, field, slot) {
+  const correct=c[field];
+  const sameKind=cards.filter(r=>r.kind===c.kind&&r[field]&&r[field]!==correct);
+  const candidates=[...shuffle(sameKind.filter(r=>r.scene===c.scene)),...shuffle(sameKind.filter(r=>r.scene!==c.scene))];
+  const options=[...new Set(candidates.map(r=>r[field]))].slice(0,3);
+  options.splice(slot,0,correct);
+  return {id:c.id,field,options};
+}
+function relaySentenceField(card) {
+  return card.main?.trim().toLowerCase().replace(/[.!?]+$/,'')===card.en.trim().toLowerCase().replace(/[.!?]+$/,'')?'zh':'main';
+}
 function themeRun() {
-  const key=themeKey();
-  if(data.themes[key]) return data.themes[key];
+  const key=themeKey(), saved=data.themes[key];
+  if(saved) {
+    const last=saved.questions?.[4];
+    const item=byId.get(last?.id);
+    if(saved.step<=4&&last?.field==='main'&&item&&relaySentenceField(item)==='zh') {
+      saved.questions[4]=relayQuestion(item,'zh',Math.max(0,last.options.indexOf(item.main)));
+      save(false);
+    }
+    return saved;
+  }
   const list=cards.filter(c=>c.scene===themeScene()&&!c.url);
   const phrases=list.filter(c=>c.kind==='p');
   const sentences=list.filter(c=>c.kind==='s');
   const positions=shuffle([0,1,2,3]);
-  const specs=[[phrases[0],'zh'],[phrases[1],'en'],[sentences[0],'zh'],[phrases[2],'en'],[sentences[1],'main']];
-  const questions=specs.map(([c,field],i)=>{
-    const correct=c[field];
-    const sameKind=cards.filter(r=>r.kind===c.kind&&r[field]&&r[field]!==correct);
-    const candidates=[...shuffle(sameKind.filter(r=>r.scene===c.scene)),...shuffle(sameKind.filter(r=>r.scene!==c.scene))];
-    const options=[...new Set(candidates.map(r=>r[field]))].slice(0,3);
-    options.splice(i===4?(positions[3]+1)%4:positions[i],0,correct);
-    return {id:c.id,field,options};
-  });
+  const specs=[[phrases[0],'zh'],[phrases[1],'en'],[sentences[0],'zh'],[phrases[2],'en'],[sentences[1],relaySentenceField(sentences[1])]];
+  const questions=specs.map(([c,field],i)=>relayQuestion(c,field,i===4?(positions[3]+1)%4:positions[i]));
   return data.themes[key]={step:0,questions,response:sentences[1].id};
 }
 function themeContent() {
   const run=themeRun();
   if(run.step>=relaySteps) {
-    const label=(kind,initial)=>{
+    const rewardRow=(kind,title,description,mark)=>{
       const receipt=window.WILDWORDS.data.expressionRewards?.[themeKey()+'/'+kind];
-      return receipt?(receipt.shown<receipt.ids.length?'继续翻牌':'查看奖励'):initial;
+      const status=!receipt?'待领取':receipt.shown<receipt.ids.length?'还有 '+(receipt.ids.length-receipt.shown)+' 张待翻':'已领取';
+      const action=!receipt?'领取':receipt.shown<receipt.ids.length?'继续翻牌':'查看卡牌';
+      return '<li><span class="ex-relay-reward-mark" aria-hidden="true">'+mark+'</span><div><strong>'+title+'</strong><small>'+description+' · '+status+'</small></div>'+
+        button(kind,action,kind==='chest'&&!receipt?'':'secondary','aria-label="'+action+' · '+title+'"')+'</li>';
     };
-    return '<div class="ex-theme-content"><h3>本期接力已完成</h3><div class="ex-actions">'+button('rewardThree',label('rewardThree','翻开 3 张奖励卡'))+button('chest',label('chest','开启主题卡包'),'')+'</div></div>';
+    return '<section class="ex-relay-complete"><div class="ex-relay-banner"><div><p class="ex-eyebrow">WORDDAY / RELAY</p><h3>本期接力已完成</h3><p>'+esc(scenes[themeScene()][0])+'</p></div>'+
+      '<div class="ex-relay-meter" aria-label="已完成 '+relaySteps+' 个步骤">'+relaySteps+'<span> / '+relaySteps+'</span><small>练习完成</small></div></div>'+
+      '<div class="ex-relay-rewards"><h4>接力奖励</h4><ul>'+rewardRow('rewardThree','三张奖励卡','固定三张','◇')+rewardRow('chest','主题卡包','逐张揭晓','✦')+'</ul></div></section>';
   }
   const question=run.questions[run.step], item=byId.get(question?.id||run.response);
   const label=question?({zh:'选中文意思',en:'选英文表达',main:'找出句子主干'})[question.field]:'场景回应';
@@ -254,7 +276,7 @@ function render() {
   }
   existingCenter?.close();
   if(page!=='home'&&!testCenter) {
-    const body=page==='relay'?'<p class="ex-stage-topic">'+esc(scenes[themeScene()][0])+'</p>'+themeContent():
+    const body=page==='relay'?(themeRun().step<relaySteps?'<p class="ex-stage-topic">'+esc(scenes[themeScene()][0])+'</p>':'')+themeContent():
       page==='notebook'?notebook():page==='wrong'?wrongBook():page==='test'?test():learning();
     root.innerHTML='<div class="ex-stage"><div class="ex-stage-inner'+(page==='test'?' ex-test-shell':'')+'"><header class="ex-stage-bar">'+button('home',returnPage==='notebook'?'← 素材本':returnPage==='wrong'?'← 错题本':'← 表达')+
       '<h2 class="ex-stage-heading" tabindex="-1">'+(page==='test'?'WORDDAY / TEST':titles[page])+'</h2>'+encounter+'</header>'+body+'</div></div>';
@@ -307,6 +329,7 @@ dialog.className = 'ex-dialog';
 dialog.setAttribute('aria-labelledby','exDialogTitle');
 document.body.append(dialog);
 function openDialog(title, body) {
+  dialog.onclick=null;
   dialog.innerHTML = '<header><h2 id="exDialogTitle">'+title+'</h2><button type="button" class="secondary ex-close">关闭</button></header>'+body;
   dialog.querySelector('.ex-close').addEventListener('click',closeDialog);
   if (!dialog.open) dialog.showModal();
@@ -347,6 +370,7 @@ async function rewards(kind, mode='open', rewardDay=themeKey()) {
     });
     render();
     document.dispatchEvent(new Event('wd28badges'));
+    if(mode==='reveal'&&!dialog.open) return;
     if (mode==='reveal') window.WD28CardFX?.sound('acquire');
     reveal(kind,receipt,rewardDay);
   } catch {
@@ -357,45 +381,55 @@ function reveal(kind,{ids,shown},rewardDay) {
   const W = window.WILDWORDS, left=ids.length-shown, last=W.animals.find(c=>c.id===ids[shown-1]);
   const art = `<div class="ex-pack" aria-hidden="true">
     <svg viewBox="0 0 220 260" fill="none">
-      <defs>
-        <linearGradient id="ex-pack-foil" x1="46" y1="22" x2="181" y2="239" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#fff0bd"/><stop offset=".45" stop-color="#e0bc77"/><stop offset="1" stop-color="#a97338"/>
-        </linearGradient>
-        <linearGradient id="ex-pack-seal" x1="42" y1="0" x2="178" y2="0" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#a9793d"/><stop offset=".46" stop-color="#fff0ba"/><stop offset="1" stop-color="#bd8d50"/>
-        </linearGradient>
-      </defs>
-      <path d="M43 49H177L173 76V202L178 226Q179 231 174 233H46Q41 231 42 226L47 202V76Z" fill="url(#ex-pack-foil)" stroke="#9d703b"/>
-      <path d="M52 67L60 82V196L52 216M168 67L160 82V196L168 216" stroke="#fff5ce" stroke-opacity=".62"/>
-      <path d="M52 63L74 72H128L157 57" stroke="#fff6d7" stroke-opacity=".64"/>
-      <path d="M77 98H143M77 184H143" stroke="#765124" stroke-opacity=".56"/>
-      <text x="110" y="90" fill="#57391c" font-size="8" letter-spacing="2.1" text-anchor="middle" font-family="system-ui">WORDDAY</text>
-      <path d="M110 113Q114 134 134 138Q114 142 110 163Q106 142 86 138Q106 134 110 113Z" fill="#765124"/>
-      <path d="M110 119Q113 135 128 138Q113 141 110 157Q107 141 92 138Q107 135 110 119Z" fill="#fff0bd"/>
-      <text x="110" y="201" fill="#57391c" font-size="7" letter-spacing="1.6" text-anchor="middle" font-family="system-ui">RELAY EDITION</text>
-      <path d="M43 215H177L178 229Q178 233 174 233H46Q42 233 42 229Z" fill="url(#ex-pack-seal)" stroke="#a5763c"/>
-      <path d="M50 220H170M50 224H170M50 228H170" stroke="#795129" stroke-opacity=".45"/>
-      <path class="ex-pack-mouth" d="M48 51L57 47L66 52L75 48L86 52L97 47L108 51L120 47L131 51L142 48L153 52L164 47L173 51" stroke="#5d381b" stroke-width="2"/>
+      <g class="ex-pack-particles">
+        <circle cx="30" cy="46" r="1.8"/><circle cx="185" cy="38" r="1.5"/>
+        <circle cx="17" cy="89" r="2"/><circle cx="199" cy="81" r="2.2"/>
+        <circle cx="30" cy="134" r="1.5"/><circle cx="191" cy="122" r="1.5"/>
+        <circle cx="21" cy="172" r="2.2"/><circle cx="201" cy="163" r="1.8"/>
+        <circle cx="32" cy="210" r="1.6"/><circle cx="190" cy="205" r="2"/>
+      </g>
+      <path class="ex-pack-body" d="M42 49H178V221Q178 232 167 232H53Q42 232 42 221Z"/>
+      <path class="ex-pack-line" d="M53 215H167"/>
+      <path class="ex-pack-mouth" d="M48 51L58 46L68 51L78 46L88 51L98 46L108 51L118 46L128 51L138 46L148 51L158 46L168 51L173 48"/>
+      <text x="58" y="85" class="ex-pack-mark" font-size="9" font-weight="700" letter-spacing="2" font-family="system-ui">WORDDAY</text>
+      <path class="ex-pack-mark" d="M110 105Q115 132 141 137Q115 142 110 169Q105 142 79 137Q105 132 110 105Z"/>
+      <text x="58" y="200" class="ex-pack-mark" font-size="8" letter-spacing="1.9" font-family="system-ui">RELAY</text>
       <g class="ex-pack-strip">
-        <path d="M45 25H175Q179 25 179 29L177 52L164 47L153 52L142 48L131 51L120 47L108 51L97 47L86 52L75 48L66 52L57 47L43 52L41 29Q41 25 45 25Z" fill="url(#ex-pack-seal)" stroke="#a5763c"/>
-        <path d="M49 31H171M49 36H171M49 41H171" stroke="#795129" stroke-opacity=".43"/>
+        <path class="ex-pack-body" d="M53 29H167Q178 29 178 40V52H42V40Q42 29 53 29Z"/>
+        <path class="ex-pack-line" d="M53 46H167" stroke-dasharray="2 3"/>
       </g>
     </svg></div>`;
   const sparks = '<div class="ex-sparks" aria-hidden="true">'+Array.from({length:14},(_,i)=>'<i style="--i:'+i+'">✦</i>').join('')+'</div>';
   const card = c => W.card(c,false,!!W.data.advanced[c.id],'');
-  openDialog(kind==='chest'?'主题卡包':'主题奖励','<div class="ex-reveal '+(last?'ex-flip':'')+'">'+(last?'<div class="ex-reward-card '+(kind==='chest'&&shown===1?'ex-pack-first':'')+'">'+card(last)+'</div>'+sparks:art)+'</div>'+
-    '<div class="ex-reward-foot"><span>剩余卡牌 <b>'+left+'</b></span>'+(left?'<button class="ex-next-reward">'+(shown?'翻开下一张':'拆卡包')+'</button>':'<button class="ex-next-reward">完成</button>')+'</div>'+
-    (shown===ids.length?'<details class="ex-reward-summary"><summary>本次获得</summary><div>'+ids.map(id=>card(W.animals.find(c=>c.id===id))).join('')+'</div></details>':''));
-  dialog.querySelector('.ex-next-reward').addEventListener('click',()=>{
-    if (!left) { closeDialog(); return; }
-    if (!shown&&kind==='chest') {
-      dialog.querySelector('.ex-next-reward').disabled=true;
-      const pack=dialog.querySelector('.ex-pack');
+  const action=shown?'翻开下一张':'拆开卡包';
+  const tapTarget=left?' role="button" tabindex="0" aria-label="'+action+'"':'';
+  openDialog(kind==='chest'?'主题卡包':'主题奖励','<div class="ex-reveal '+(last?'ex-flip':'')+'"'+tapTarget+'>'+(last?'<div class="ex-reward-card '+(kind==='chest'&&shown===1?'ex-pack-first':'')+'">'+card(last)+'</div>'+sparks:art)+'</div>'+
+    '<div class="ex-reward-foot">'+(left?'<span>轻点屏幕'+action+'</span>':'')+'<span>剩余卡牌 <b>'+left+'</b></span></div>'+
+    (left?'':'<details class="ex-reward-summary"><summary>本次获得 · '+ids.length+' 张</summary><ul>'+ids.map(id=>{
+      const a=W.animals.find(animal=>animal.id===id);
+      return '<li data-rarity="'+a.rarity+'"><span class="ex-summary-emoji" aria-hidden="true">'+esc(a.emoji)+'</span><strong>'+esc(a.cn)+'</strong><small lang="en">'+esc(a.name)+'</small></li>';
+    }).join('')+'</ul></details>'));
+  if(!left) return;
+  const surface=dialog.querySelector('.ex-reveal');
+  surface.focus({preventScroll:true});
+  let advancing=false;
+  function advance(){
+    if(advancing||!dialog.open) return;
+    advancing=true;
+    if(!shown&&kind==='chest'){
+      const pack=surface.querySelector('.ex-pack');
       pack?.classList.add('opening');
       const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('wd26-reduced');
-      setTimeout(()=>{if(dialog.open&&pack?.isConnected) rewards(kind,'reveal',rewardDay);},reduced?0:460);
+      setTimeout(()=>{if(dialog.open&&surface.isConnected) rewards(kind,'reveal',rewardDay);},reduced?0:460);
     } else rewards(kind,'reveal',rewardDay);
+  }
+  dialog.onclick=ev=>{
+    if(!ev.target.closest('button, summary, a')) advance();
+  };
+  surface.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();advance();}
   });
+
 }
 root.addEventListener('input',ev=>{
   if(ev.target.matches('.ex-reply textarea') && renderedDay===dayKey()) {
@@ -409,24 +443,24 @@ root.addEventListener('toggle',ev=>{
 root.addEventListener('change',ev=>{
   if (ev.target.closest('.ex-test-filters')) {
     quizPrefs[ev.target.name]=ev.target.value;
+    data.quizPrefs={...quizPrefs}; save(false);
     quizError='';
     render();
     root.querySelector('.ex-test-filters [name="'+ev.target.name+'"]')?.focus();
     return;
   }
-  const name = ev.target.dataset.filter;
-  if (name==='exam') exam=ev.target.value;
-  else if (name==='source') source=ev.target.value;
-  else if (name==='scene') sceneFilter=ev.target.value;
-  else return;
-  current=null; position=0; context=[]; render();
+
 });
 root.addEventListener('submit',ev=>{
   ev.preventDefault();
   if(ev.target.classList.contains('ex-reply') && renderedDay!==dayKey()) { render(); return; }
-  if (ev.target.classList.contains('ex-search')) {
-    query = new FormData(ev.target).get('q').trim().toLowerCase();
-    current=null; position=0; context=[]; render();
+  if (ev.target.classList.contains('ex-filter-form')) {
+    const filters=new FormData(ev.target);
+    query=filters.get('q').trim().toLowerCase();
+    exam=filters.get('exam'); source=filters.get('source'); sceneFilter=filters.get('scene');
+    (data.learningFilters??={})[tab]={query,exam,source,scene:sceneFilter};
+    save(false);
+    current=null; position=0; context=[]; settingsOpen=false; render();
   } else if (ev.target.classList.contains('ex-reply') && themeRun().step===relaySteps-1) {
     const reply = new FormData(ev.target).get('reply').trim();
     const words=reply.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g)||[];
@@ -451,7 +485,7 @@ root.addEventListener('click',ev=>{
   const c=byId.get(current)||pool(tab,exam,source,query,sceneFilter)[position];
   switch(b.dataset.ex) {
     case 'home': openPage(returnPage); break;
-    case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; exam=''; source=''; query=''; sceneFilter=''; openPage(tab==='test'?'testCenter':tab); break;
+    case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; if(tab!=='test')restoreLearningFilters(tab); openPage(tab==='test'?'testCenter':tab); break;
     case 'notebook': openPage('notebook'); break;
     case 'wrong': openPage('wrong'); break;
     case 'openWrong': {
@@ -491,11 +525,22 @@ root.addEventListener('click',ev=>{
     case 'next': current=null; position++; render(); break;
     case 'learned':
       if (c) {
+        const before=pool(tab,exam,source,query,sceneFilter);
+        const index=before.findIndex(item=>item.id===c.id);
+        const next=before[index+1];
         learned(c);
-        if (context.length) current=context.pop();
-        else if (!source || source==='learned' || source==='favorites') { current=null; position=Math.min(position+1,Math.max(0,pool(tab,exam,source,query,sceneFilter).length-1)); }
-        else { current=null; position=Math.min(position,Math.max(0,pool(tab,exam,source,query,sceneFilter).length-1)); }
+        if(context.length) current=context.pop();
+        else {
+          const after=pool(tab,exam,source,query,sceneFilter);
+          current=null;
+          if(next) position=Math.max(0,after.findIndex(item=>item.id===next.id));
+          else if(after.length&&index>=0&&after.some(item=>item.id===c.id)){
+            position=after.length-1;
+            toast('已到当前范围的最后一张');
+          } else position=0;
+        }
         render();
+        root.querySelector('.ex-stage').scrollTop=0;
       }
       break;
     case 'word': showDetail(b.dataset.word); break;
