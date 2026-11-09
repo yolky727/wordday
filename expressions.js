@@ -70,7 +70,8 @@ function learned(card) {
     record.times++;
     event('studied');
     const todaySet=data.dailyLearned[today]??={p:[],s:[]};
-    (todaySet[card.kind]??=[]).push(card.id);
+    const dayItems=todaySet[card.kind]??=[];
+    if(!dayItems.includes(card.id)) dayItems.push(card.id);
     if(data.wrong[card.id] || record.times>1) {
       const reviewed=data.reviewDone[today]??=[];
       if(!reviewed.includes(card.id)) reviewed.push(card.id);
@@ -87,6 +88,12 @@ function pool(kind, level, from, search='', scene='') {
   return cards.filter(c => (kind==='mixed'||c.kind===kind) && (!level||c.exam===level) &&
     (!from || (from==='due' ? data.learned[c.id]?.due<=dayKey() : from==='official'?Boolean(c.url):data[from]?.[c.id])) &&
     (!search||[c.en,c.zh,c.title].some(x=>x.toLowerCase().includes(search))) && (scene===''||c.scene===Number(scene)));
+}
+// V3.1.5: regular study shows only cards not yet mastered. Explicit review,
+// favorites, wrong answers, and official collections remain accessible.
+function studyPool() {
+  const list=pool(tab,exam,source,query,sceneFilter);
+  return source==='' ? list.filter(c=>!data.learned[c.id]?.times) : list;
 }
 function showCard(c) {
   current = c.id;
@@ -105,16 +112,16 @@ function cardView(c) {
     '<footer>'+(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.type)+'</a>':'<span>原创练习</span>')+(word?button('word','查词','secondary','data-word="'+word+'"'):'')+button('listen','发音')+button('learned','记住了','')+'</footer></article>';
 }
 function learning() {
-  const list = pool(tab,exam,source,query,sceneFilter);
-  const c = byId.get(current) || list[Math.min(position,list.length-1)];
+  const list = studyPool();
+  const c = (current && list.find(item=>item.id===current)) || list[Math.min(position,list.length-1)];
   return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...scenes.map(([name],i)=>[String(i),name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
     '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form></details>'+
-    '<div class="ex-daily-goal"><label>每日'+(tab==='p'?'短语':'句子')+'目标 <input type="number" class="field" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'"></label>'+button('saveGoal','保存目标')+'<small>今日已学 '+(data.dailyLearned[dayKey()]?.[tab]?.length||0)+' 个</small></div>'+
+    '<div class="ex-daily-goal"><label>每日'+(tab==='p'?'短语':'句子')+'目标 <input type="number" class="field" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'"></label>'+button('saveGoal','保存目标')+'<small>今日已学 '+new Set(data.dailyLearned[dayKey()]?.[tab]||[]).size+' 个</small></div>'+
     (source==='official'?'<p class="ex-official-links"><a href="https://cet.neea.edu.cn/html1/folder/16113/1588-1.htm" target="_blank" rel="noopener noreferrer">四六级官方样卷</a> · <a href="https://ielts.org/take-a-test/preparation-resources/sample-test-questions" target="_blank" rel="noopener noreferrer">IELTS 官方完整样题</a></p>':'')+
     (c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
       '<span>'+ (context.length?'关联表达':(position+1)+' / '+list.length)+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
-      '<p class="ex-empty">这个范围暂无内容。试试换个筛选条件。</p>');
+      '<p class="ex-empty">'+(source===''?'当前范围已全部学完！可以在「筛选与搜索」中选择「已学」进行复习。':'这个范围暂无内容。试试换个筛选条件。')+'</p>');
 }
 function startQuiz(mode) {
   const list = shuffle(pool(mode,quizPrefs.exam,quizPrefs.source));
@@ -533,22 +540,20 @@ root.addEventListener('click',ev=>{
     case 'next': current=null; position++; render(); break;
     case 'learned':
       if (c) {
-        const before=pool(tab,exam,source,query,sceneFilter);
+        const before=studyPool();
         const index=before.findIndex(item=>item.id===c.id);
         const next=before[index+1];
         learned(c);
         if(context.length) current=context.pop();
         else {
-          const after=pool(tab,exam,source,query,sceneFilter);
+          const after=studyPool();
           current=null;
-          if(next) position=Math.max(0,after.findIndex(item=>item.id===next.id));
-          else if(after.length&&index>=0&&after.some(item=>item.id===c.id)){
-            position=after.length-1;
-            toast('已到当前范围的最后一张');
-          } else position=0;
+          if(next && after.some(item=>item.id===next.id)) position=after.findIndex(item=>item.id===next.id);
+          else position=Math.min(Math.max(0,index),Math.max(0,after.length-1));
+          if(!after.length && source==='') toast('当前范围全部学习完成！');
         }
         render();
-        root.querySelector('.ex-stage').scrollTop=0;
+        root.querySelector('.ex-stage')?.scrollTo(0,0);
       }
       break;
     case 'word': showDetail(b.dataset.word); break;
