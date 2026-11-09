@@ -217,13 +217,42 @@ function tasks(){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-action="review-ok"]');if(!b)return;const word=b.dataset.word;if(!word)return;const d=dateKey();const list=store.reviewDone[d]??=[];if(!list.includes(word)){list.push(word);localStorage.setItem(key,JSON.stringify(store));}},true);
 function taskPage(){const rows=tasks(),claims=W.data.taskClaims||{};
  frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+(r.progress||Math.min(r.n,r.max)+' / '+r.max)+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?(r.pack?'领取卡包':'抽取 1 张'):'进行中',(r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary')+(r.rewardTier===4?' luminous-task':r.rewardTier===3?' luminous-task mythic-task':''),!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
+let taskRevealStep=0;
+function showTaskPack(){
+ if(!rewardCard?.length)return taskPage();
+ const total=rewardCard.length, shown=taskRevealStep, last=rewardCard[shown-1];
+  const art = `<div class="ex-pack" aria-hidden="true">
+    <svg viewBox="0 0 220 260" fill="none">
+      <g class="ex-pack-particles">
+        <circle cx="30" cy="46" r="1.8"/><circle cx="185" cy="38" r="1.5"/>
+        <circle cx="17" cy="89" r="2"/><circle cx="199" cy="81" r="2.2"/>
+        <circle cx="30" cy="134" r="1.5"/><circle cx="191" cy="122" r="1.5"/>
+        <circle cx="21" cy="172" r="2.2"/><circle cx="201" cy="163" r="1.8"/>
+        <circle cx="32" cy="210" r="1.6"/><circle cx="190" cy="205" r="2"/>
+      </g>
+      <path class="ex-pack-body" d="M42 49H178V221Q178 232 167 232H53Q42 232 42 221Z"/>
+      <path class="ex-pack-line" d="M53 215H167"/>
+      <path class="ex-pack-mouth" d="M48 51L58 46L68 51L78 46L88 51L98 46L108 51L118 46L128 51L138 46L148 51L158 46L168 51L173 48"/>
+      <text x="58" y="85" class="ex-pack-mark" font-size="9" font-weight="700" letter-spacing="2" font-family="system-ui">WORDDAY</text>
+      <path class="ex-pack-mark" d="M110 105Q115 132 141 137Q115 142 110 169Q105 142 79 137Q105 132 110 105Z"/>
+      <text x="58" y="200" class="ex-pack-mark" font-size="8" letter-spacing="1.9" font-family="system-ui">RELAY</text>
+      <g class="ex-pack-strip">
+        <path class="ex-pack-body" d="M53 29H167Q178 29 178 40V52H42V40Q42 29 53 29Z"/>
+        <path class="ex-pack-line" d="M53 46H167" stroke-dasharray="2 3"/>
+      </g>
+    </svg></div>`;
+ const sparks='<div class="ex-sparks" aria-hidden="true">'+Array.from({length:14},(_,i)=>'<i style="--i:'+i+'">✦</i>').join('')+'</div>';
+ const card=last?W.card(last,false,!!W.data.advanced[last.id],''):'';
+ frame('获得灵宠卡牌','<div class="ex-reveal '+(shown?'ex-flip':'')+'" style="text-align:center;min-height:290px;cursor:pointer" data-b="taskReveal" role="button" tabindex="0">'+(shown?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+card+'</div>'+sparks:art)+'</div><p class="a-hint">'+(shown?'第 '+shown+' / '+total+' 张 · 已加入图鉴与库存':'轻点卡包拆开 · '+total+' 张奖励卡')+'</p>'+(shown===total?'<details class="ex-reward-summary"><summary>本次获得 · '+total+' 张</summary><ul>'+rewardCard.map(a=>'<li><span class="ex-summary-emoji">'+text(a.emoji)+'</span><strong>'+text(a.cn)+'</strong></li>').join('')+'</ul></details>'+btn('rewardBack','返回任务',''):btn('taskReveal',shown?'翻开下一张':'拆开卡包','')));
+}
+
 async function claim(index){
  if(claiming)return;claiming=true;rewardCard=null;
  try{const r=tasks()[index];if(!r||r.n<r.max)return;
  const grant=()=>{const raw=JSON.parse(localStorage.getItem('wordday_wildwords_25')||'null')||JSON.parse(JSON.stringify(W.data));
- raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const awards=r.pack?Array.from({length:3},()=>W.randomCard()):[r.rewardTier!=null?W.sample(r.rewardTier):W.randomCard()];for(const a of awards){raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;}raw.taskClaims[r.id]=awards.map(a=>a.id); 
+ raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const awards=r.pack?(window.WDChestCards?window.WDChestCards().map(id=>W.animals.find(a=>a.id===id)).filter(Boolean):Array.from({length:3},()=>W.randomCard())):[r.rewardTier!=null?W.sample(r.rewardTier):W.randomCard()];for(const a of awards){raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;}raw.taskClaims[r.id]=awards.map(a=>a.id); 
  localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='已领取 '+awards.length+' 张卡牌';rewardCard=awards;document.dispatchEvent(new Event('wd28badges'))};
- if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){frame('获得灵宠卡牌','<div class="task-reveal">'+rewardCard.map(a=>W.card(a,false,!!W.data.advanced[a.id],'')).join('')+'</div><p class="a-hint">已加入图鉴与库存</p>'+btn('rewardBack','返回任务',''))}else taskPage();
+ if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){taskRevealStep=0;showTaskPack()}else taskPage();
  }catch{toast('保存奖励失败，请重试')}finally{claiming=false}
 }
 async function luminousAchievements(){
@@ -304,7 +333,7 @@ dialog.addEventListener('click',ev=>{if(performance.now()<suppressClickUntil&&ev
 dialog.addEventListener('pointercancel',clearDrag);dialog.addEventListener('close',clearDrag);
 dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b||b.disabled)return;const [op,arg]=b.dataset.b.split(':');
  if(op==='victoryClaim')return claimVictory(arg);if(op==='victoryBack'){scene=victoryReturnScene;victoryPrize=null;return paint()}
- if(op==='rewardBack'){rewardCard=null;return taskPage()}if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];store.lineup=selection.slice();save();return lobby()}
+ if(op==='taskReveal'){if(!rewardCard||taskRevealStep>=rewardCard.length)return;const advance=()=>{taskRevealStep=Math.min(rewardCard.length,taskRevealStep+1);window.WD28CardFX?.sound('acquire');showTaskPack()};if(taskRevealStep===0){dialog.querySelector('.ex-pack')?.classList.add('opening');setTimeout(advance,matchMedia('(prefers-reduced-motion: reduce)').matches?0:460)}else advance();return}if(op==='rewardBack'){rewardCard=null;return taskPage()}if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];store.lineup=selection.slice();save();return lobby()}
  if(op==='day'||op==='week'){taskTab=op;return taskPage()}if(op==='claim')return claim(+arg);
  if(!game)return;if(!game.finished&&game.deadline&&Date.now()>=game.deadline){tick();return}
  if(op==='again'){clearTimers();scene='lobby';return lobby()}if(op==='next'){B.advance(game);return step()}
@@ -326,5 +355,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.1.6';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.1.8';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

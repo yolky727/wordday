@@ -8,7 +8,7 @@ const load = (name, fallback) => {
   catch { return fallback; }
 };
 const data = Object.assign({ learned:{}, favorites:{}, wrong:{}, days:{}, themes:{}, quizHistory:[], targets:{p:7,s:3}, dailyLearned:{}, reviewDone:{} }, load(key, {}));
-data.targets ??= {p:7,s:3}; data.dailyLearned ??= {}; data.reviewDone ??= {};
+data.targets ??= {p:7,s:3}; data.dailyLearned ??= {}; data.reviewDone ??= {}; data.dailyDecks ??= {};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const dayKey = () => {
   const d = new Date();
@@ -47,6 +47,7 @@ const opts = {
 };
 let tab = 'p', exam = '', source = '', query = '', sceneFilter = '', current = null, position = 0, context = [], quiz = data.quizDraft?.questions?.length ? data.quizDraft : null, quizError = '', busy = false, wordNode = 0, renderedDay = dayKey();
 let page = 'home', returnPage = 'home', settingsOpen = false;
+let notebookType='', notebookExam='', notebookTag='', notebookQuery='';
 const quizPrefs = {exam:'', source:'', count:'10', ...data.quizPrefs};
 function restoreLearningFilters(kind) {
   const saved=data.learningFilters?.[kind]||{};
@@ -95,9 +96,29 @@ function pool(kind, level, from, search='', scene='') {
 }
 // V3.1.5: regular study shows only cards not yet mastered. Explicit review,
 // favorites, wrong answers, and official collections remain accessible.
+function dailyDeck() {
+  const date=dayKey(), id=date+'/'+tab;
+  const target=Math.max(tab==='p'?7:3,Number(data.targets[tab]||0));
+  const available=pool(tab,exam,'',query,sceneFilter);
+  const old=data.dailyDecks[id]||[];
+  const today=data.dailyLearned[date]?.[tab]||[];
+  // Keep already studied cards in today's deck so Back always works.
+  const ids=[...new Set([...old,...today])].filter(x=>byId.has(x));
+  const remaining=available.filter(c=>!ids.includes(c.id)&&!data.learned[c.id]?.times);
+  const goal=Math.max(target,today.length);
+  for(const c of remaining.slice(0,Math.max(0,goal-ids.length))) ids.push(c.id);
+  if(JSON.stringify(old)!==JSON.stringify(ids)) {data.dailyDecks[id]=ids;save(false);}
+  return ids.map(x=>byId.get(x)).filter(Boolean);
+}
 function studyPool() {
-  const list=pool(tab,exam,source,query,sceneFilter);
-  return source==='' ? list.filter(c=>!data.learned[c.id]?.times) : list;
+  return source==='' ? dailyDeck() : pool(tab,exam,source,query,sceneFilter);
+}
+function restoreDailyPosition() {
+  if(source!=='') return;
+  const list=studyPool(), learnedToday=new Set(data.dailyLearned[dayKey()]?.[tab]||[]);
+  const next=list.findIndex(c=>!learnedToday.has(c.id));
+  position=next>=0?next:Math.max(0,list.length-1);
+  current=null;
 }
 function showCard(c) {
   current = c.id;
@@ -118,13 +139,15 @@ function cardView(c) {
 function learning() {
   const list = studyPool();
   const c = (current && list.find(item=>item.id===current)) || list[Math.min(position,list.length-1)];
+  const done=new Set(data.dailyLearned[dayKey()]?.[tab]||[]);
+  const goal=Math.max(tab==='p'?7:3,Number(data.targets[tab]||0));
   return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...scenes.map(([name],i)=>[String(i),name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
     '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form></details>'+
     '<div class="ex-daily-goal"><label>每日'+(tab==='p'?'短语':'句子')+'目标 <input type="number" class="field" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'"></label>'+button('saveGoal','保存目标')+'<small>今日已学 '+new Set(data.dailyLearned[dayKey()]?.[tab]||[]).size+' 个</small></div>'+
     (source==='official'?'<p class="ex-official-links"><a href="https://cet.neea.edu.cn/html1/folder/16113/1588-1.htm" target="_blank" rel="noopener noreferrer">四六级官方样卷</a> · <a href="https://ielts.org/take-a-test/preparation-resources/sample-test-questions" target="_blank" rel="noopener noreferrer">IELTS 官方完整样题</a></p>':'')+
     (c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
-      '<span>'+ (context.length?'关联表达':(position+1)+' / '+list.length)+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
+      '<span>'+ (context.length?'关联表达':(source===''?Math.min(done.size,goal)+' / '+goal+' · 第 '+(position+1)+' 张':(position+1)+' / '+list.length))+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
       '<p class="ex-empty">'+(source===''?'当前范围已全部学完！可以在「筛选与搜索」中选择「已学」进行复习。':'这个范围暂无内容。试试换个筛选条件。')+'</p>');
 }
 function startQuiz(mode) {
@@ -194,9 +217,18 @@ function wrongBook() {
     button('openWrong','复习','secondary','data-id="'+c.id+'"')+'</div>').join('')+'</div>';
 }
 function notebook() {
-  const list = cards.filter(c=>data.favorites[c.id]);
-  return '<div class="ex-notebook">'+(list.map(c=>'<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(data.favorites[c.id].join(' · '))+'</small></span>'+
-    button('openSaved','查看','secondary','data-id="'+c.id+'"')+button('tagSaved','标签','secondary','data-id="'+c.id+'"')+'</div>').join('')||'<p class="ex-empty">在卡片上点 ☆，选好标签后即可收藏。</p>')+'</div>';
+  const saved=cards.filter(c=>data.favorites[c.id]);
+  const tags=[...new Set(saved.flatMap(c=>data.favorites[c.id]||[]))].sort();
+  const choices=(items,value,name)=>'<select class="field" data-notebook="'+name+'">'+items.map(([v,t])=>'<option value="'+esc(v)+'" '+(v===value?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select>';
+  const filtered=saved.filter(c=>(!notebookType||c.kind===notebookType)&&(!notebookExam||c.exam===notebookExam)&&(!notebookTag||(data.favorites[c.id]||[]).includes(notebookTag))&&(!notebookQuery||(c.en+' '+c.zh+' '+c.title).toLowerCase().includes(notebookQuery.toLowerCase())));
+  return '<div class="ex-notebook-tools" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px">'+
+    choices([['','全部类型'],['p','短语'],['s','句子']],notebookType,'type')+
+    choices([['','全部考试'],...tiers.map(t=>[t,t])],notebookExam,'exam')+
+    choices([['','全部标签'],...tags.map(t=>[t,t])],notebookTag,'tag')+
+    '<input class="field" data-notebook="query" value="'+esc(notebookQuery)+'" placeholder="搜索素材" aria-label="搜索素材" />'+
+    '</div><p class="ex-note">已筛选 '+filtered.length+' / '+saved.length+' 条收藏</p><div class="ex-notebook">'+
+    (filtered.map(c=>'<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(c.zh)+' · '+esc(c.exam)+' · '+esc((data.favorites[c.id]||[]).join(' · '))+'</small></span>'+
+    button('openSaved','查看','secondary','data-id="'+c.id+'"')+button('tagSaved','标签','secondary','data-id="'+c.id+'"')+'</div>').join('')||'<p class="ex-empty">没有符合当前筛选的收藏内容。</p>')+'</div>';
 }
 function relayQuestion(c, field, slot) {
   const correct=c[field];
@@ -364,6 +396,7 @@ function chestCards() {
   });
   return counts.flatMap((count,tier)=>Array.from({length:count},()=>W.sample(tier).id));
 }
+window.WDChestCards = chestCards;
 async function rewards(kind, mode='open', rewardDay=themeKey()) {
   if (busy) return;
   busy=true;
@@ -451,6 +484,7 @@ function reveal(kind,{ids,shown},rewardDay) {
 
 }
 root.addEventListener('input',ev=>{
+  if(ev.target.matches('[data-notebook=query]')) { notebookQuery=ev.target.value; const start=ev.target.selectionStart; render(); const el=root.querySelector('[data-notebook=query]'); el?.focus(); el?.setSelectionRange(start,start); return; }
   if(ev.target.matches('.ex-reply textarea') && renderedDay===dayKey()) {
     themeRun().draft=ev.target.value;
     save(false);
@@ -460,6 +494,7 @@ root.addEventListener('toggle',ev=>{
   if(ev.target.matches('.ex-settings')&&ev.target.isConnected) settingsOpen=ev.target.open;
 },true);
 root.addEventListener('change',ev=>{
+  if(ev.target.matches('[data-notebook]')) { const k=ev.target.dataset.notebook; if(k==='type') notebookType=ev.target.value; else if(k==='exam') notebookExam=ev.target.value; else if(k==='tag') notebookTag=ev.target.value; else notebookQuery=ev.target.value; render(); return; }
   if (ev.target.closest('.ex-test-filters')) {
     quizPrefs[ev.target.name]=ev.target.value;
     data.quizPrefs={...quizPrefs}; save(false);
@@ -504,7 +539,7 @@ root.addEventListener('click',ev=>{
   const c=byId.get(b.dataset.cardId)||byId.get(current)||studyPool()[Math.min(position,studyPool().length-1)];
   switch(b.dataset.ex) {
     case 'home': openPage(returnPage); break;
-    case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; if(tab!=='test')restoreLearningFilters(tab); openPage(tab==='test'?'testCenter':tab); break;
+    case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; if(tab!=='test'){restoreLearningFilters(tab);restoreDailyPosition();} openPage(tab==='test'?'testCenter':tab); break;
     case 'notebook': openPage('notebook'); break;
     case 'wrong': openPage('wrong'); break;
     case 'openWrong': {
@@ -516,7 +551,7 @@ root.addEventListener('click',ev=>{
       quizPrefs.source='wrong'; quizPrefs.exam='';
       openPage('testCenter');
       break;
-    case 'readScene': tab='p'; exam=''; source=''; query=''; sceneFilter=b.dataset.id; current=null; context=[]; position=0; openPage('p'); break;
+    case 'readScene': tab='p'; exam=''; source=''; query=''; sceneFilter=b.dataset.id; current=null; context=[]; position=0; restoreDailyPosition(); openPage('p'); break;
     case 'theme': openPage('relay'); break;
     case 'themeChoice': {
       const run=themeRun(), q=run.questions[run.step];
@@ -543,20 +578,16 @@ root.addEventListener('click',ev=>{
     case 'prev': current=null; position=Math.max(0,position-1); render(); break;
     case 'next': current=null; position++; render(); break;
     case 'learned':
-      if (c) {
-        // Capture the displayed card by stable ID, never by a stale list index.
-        const before=studyPool();
-        const index=before.findIndex(item=>item.id===c.id);
-        const nextId=before[index+1]?.id || before[index-1]?.id || null;
+      if(c) {
+        const list=studyPool();
+        const idx=list.findIndex(item=>item.id===c.id);
         learned(c);
-        if(context.length) {
-          current=context.pop();
-        } else {
-          const after=studyPool();
-          const nextIndex=nextId?after.findIndex(item=>item.id===nextId):-1;
-          position=nextIndex>=0?nextIndex:Math.min(Math.max(0,index),Math.max(0,after.length-1));
+        if(context.length) current=context.pop();
+        else {
+          const next=list.findIndex((item,i)=>i>idx&&!data.dailyLearned[dayKey()]?.[tab]?.includes(item.id));
+          position=next>=0?next:Math.min(idx+1,list.length-1);
           current=null;
-          if(!after.length && source==='') toast('当前范围全部学习完成！');
+          if(next<0&&source==='') toast('今日学习批次已完成，可以返回查看已学卡片');
         }
         render();
         root.querySelector('.ex-stage')?.scrollTo(0,0);
