@@ -151,19 +151,51 @@ function challengeRoll(period){
  hash=Math.imul(hash^(hash>>>15),0x846ca68b);
  return ((hash^(hash>>>16))>>>0)/4294967296;
 }
+const taskMigrationKey='wordday_30_task_migration';
+let taskMigration={};
+try {
+ const saved=localStorage.getItem(taskMigrationKey);
+ if(saved) taskMigration=JSON.parse(saved)||{};
+ else {
+  const oldSave=state.days?.length||state.known?.length||Object.keys(W.data.inventory).length||Object.keys(W.data.taskClaims||{}).length||store.total.games;
+  if(oldSave) taskMigration={day:dateKey(),week:weekDates()[0]};
+  localStorage.setItem(taskMigrationKey,JSON.stringify(taskMigration));
+ }
+} catch {}
 function tasks(){
  const days=taskTab==='day'?[dateKey()]:weekDates(),prefix=(taskTab==='day'?'D':'W')+days[0]+'/',uniqueWords=days.reduce((c,d)=>c+new Set(state.daily[d]||[]).size,0),studyDays=days.filter(d=>state.daily[d]?.length).length;
  const quizzes=(state.quizHistory||[]).filter(r=>days.includes(r.date)),sum=field=>days.reduce((n,d)=>n+(store.daily[d]?.[field]||0),0);
- const specs=taskTab==='day'?[['学习 5 个单词',uniqueWords,5],['完成一次测试或一场对战',quizzes.length+sum('games'),1]]:[
- ['累计学习 15 词',uniqueWords,15],['累计学习 40 词',uniqueWords,40],['在 3 天留下学习记录',studyDays,3],['完成 3 次测试',quizzes.length,3],['测试累计答对 20 题',quizzes.reduce((n,r)=>n+(+r.correct||0),0),20],['完成 2 场对战',sum('games'),2],['赢得 3 个战斗回合',sum('points'),3]];
+ const daily=taskTab==='day', ex=window.WDExpressions?.totals(days)||{};
+ const correct=quizzes.reduce((n,r)=>n+(+r.correct||0),0);
+ const period=Math.floor(Date.parse(days[0])/86400000/(daily?1:7));
+ const rotate=(pool,offset=0)=>pool[((period+offset)%pool.length+pool.length)%pool.length];
+ const weekly=[
+  [['累计学习 15 词',uniqueWords,15],['完成 2 次测试',quizzes.length,2],['学习 12 条表达',ex.studied||0,12]],
+  [['累计学习 40 词',uniqueWords,40],['测试答对 35 题',correct,35],['学习 24 条表达',ex.studied||0,24]],
+  [['在 3 天留下单词学习记录',studyDays,3],['完成 2 次表达接力',ex.themes||0,2],['完成 3 次表达测试',ex.tests||0,3]],
+  [['完成 3 次测试',quizzes.length,3],['完成 2 次表达测试',ex.tests||0,2],['测试或对战共完成 5 次',quizzes.length+sum('games'),5]],
+  [['测试累计答对 20 题',correct,20],['表达测试答对 18 题',ex.correct||0,18],['学习 18 个单词或表达',uniqueWords+(ex.studied||0),18]],
+  [['完成 2 场对战',sum('games'),2],['完成 4 场对战',sum('games'),4],['完成 3 场对战',sum('games'),3]],
+  [['赢得 3 个战斗回合',sum('points'),3],['赢得 5 个战斗回合',sum('points'),5],['赢得 2 场对战',sum('wins'),2]]
+ ];
+ const legacy=taskMigration[taskTab]===days[0];
+ const previous=daily?[['学习 5 个单词',uniqueWords,5],['完成一次测试或一场对战',quizzes.length+sum('games'),1]]:[
+ ['累计学习 15 词',uniqueWords,15],['累计学习 40 词',uniqueWords,40],['在 3 天留下学习记录',studyDays,3],['完成 3 次测试',quizzes.length,3],['测试累计答对 20 题',correct,20],['完成 2 场对战',sum('games'),2],['赢得 3 个战斗回合',sum('points'),3]];
+ const specs=legacy?previous:daily?[rotate([['学习 5 个单词',uniqueWords,5],['学习 4 条表达',ex.studied||0,4],['完成 1 次表达接力',ex.themes||0,1],['学习 8 个单词',uniqueWords,8]]),
+  rotate([['完成一次测试或一场对战',quizzes.length+sum('games'),1],['表达测试答对 5 题',ex.correct||0,5],['赢得 2 个战斗回合',sum('points'),2],['完成 1 次表达测试',ex.tests||0,1]],2)]:weekly.map((choices,i)=>rotate(choices,i));
  const rows=specs.map(([label,n,max],i)=>({label,n,max,id:prefix+i}));
- if(taskTab==='week'&&challengeRoll(days[0])<.2){
-  const correct=quizzes.reduce((n,r)=>n+(+r.correct||0),0);
-  rows.push({label:'进阶挑战',n:Number(quizzes.length>=5)+Number(correct>=100),max:2,id:prefix+'luminous',rewardTier:4,progress:Math.min(quizzes.length,5)+' / 5 场 · '+Math.min(correct,100)+' / 100 题'});
+ function challenge(left,right,rewardTier,id) {
+  const n=Number(left[0]>=left[1])+Number(right[0]>=right[1]);
+  const metric=([v,goal,unit])=>Math.min(v,goal)+' / '+goal+' '+unit;
+  rows.push({label:'进阶挑战',n,max:2,id:prefix+id,rewardTier,progress:metric(left)+' · '+metric(right)});
  }
- if(taskTab==='day'&&challengeRoll('daily/'+days[0])<.27){
-  const correct=quizzes.reduce((n,r)=>n+(+r.correct||0),0);
-  rows.push({label:'进阶挑战 · 今日测试答对 30 题',n:correct,max:30,id:prefix+'mythic',rewardTier:3});
+ if(!daily&&challengeRoll(days[0])<.2){
+  const original=[[quizzes.length,5,'场测试'],[correct,100,'题答对']];
+  challenge(...(legacy?original:rotate([[[quizzes.length,5,'场测试'],[correct,100,'题答对']],[[ex.themes||0,4,'次接力'],[ex.correct||0,45,'题表达答对']],[[sum('games'),8,'场对战'],[sum('points'),20,'回合赢']],[[uniqueWords,75,'词'],[ex.studied||0,35,'条表达']]])),4,'luminous');
+ }
+ if(daily&&challengeRoll('daily/'+days[0])<.27){
+  const [label,n,max]=legacy?['测试答对 30 题',correct,30]:rotate([['测试答对 30 题',correct,30],['完成 2 次表达测试',ex.tests||0,2],['赢得 6 个战斗回合',sum('points'),6],['学习 10 条表达',ex.studied||0,10],['累计学习 18 词',uniqueWords,18]]);
+  rows.push({label:'进阶挑战 · '+label,n,max,id:prefix+'mythic',rewardTier:3});
  }
  return rows;
 }
@@ -278,5 +310,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 2.9.9.1';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.0';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();
