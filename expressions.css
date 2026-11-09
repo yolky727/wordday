@@ -221,3 +221,11 @@ body:has(#expressions.active .ex-stage) #detailModal{z-index:90!important}
 
 .ex-official-links{font-size:12px;color:var(--muted);margin:0 0 12px}
 .ex-official-links a{color:var(--green);text-underline-offset:3px}
+
+/* 3.1.3 */
+.ex-daily-goal{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;margin:12px 0;border:1px solid #b9ccc7;border-radius:14px;background:rgba(255,255,255,.58)}.ex-daily-goal label{display:flex;align-items:center;gap:8px;font-weight:650}.ex-daily-goal input{width:76px!important;min-width:76px}.ex-daily-goal small{color:#60756f}
+
+/* WORDDAY 3.1.4: expression quiz typography aligned with word quiz. */
+#expressions .ex-question h3{font-size:clamp(20px,5vw,24px);line-height:1.35;overflow-wrap:anywhere}
+#expressions .ex-question .ex-options button{font-size:14px;line-height:1.5;font-weight:650;min-height:58px;padding:14px 17px;grid-template-columns:27px minmax(0,1fr)}
+#expressions .ex-question .ex-options button .ex-option-index{font-size:12px}

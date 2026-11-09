@@ -9,7 +9,7 @@ const dateKey=(d=new Date())=>[d.getFullYear(),String(d.getMonth()+1).padStart(2
 function weekDates(){const now=new Date(),start=new Date(now);start.setDate(start.getDate()-(start.getDay()+6)%7);return Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return dateKey(d)})}
 const key='wordday_battle28';
 function readStore(){try{return JSON.parse(localStorage.getItem(key))||{}}catch{return {}}}
-let store=readStore();store.daily??={};store.total??={games:0,wins:0,points:0,skills:0};let game=store.active||null;if(game&&!game.finished&&!['2.8.3','2.9'].includes(game.rulesVersion)){game=null;store.active=null;localStorage.setItem(key,JSON.stringify(store))}
+let store=readStore();store.loginDays??=[];if(!store.loginDays.includes(dateKey())){store.loginDays.push(dateKey());store.loginDays=store.loginDays.slice(-400);localStorage.setItem(key,JSON.stringify(store))}store.reviewDone??={};store.daily??={};store.total??={games:0,wins:0,points:0,skills:0};let game=store.active||null;if(game&&!game.finished&&!['2.8.3','2.9'].includes(game.rulesVersion)){game=null;store.active=null;localStorage.setItem(key,JSON.stringify(store))}
 function save(){if(game){game.evolved??=[advanced().filter(n=>game.hands[0].includes(n)),[]];game.rulesVersion='2.9';game.rarity??=Object.fromEntries(W.animals.map(a=>[a.cn,a.rarity]))}store.active=game;localStorage.setItem(key,JSON.stringify(store))}
 function record(){
  if(game?.finished)creditVictory(game);
@@ -184,6 +184,21 @@ function tasks(){
  const specs=legacy?previous:daily?[rotate([['学习 5 个单词',uniqueWords,5],['学习 4 条表达',ex.studied||0,4],['完成 1 次表达接力',ex.themes||0,1],['学习 8 个单词',uniqueWords,8]]),
   rotate([['完成一次测试或一场对战',quizzes.length+sum('games'),1],['表达测试答对 5 题',ex.correct||0,5],['赢得 2 个战斗回合',sum('points'),2],['完成 1 次表达测试',ex.tests||0,1]],2)]:weekly.map((choices,i)=>rotate(choices,i));
  const rows=specs.map(([label,n,max],i)=>({label,n,max,id:prefix+i}));
+ const expr=window.WDExpressions;
+ if(daily){
+  const wordDone=new Set(state.daily[days[0]]||[]).size, wordGoal=Number(state.dailyTargets?.[days[0]]||8);
+  const phrase=expr?.goalProgress(days[0],'p')||{done:0,target:7};
+  const sentence=expr?.goalProgress(days[0],'s')||{done:0,target:3};
+  rows.unshift({label:'博学多识 · 完成单词、短语、句子每日目标',n:Number(wordDone>=wordGoal)+Number(phrase.done>=phrase.target)+Number(sentence.done>=sentence.target),max:3,id:prefix+'fixedAll',pack:true,progress:`单词 ${wordDone}/${wordGoal} · 短语 ${phrase.done}/${phrase.target} · 句子 ${sentence.done}/${sentence.target}`});
+ }else{
+  const wordDays=days.filter(d=>new Set(state.daily[d]||[]).size>=Number(state.dailyTargets?.[d]||8)).length;
+  const reviewed=days.reduce((n,d)=>n+new Set(store.reviewDone?.[d]||[]).size,0)+(expr?.reviewCount(days)||0);
+  const logins=days.filter(d=>store.loginDays.includes(d)).length;
+  rows.unshift({label:'七日勤学 · 7 天完成单词目标',n:wordDays,max:7,id:prefix+'fixedWords',pack:true},
+    {label:'温故知新 · 复习掌握 30 个内容',n:reviewed,max:30,id:prefix+'fixedReview',pack:true},
+    {label:'全勤达人 · 本周登录 7 天',n:logins,max:7,id:prefix+'fixedLogin',pack:true});
+ }
+
  function challenge(left,right,rewardTier,id) {
   const n=Number(left[0]>=left[1])+Number(right[0]>=right[1]);
   const metric=([v,goal,unit])=>Math.min(v,goal)+' / '+goal+' '+unit;
@@ -199,15 +214,16 @@ function tasks(){
  }
  return rows;
 }
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action="review-ok"]');if(!b)return;const word=b.dataset.word;if(!word)return;const d=dateKey();const list=store.reviewDone[d]??=[];if(!list.includes(word)){list.push(word);localStorage.setItem(key,JSON.stringify(store));}},true);
 function taskPage(){const rows=tasks(),claims=W.data.taskClaims||{};
- frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+(r.progress||Math.min(r.n,r.max)+' / '+r.max)+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?'抽取 1 张':'进行中',(r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary')+(r.rewardTier===4?' luminous-task':r.rewardTier===3?' luminous-task mythic-task':''),!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
+ frame('任务与奖励','<div class="b28-tabs">'+btn('day','每日任务',taskTab==='day'?'':'secondary')+btn('week','每周任务',taskTab==='week'?'':'secondary')+'</div>'+rows.map((r,i)=>'<div class="b28-task"><div><strong>'+r.label+'</strong><small>'+(r.progress||Math.min(r.n,r.max)+' / '+r.max)+'</small></div>'+btn('claim:'+i,Object.hasOwn(claims,r.id)?'已领取':r.n>=r.max?(r.pack?'领取卡包':'抽取 1 张'):'进行中',(r.n>=r.max&&!Object.hasOwn(claims,r.id)?'':'secondary')+(r.rewardTier===4?' luminous-task':r.rewardTier===3?' luminous-task mythic-task':''),!!Object.hasOwn(claims,r.id)||r.n<r.max)+'</div>').join('')+(store.message?'<p aria-live="polite">'+text(store.message)+'</p>':''));}
 async function claim(index){
  if(claiming)return;claiming=true;rewardCard=null;
  try{const r=tasks()[index];if(!r||r.n<r.max)return;
  const grant=()=>{const raw=JSON.parse(localStorage.getItem('wordday_wildwords_25')||'null')||JSON.parse(JSON.stringify(W.data));
- raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const a=r.rewardTier!=null?W.sample(r.rewardTier):W.randomCard();raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;raw.taskClaims[r.id]=a.id;
- localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='获得 '+a.cn+' · '+a.name;rewardCard=a;document.dispatchEvent(new Event('wd28badges'))};
- if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){frame('获得灵宠卡牌','<div class="task-reveal">'+W.card(rewardCard,false,!!W.data.advanced[rewardCard.id],'')+'</div><p class="a-hint">已加入图鉴与库存</p>'+btn('rewardBack','返回任务',''))}else taskPage();
+ raw.taskClaims??={};if(Object.hasOwn(raw.taskClaims,r.id)){Object.assign(W.data,raw);return}const awards=r.pack?Array.from({length:3},()=>W.randomCard()):[r.rewardTier!=null?W.sample(r.rewardTier):W.randomCard()];for(const a of awards){raw.discovered[a.id]=true;raw.inventory[a.id]=Number(raw.inventory[a.id]||0)+1;}raw.taskClaims[r.id]=awards.map(a=>a.id); 
+ localStorage.setItem('wordday_wildwords_25',JSON.stringify(raw));Object.assign(W.data,raw);window.WD28CardFX?.sound('acquire');store.message='已领取 '+awards.length+' 张卡牌';rewardCard=awards;document.dispatchEvent(new Event('wd28badges'))};
+ if(navigator.locks)await navigator.locks.request('wd28-reward',grant);else grant();if(rewardCard){frame('获得灵宠卡牌','<div class="task-reveal">'+rewardCard.map(a=>W.card(a,false,!!W.data.advanced[a.id],'')).join('')+'</div><p class="a-hint">已加入图鉴与库存</p>'+btn('rewardBack','返回任务',''))}else taskPage();
  }catch{toast('保存奖励失败，请重试')}finally{claiming=false}
 }
 async function luminousAchievements(){

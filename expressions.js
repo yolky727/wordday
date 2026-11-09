@@ -7,7 +7,8 @@ const load = (name, fallback) => {
   try { return JSON.parse(localStorage.getItem(name)) || fallback; }
   catch { return fallback; }
 };
-const data = Object.assign({ learned:{}, favorites:{}, wrong:{}, days:{}, themes:{}, quizHistory:[] }, load(key, {}));
+const data = Object.assign({ learned:{}, favorites:{}, wrong:{}, days:{}, themes:{}, quizHistory:[], targets:{p:7,s:3}, dailyLearned:{}, reviewDone:{} }, load(key, {}));
+data.targets ??= {p:7,s:3}; data.dailyLearned ??= {}; data.reviewDone ??= {};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const dayKey = () => {
   const d = new Date();
@@ -68,6 +69,12 @@ function learned(card) {
   if (record.last !== today) {
     record.times++;
     event('studied');
+    const todaySet=data.dailyLearned[today]??={p:[],s:[]};
+    (todaySet[card.kind]??=[]).push(card.id);
+    if(data.wrong[card.id] || record.times>1) {
+      const reviewed=data.reviewDone[today]??=[];
+      if(!reviewed.includes(card.id)) reviewed.push(card.id);
+    }
   }
   const due = new Date();
   due.setDate(due.getDate() + [1,3,7,14,30][Math.min(record.times-1,4)]);
@@ -103,6 +110,7 @@ function learning() {
   return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...scenes.map(([name],i)=>[String(i),name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
     '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form></details>'+
+    '<div class="ex-daily-goal"><label>每日'+(tab==='p'?'短语':'句子')+'目标 <input type="number" class="field" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'"></label>'+button('saveGoal','保存目标')+'<small>今日已学 '+(data.dailyLearned[dayKey()]?.[tab]?.length||0)+' 个</small></div>'+
     (source==='official'?'<p class="ex-official-links"><a href="https://cet.neea.edu.cn/html1/folder/16113/1588-1.htm" target="_blank" rel="noopener noreferrer">四六级官方样卷</a> · <a href="https://ielts.org/take-a-test/preparation-resources/sample-test-questions" target="_blank" rel="noopener noreferrer">IELTS 官方完整样题</a></p>':'')+
     (c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
       '<span>'+ (context.length?'关联表达':(position+1)+' / '+list.length)+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
@@ -403,7 +411,7 @@ function reveal(kind,{ids,shown},rewardDay) {
   const card = c => W.card(c,false,!!W.data.advanced[c.id],'');
   const action=shown?'翻开下一张':'拆开卡包';
   const tapTarget=left?' role="button" tabindex="0" aria-label="'+action+'"':'';
-  openDialog(kind==='chest'?'主题卡包':'主题奖励','<div class="ex-reveal '+(last?'ex-flip':'')+'"'+tapTarget+'>'+(last?'<div class="ex-reward-card '+(kind==='chest'&&shown===1?'ex-pack-first':'')+'">'+card(last)+'</div>'+sparks:art)+'</div>'+
+  openDialog(kind==='chest'?'主题卡包':'三张奖励卡','<div class="ex-reveal '+(last?'ex-flip':'')+'"'+tapTarget+'>'+(last?'<div class="ex-reward-card '+(shown===1?'ex-pack-first':'')+'">'+card(last)+'</div>'+sparks:art)+'</div>'+
     '<div class="ex-reward-foot">'+(left?'<span>轻点屏幕'+action+'</span>':'')+'<span>剩余卡牌 <b>'+left+'</b></span></div>'+
     (left?'':'<details class="ex-reward-summary"><summary>本次获得 · '+ids.length+' 张</summary><ul>'+ids.map(id=>{
       const a=W.animals.find(animal=>animal.id===id);
@@ -416,7 +424,7 @@ function reveal(kind,{ids,shown},rewardDay) {
   function advance(){
     if(advancing||!dialog.open) return;
     advancing=true;
-    if(!shown&&kind==='chest'){
+    if(!shown){
       const pack=surface.querySelector('.ex-pack');
       pack?.classList.add('opening');
       const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('wd26-reduced');
@@ -583,6 +591,7 @@ root.addEventListener('click',ev=>{
         }
       }
       render(); break;
+    case 'saveGoal': {const min=tab==='p'?7:3;const input=root.querySelector('#exGoal');const n=Number(input?.value);if(!Number.isInteger(n)||n<min||n>200){alert('每日目标需在 '+min+' 到 200 之间');break;}data.targets[tab]=n;save();render();break;}
     case 'reviewQuiz': quiz.finished=false; quiz.index=0; render(); break;
     case 'resetQuiz': quiz=null; delete data.quizDraft; save(false); openPage('testCenter'); break;
   }
@@ -626,6 +635,8 @@ window.WDExpressions={
     save();
   },
   stats() { return { learned:Object.keys(data.learned).length, tests:Object.values(data.days).reduce((n,d)=>n+(d.tests||0),0), themes:Object.values(data.days).reduce((n,d)=>n+(d.themes||0),0) }; },
+  goalProgress(day,kind) {return {done:new Set(data.dailyLearned[day]?.[kind]||[]).size,target:Math.max(kind==='p'?7:3,Number(data.targets[kind]||0))};},
+  reviewCount(days) {return days.reduce((n,d)=>n+new Set(data.reviewDone[d]||[]).size,0);},
   totals(days) { return Object.fromEntries(['studied','correct','tests','themes'].map(k=>[k,days.reduce((n,d)=>n+(data.days[d]?.[k]||0),0)])); }
 };
 const exploration=document.createElement('details');
