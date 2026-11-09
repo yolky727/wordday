@@ -70,7 +70,7 @@ body.wd26-reduced .wild-card[data-luminous],body.wd26-reduced .luminous-task,bod
 .achievement progress{display:block;width:100%;height:6px;margin-top:8px;accent-color:var(--green)}
 .victory285 .victory285-track{margin-bottom:10px}
 .wd-card-celebration .wd-medal{display:block;width:min(200px,57vw);height:auto;aspect-ratio:auto;margin:12px auto;border:0;background:none;box-shadow:none;border-radius:0;font-size:inherit}
-.wd-card-celebration .wild-reveal{margin:0}
+.wd-card-celebration .wild-reveal{width:100%;margin:0 auto}
 .wd-card-celebration .wild-reveal .wild-card{width:100%}
 .wd-card-celebration #wdCelebrateDesc{display:none}
 .wild-reveal:has(> [data-luminous]),.task-reveal:has(> [data-luminous]){
@@ -101,3 +101,13 @@ body.wd26-reduced .wild-card[data-luminous],body.wd26-reduced .luminous-task,bod
  --a:#e6a42e;--b:#fff0a2;--c:#b87918;--halo:#e9b447;--paper-luminous:#53340d;
 }
 #wd28Dialog button.mythic-task:disabled{color:#ffedb7!important}
+
+:root:not([data-theme="midnight"]) #wd28Dialog button.mythic-task{
+ --paper-luminous:#fff4d5;
+ --halo:#dfac48;
+ color:#63420e!important;
+}
+:root:not([data-theme="midnight"]) #wd28Dialog button.mythic-task:disabled{
+ --paper-luminous:#fbefd3;
+ color:#755520!important;
+}

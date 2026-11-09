@@ -72,6 +72,9 @@ html[data-theme="midnight"] .arena283 .wd29-final.loss h3 { color: #ff8585; }
 .wild-reveal:has([data-rarity="1"]) .wd28-fx.advance { --upgrade-light: #58a9df; }
 .wild-reveal:has([data-rarity="2"]) .wd28-fx.advance { --upgrade-light: #a67cde; }
 .wild-reveal:has([data-rarity="3"]) .wd28-fx.advance { --upgrade-light: #dbac53; }
+.wild-reveal:has(> [data-luminous="Dragon"]) .wd28-fx.advance { --upgrade-light: #29d99a; }
+.wild-reveal:has(> [data-luminous="Phoenix"]) .wd28-fx.advance { --upgrade-light: #ff4b48; }
+.wild-reveal:has(> [data-luminous="Unicorn"]) .wd28-fx.advance { --upgrade-light: #f16dbb; }
 .wd28-fx.advance i:nth-child(n) {
   inset: 0;
   width: auto;

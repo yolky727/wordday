@@ -13,7 +13,10 @@ const dayKey = () => {
   const d = new Date();
   return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
 };
-const sceneForDay = () => Math.floor(Date.parse(dayKey())/86400000) % scenes.length;
+const calendarDay = () => Math.floor(Date.parse(dayKey())/86400000);
+const themeKey = () => 'relay31/'+Math.floor(calendarDay()/3);
+const themeScene = () => Math.floor(calendarDay()/3)%scenes.length;
+const relaySteps = 6;
 const scenes = window.WDExpressionScenes;
 const tiers = ['CET-4','CET-6','IELTS'];
 const cards = scenes.flatMap(([title, phrases, ...sentences], i) => {
@@ -41,7 +44,10 @@ const opts = {
   source:[['','全部内容'],['learned','已学'],['favorites','收藏'],['wrong','错题'],['official','官方样题']],
   count:[['5','5 题'],['10','10 题'],['20','20 题']]
 };
-let tab = 'p', exam = '', source = '', query = '', sceneFilter = '', current = null, position = 0, context = [], quiz = null, quizError = '', theme = false, libraryPage = false, busy = false, reading = false, explore = false, wordNode = 0, renderedDay = dayKey();
+let tab = 'p', exam = '', source = '', query = '', sceneFilter = '', current = null, position = 0, context = [], quiz = null, quizError = '', busy = false, wordNode = 0, renderedDay = dayKey();
+let page = 'home', returnPage = 'home', settingsOpen = false;
+const quizPrefs = {exam:'', source:'', count:'10'};
+const testModes = [['p','短语测试'],['s','句子测试'],['mixed','综合测试']];
 const button = (action, label, cls='secondary', attrs='') => '<button type="button" data-ex="'+action+'" class="'+cls+'" '+attrs+'>'+label+'</button>';
 const select = (name, label, choices, value) => '<label><span>'+label+'</span><select class="field" name="'+name+'" data-filter="'+name+'">'+choices.map(([key,label])=>'<option value="'+esc(key)+'" '+(key===value?'selected':'')+'>'+esc(label)+'</option>').join('')+'</select></label>';
 function save(notify = true) {
@@ -90,21 +96,20 @@ function cardView(c) {
 function learning() {
   const list = pool(tab,exam,source,query,sceneFilter);
   const c = byId.get(current) || list[Math.min(position,list.length-1)];
-  return '<div class="ex-controls">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...scenes.map(([name],i)=>[String(i),name])],sceneFilter)+
+  return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><div class="ex-controls">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...scenes.map(([name],i)=>[String(i),name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
-    '<form class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit" class="secondary">查找</button></form></div>'+
+    '<form class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit" class="secondary">查找</button></form></div></details>'+
     (c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
       '<span>'+ (context.length?'关联表达':(position+1)+' / '+list.length)+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
       '<p class="ex-empty">这个范围暂无内容。试试换个筛选条件。</p>');
 }
-function startQuiz(form) {
-  const filters = new FormData(form);
-  const list = shuffle(pool(filters.get('mode'),filters.get('exam'),filters.get('source')));
+function startQuiz(mode) {
+  const list = shuffle(pool(mode,quizPrefs.exam,quizPrefs.source));
   if (!list.length) { quizError='该范围暂无题目，请换一个范围。'; render(); return; }
   quizError = '';
-  const count=Number(filters.get('count'));
+  const count=Number(quizPrefs.count);
   const selected=list.slice(0,count);
-  if(filters.get('mode')==='mixed' && selected.every(c=>c.kind===selected[0].kind)) {
+  if(mode==='mixed' && selected.every(c=>c.kind===selected[0].kind)) {
     const other=list.find(c=>c.kind!==selected[0].kind);
     if(other) selected[selected.length-1]=other;
   }
@@ -116,13 +121,30 @@ function startQuiz(form) {
     for(const r of distractors) if(options.length<4&&!options.includes(r[field])) options.push(r[field]);
     return {c,options:shuffle(options),correct,prompt,field,answer:null};
   });
-  quiz = { questions,index:0,finished:false };
+  quiz = { mode,questions,index:0,finished:false,streak:0 };
+  page='test';
+  settingsOpen=false;
   render();
 }
-function test() {
-  if (!quiz) return '<form class="ex-test-form">'+select('mode','题型',opts.mode,'mixed')+select('exam','考试方向',opts.exam,'')+
-    select('source','出题范围',opts.source,'')+select('count','题数',opts.count,'10')+'<button type="submit">开始测试</button>'+
-    (quizError?'<p role="status">'+quizError+'</p>':'')+'</form>';
+function test(center=false) {
+  if (center) {
+    const available=pool('mixed',quizPrefs.exam,quizPrefs.source).length;
+    return '<div class="ex-test-title"><h2>自由测试中心</h2><span>随时开始 · 三种模式</span></div>'+
+      '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>题目设置</summary><div class="ex-controls ex-test-filters">'+
+      select('exam','考试方向',opts.exam,quizPrefs.exam)+select('source','出题范围',opts.source,quizPrefs.source)+
+      select('count','题数',opts.count,quizPrefs.count)+'</div></details>'+
+      '<section class="quiz-lock ex-test-choices"><div class="lock-icon" aria-hidden="true">✦</div><h3>选择测试</h3>'+
+      '<p>当前范围 '+available+' 条表达 · 每场最多 '+quizPrefs.count+' 题</p>'+
+      (quiz&&!quiz.finished?button('resumeQuiz','继续上次测试'):'')+
+      '<div class="ex-mode-grid">'+testModes.map(([id,label])=>button('startQuiz',label,'','data-id="'+id+'"')).join('')+'</div>'+
+      (quizError?'<p role="status">'+quizError+'</p>':'')+
+      '<div class="quiz-mode-stats ex-mode-grid">'+testModes.map(([id,label])=>{
+        const attempts=data.quizHistory.filter(row=>row.mode===id);
+        const total=attempts.reduce((n,row)=>n+row.total,0);
+        const correct=attempts.reduce((n,row)=>n+row.correct,0);
+        return '<div class="quiz-mode-stat"><strong>'+label+'</strong><span>'+(total?attempts.length+' 次测试 · '+Math.round(correct/total*100)+'% 正确率':'暂无分模式成绩')+'</span></div>';
+      }).join('')+'</div></section>';
+  }
   if (quiz.finished) {
     const rows = ['p','s'].map(kind=>{
       const subset = quiz.questions.filter(q=>q.c.kind===kind);
@@ -131,7 +153,7 @@ function test() {
     return '<div class="ex-empty"><h3>测试完成</h3><p>'+rows+'</p>'+button('reviewQuiz','回看整题')+button('resetQuiz','新测试','')+'</div>';
   }
   const {c,options,answer,correct,prompt,field} = quiz.questions[quiz.index];
-  return '<article class="ex-card"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span></div><h3'+(field==='en'?'':' lang="en"')+'>'+esc(prompt)+'</h3>'+
+  return '<article class="ex-card"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span><span>⚡ 连对 '+(quiz.streak||0)+'</span></div><h3'+(field==='en'?'':' lang="en"')+'>'+esc(prompt)+'</h3>'+
     '<div class="ex-options">'+options.map((opt,i)=>button('answer',esc(opt),'secondary '+(answer!==null?(opt===correct?'ex-correct':opt===answer?'ex-incorrect':''):''),'data-index="'+i+'" '+(answer===null?'':'disabled'))).join('')+'</div>'+
     (answer===null?'':'<p class="ex-note">'+(answer===correct?'答对了':'正确答案 · '+esc(correct))+(field==='note'?' · 主干 '+esc(c.main):c.note?' · '+esc(c.note):' · '+esc(c.title))+'</p>')+
     '<div class="ex-steps">'+button('quizPrev','← 上一题','secondary',quiz.index===0?'disabled':'')+
@@ -142,24 +164,39 @@ function notebook() {
   return '<div class="ex-notebook">'+(list.map(c=>'<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(data.favorites[c.id].join(' · '))+'</small></span>'+
     button('openSaved','查看','secondary','data-id="'+c.id+'"')+button('tagSaved','标签','secondary','data-id="'+c.id+'"')+'</div>').join('')||'<p class="ex-empty">在卡片上点 ☆，选好标签后即可收藏。</p>')+'</div>';
 }
-const themeRun = () => data.themes[dayKey()] ??= {step:0};
+function themeRun() {
+  const key=themeKey();
+  if(data.themes[key]) return data.themes[key];
+  const list=cards.filter(c=>c.scene===themeScene()&&!c.url);
+  const phrases=list.filter(c=>c.kind==='p');
+  const sentences=list.filter(c=>c.kind==='s');
+  const positions=shuffle([0,1,2,3]);
+  const specs=[[phrases[0],'zh'],[phrases[1],'en'],[sentences[0],'zh'],[phrases[2],'en'],[sentences[1],'main']];
+  const questions=specs.map(([c,field],i)=>{
+    const correct=c[field];
+    const sameKind=cards.filter(r=>r.kind===c.kind&&r[field]&&r[field]!==correct);
+    const candidates=[...shuffle(sameKind.filter(r=>r.scene===c.scene)),...shuffle(sameKind.filter(r=>r.scene!==c.scene))];
+    const options=[...new Set(candidates.map(r=>r[field]))].slice(0,3);
+    options.splice(i===4?(positions[3]+1)%4:positions[i],0,correct);
+    return {id:c.id,field,options};
+  });
+  return data.themes[key]={step:0,questions,response:sentences[1].id};
+}
 function themeContent() {
-  const scene = sceneForDay();
-  const run = themeRun();
-  const list = cards.filter(c=>c.scene===scene);
-  if (run.step>=3) {
+  const run=themeRun();
+  if(run.step>=relaySteps) {
     const label=(kind,initial)=>{
-      const receipt=window.WILDWORDS.data.expressionRewards?.[dayKey()+'/'+kind];
+      const receipt=window.WILDWORDS.data.expressionRewards?.[themeKey()+'/'+kind];
       return receipt?(receipt.shown<receipt.ids.length?'继续翻牌':'查看奖励'):initial;
     };
-    return '<div class="ex-theme-content"><h3>今日表达接力已完成</h3><div class="ex-actions">'+button('rewardThree',label('rewardThree','翻开 3 张奖励卡'))+button('chest',label('chest','开启主题宝箱'),'')+'</div></div>';
+    return '<div class="ex-theme-content"><h3>本期接力已完成</h3><div class="ex-actions">'+button('rewardThree',label('rewardThree','翻开 3 张奖励卡'))+button('chest',label('chest','开启主题宝箱'),'')+'</div></div>';
   }
-  const item = run.step===0?list.find(c=>c.kind==='p'):list.filter(c=>c.kind==='s')[run.step-1];
-  const alternatives = run.step<2?[item.zh,...cards.filter(c=>c.kind===item.kind&&c.scene!==(scene)&&c.scene===(scene+1)%scenes.length).slice(0,2).map(c=>c.zh)]:[];
-  const choices = [...alternatives.slice(1,1+scene%3),...alternatives.slice(0,1),...alternatives.slice(1+scene%3)];
-  return '<div class="ex-theme-content"><small>第 '+(run.step+1)+' / 3 步 · '+['辨认短语','理解句子','场景回应'][run.step]+'</small><h3'+(run.step===2?'':' lang="en"')+'>'+esc(run.step===2?item.zh:item.en)+'</h3>'+
-    (run.step===2?'<form class="ex-reply"><label><span>想象你就在现场，试着用自己的话写一句英文</span><textarea name="reply" class="field" required minlength="8" maxlength="300" placeholder="Write your response">'+esc(run.draft||'')+'</textarea></label><details><summary>查看参考表达</summary><p lang="en">'+esc(item.en)+'</p></details><button type="submit">完成接力</button></form>':
-    '<div class="ex-options">'+choices.map(opt=>button('themeChoice',esc(opt),'secondary','data-right="'+Number(opt===item.zh)+'"')).join('')+'</div><p role="status" id="exThemeFeedback"></p>')+'</div>';
+  const question=run.questions[run.step], item=byId.get(question?.id||run.response);
+  const label=question?({zh:'选中文意思',en:'选英文表达',main:'找出句子主干'})[question.field]:'场景回应';
+  const prompt=question&&question.field!=='en'?item.en:item.zh;
+  return '<article class="ex-card"><small>第 '+(run.step+1)+' / '+relaySteps+' 步 · '+label+'</small><h3>'+esc(prompt)+'</h3>'+
+    (question?'<div class="ex-options">'+question.options.map((opt,i)=>button('themeChoice',esc(opt),'secondary','data-index="'+i+'"')).join('')+'</div><p role="status" id="exThemeFeedback"></p>':
+    '<form class="ex-reply"><label><span>在这个场景中写至少两句、共 12 个英文词。第一句回应提示，第二句补充理由、细节或一个后续问题。</span><textarea name="reply" class="field" required maxlength="500" placeholder="Write your response">'+esc(run.draft||'')+'</textarea></label><details><summary>查看一句参考表达</summary><p lang="en">'+esc(item.en)+'</p></details><p role="status"></p><button type="submit">完成接力</button></form>')+'</article>';
 }
 const wordMap=[
   ['clarify','澄清','explain','解释','confuse','使困惑',23],
@@ -172,28 +209,64 @@ const wordMap=[
   ['reserve','预订','book','预订场地或时间','release','释放已占用的位置',28]
 ];
 function exploreView() {
-  const [word,zh,related,relatedZh,opposite,oppositeZh,scene]=wordMap[wordNode];
-  return '<div class="ex-map"><h3>词汇探索</h3><div class="ex-map-nodes">'+wordMap.map(([term],i)=>
+  const [word,zh,related,relatedZh,opposite,oppositeZh]=wordMap[wordNode];
+  return '<div class="ex-map"><div class="ex-map-nodes">'+wordMap.map(([term],i)=>
     button('wordNode',term,i===wordNode?'':'secondary','data-id="'+i+'" aria-pressed="'+(i===wordNode)+'"')).join('')+
     '</div><article class="ex-card"><h3 lang="en">'+esc(word)+'</h3><p>'+esc(zh)+'</p><div class="ex-map-branches">'+
     '<div><small>近义或相关用法</small><strong lang="en">'+esc(related)+'</strong><p>'+esc(relatedZh)+'</p></div>'+
     '<div><small>对照用法</small><strong lang="en">'+esc(opposite)+'</strong><p>'+esc(oppositeZh)+'</p></div></div>'+
-    button('readScene','去场景中练习','secondary','data-id="'+scene+'"')+'</article></div>';
+    button('word','查看词条','secondary','data-word="'+word+'"')+'</article></div>';
 }
 function readView() {
   const list=window.WDExpressionReading;
-  const [title,en,zh,scene]=list[sceneForDay()%list.length];
+  const [title,en,zh,scene]=list[calendarDay()%list.length];
   return '<article class="ex-card"><small>每日短读 · 原创</small><h3>'+esc(title)+'</h3><p lang="en">'+esc(en)+'</p><details><summary>查看译文</summary><p>'+esc(zh)+'</p></details>'+button('readScene','查看相关表达','secondary','data-id="'+scene+'"')+'</article>';
 }
+const titles={p:'短语卡',s:'句子卡',test:'表达测试',relay:'表达接力',notebook:'素材本'};
+function openPage(next, back='home') {
+  page=next;
+  returnPage=back;
+  settingsOpen=false;
+  render();
+  if(next==='home') root.querySelector('[data-id="test"]')?.focus({preventScroll:true});
+  else if(!root.querySelector('.ex-test-window[open]')) root.querySelector('.ex-stage-heading')?.focus({preventScroll:true});
+}
 function render() {
+  const scroll=root.querySelector('.ex-stage')?.scrollTop||0;
   renderedDay=dayKey();
-  const ready = Object.values(window.WILDWORDS?.data.encounters||{}).some(r=>r?.status==='ready');
-  root.innerHTML = '<header class="ex-header"><div><p class="ex-eyebrow">WORDDAY / EXPRESSIONS</p><h2>表达</h2><p>从一个场景，练到一句能用的话。</p></div>'+'<div class="ex-header-actions">'+button('reading',reading?'返回学习':'每日短读')+button('notebook',libraryPage?'返回学习':'素材本')+button('explore',explore?'返回学习':'词汇探索')+'</div>'+'</header>'+
-    '<section class="panel ex-theme"><div class="ex-theme-top"><div><p class="ex-eyebrow">今日场景</p><h3>'+esc(scenes[sceneForDay()][0])+'</h3></div>'+button('theme',theme?'收起':'表达接力',theme?'secondary':'')+'</div>'+
-    (theme?themeContent():'')+'</section>'+
-    '<section class="panel ex-body">'+(explore?exploreView():reading?readView():libraryPage?'<h3>素材本</h3>'+notebook():
-      '<div class="ex-tabs" aria-label="表达练习类型">'+opts.mode.slice(0,2).concat([['test','测试']]).map(([id,label])=>button('tab',label,tab===id?'':'secondary','data-id="'+id+'" aria-pressed="'+(tab===id)+'"')).join('')+'</div>'+
-      (ready?button('encounter','🐾 表达奇遇','secondary'):'')+(tab==='test'?test():learning()))+'</section>';
+  const ready=Object.values(window.WILDWORDS?.data.encounters||{}).some(r=>r?.status==='ready');
+  const encounter=ready?button('encounter','🐾 表达奇遇'):'';
+  const testCenter=page==='testCenter';
+  const existingCenter=root.querySelector('.ex-test-window');
+  if(testCenter&&existingCenter?.open) {
+    existingCenter.querySelector('.ex-test-window-body').innerHTML=test(true);
+    return;
+  }
+  existingCenter?.close();
+  if(page!=='home'&&!testCenter) {
+    const body=page==='relay'?'<p class="ex-stage-topic">'+esc(scenes[themeScene()][0])+'</p>'+themeContent():
+      page==='notebook'?notebook():page==='test'?test():learning();
+    root.innerHTML='<div class="ex-stage"><div class="ex-stage-inner'+(page==='test'?' ex-test-shell':'')+'"><header class="ex-stage-bar">'+button('home',returnPage==='notebook'?'← 素材本':'← 表达')+
+      '<h2 class="ex-stage-heading" tabindex="-1">'+(page==='test'?'WORDDAY / TEST':titles[page])+'</h2>'+encounter+'</header>'+body+'</div></div>';
+    root.querySelector('.ex-stage').scrollTop=scroll;
+    return;
+  }
+  const entries=[['p','01','短语卡','学搭配，看例句'],['s','02','句子卡','读译文，拆主干'],['test','03','表达测试',quiz&&!quiz.finished?'继续上次测试':'测短语、句意与句型']];
+  root.innerHTML='<header class="ex-header"><div><p class="ex-eyebrow">WORDDAY / EXPRESSIONS</p><h2>表达</h2><p>从一个场景，练到一句能用的话。</p></div></header>'+
+    '<div class="ex-practice-entries">'+entries.map(([id,number,title,desc])=>button('tab','<small>'+number+'</small><span><b>'+title+'</b><span>'+desc+'</span></span><i aria-hidden="true">→</i>','secondary ex-entry','data-id="'+id+'"')).join('')+'</div>'+
+    '<section class="panel ex-theme"><div class="ex-theme-top"><div><p class="ex-eyebrow">每三天一题组</p><h3>'+esc(scenes[themeScene()][0])+'</h3></div>'+button('theme','表达接力','')+'</div>'+encounter+'</section>'+
+    '<section class="panel ex-daily-reading">'+readView()+'</section>'+
+    '<section class="panel ex-notebook-entry"><div><h3>素材本</h3><p>'+Object.keys(data.favorites).length+' 条收藏</p></div>'+button('notebook','查看收藏')+'</section>';
+  if(testCenter) {
+    const center=document.createElement('dialog');
+    center.className='ex-dialog ex-test-window';
+    center.setAttribute('aria-label','表达自由测试中心');
+    center.innerHTML='<header class="ex-stage-bar">'+button('home','← 表达','secondary','autofocus')+
+      '<h2 class="ex-stage-heading">WORDDAY / TEST</h2></header><div class="ex-test-window-body">'+test(true)+'</div>';
+    center.addEventListener('cancel',ev=>{ev.preventDefault();openPage('home');});
+    root.append(center);
+    center.showModal();
+  }
 }
 function tagDialog(c) {
   openDialog('收藏标签','<p>'+esc(c.en)+'</p><form class="ex-tagform"><fieldset><legend>至少选一个，可多选</legend><div class="ex-tags">'+tagNames.map(name=>'<label><input type="checkbox" name="tag" value="'+name+'" '+(data.favorites[c.id]?.includes(name)?'checked':'')+'><span>'+name+'</span></label>').join('')+'</div></fieldset><p role="status"></p><div class="ex-actions">'+(data.favorites[c.id]?'<button type="button" class="secondary ex-remove">移除收藏</button>':'')+'<button type="submit">保存</button></div></form>');
@@ -229,7 +302,7 @@ function chestCards() {
   });
   return counts.flatMap((count,tier)=>Array.from({length:count},()=>W.sample(tier).id));
 }
-async function rewards(kind, mode='open', rewardDay=dayKey()) {
+async function rewards(kind, mode='open', rewardDay=themeKey()) {
   if (busy) return;
   busy=true;
   const W = window.WILDWORDS, receiptKey = rewardDay+'/'+kind;
@@ -239,7 +312,7 @@ async function rewards(kind, mode='open', rewardDay=dayKey()) {
       const claims = raw.expressionRewards ??= {};
       let receipt = claims[receiptKey];
       if (!receipt) {
-        if(mode==='reveal'||data.themes[rewardDay]?.step<3||!data.themes[rewardDay]) throw new Error('Reward unavailable');
+        if(mode==='reveal'||data.themes[rewardDay]?.step<relaySteps||!data.themes[rewardDay]) throw new Error('Reward unavailable');
         const ids = kind==='chest'?chestCards():Array.from({length:3},()=>W.randomCard().id).sort((a,b)=>W.animals.find(c=>c.id===a).rarity-W.animals.find(c=>c.id===b).rarity);
         receipt = claims[receiptKey] = {ids,shown:0};
         for (const id of ids) {
@@ -283,8 +356,17 @@ root.addEventListener('input',ev=>{
     save(false);
   }
 });
+root.addEventListener('toggle',ev=>{
+  if(ev.target.matches('.ex-settings')&&ev.target.isConnected) settingsOpen=ev.target.open;
+},true);
 root.addEventListener('change',ev=>{
-  if (ev.target.form?.classList.contains('ex-test-form')) return;
+  if (ev.target.closest('.ex-test-filters')) {
+    quizPrefs[ev.target.name]=ev.target.value;
+    quizError='';
+    render();
+    root.querySelector('.ex-test-filters [name="'+ev.target.name+'"]')?.focus();
+    return;
+  }
   const name = ev.target.dataset.filter;
   if (name==='exam') exam=ev.target.value;
   else if (name==='source') source=ev.target.value;
@@ -295,17 +377,22 @@ root.addEventListener('change',ev=>{
 root.addEventListener('submit',ev=>{
   ev.preventDefault();
   if(ev.target.classList.contains('ex-reply') && renderedDay!==dayKey()) { render(); return; }
-  if (ev.target.classList.contains('ex-test-form')) startQuiz(ev.target);
-  else if (ev.target.classList.contains('ex-search')) {
+  if (ev.target.classList.contains('ex-search')) {
     query = new FormData(ev.target).get('q').trim().toLowerCase();
     current=null; position=0; context=[]; render();
-  } else if (ev.target.classList.contains('ex-reply') && themeRun().step===2) {
+  } else if (ev.target.classList.contains('ex-reply') && themeRun().step===relaySteps-1) {
     const reply = new FormData(ev.target).get('reply').trim();
-    if (reply.length<8 || !/[A-Za-z]/.test(reply)) { ev.target.elements.reply.focus(); return; }
+    const words=reply.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g)||[];
+    const sentences=reply.split(/[.!?]+/).filter(part=>(part.match(/[A-Za-z]+/g)||[]).length>=3);
+    if(words.length<12||sentences.length<2) {
+      ev.target.querySelector('[role=status]').textContent='请用句号、问号或感叹号分出至少两句，共写至少 12 个英文词。';
+      ev.target.elements.reply.focus();
+      return;
+    }
     const run = themeRun();
     run.reply = reply;
     delete run.draft;
-    run.step=3;
+    run.step=relaySteps;
     event('themes');
     save(); render();
   }
@@ -316,23 +403,30 @@ root.addEventListener('click',ev=>{
   if(['themeChoice','rewardThree','chest'].includes(b.dataset.ex) && renderedDay!==dayKey()) { render(); return; }
   const c=byId.get(current)||pool(tab,exam,source,query,sceneFilter)[position];
   switch(b.dataset.ex) {
-    case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; render(); break;
-    case 'notebook': reading=false; explore=false; libraryPage=!libraryPage; render(); break;
-    case 'reading': reading=!reading; explore=false; libraryPage=false; render(); break;
-    case 'explore': explore=!explore; libraryPage=false; reading=false; render(); break;
-    case 'wordNode': wordNode=Number(b.dataset.id); render(); break;
-    case 'readScene': reading=false; explore=false; tab='p'; exam=''; source=''; query=''; sceneFilter=b.dataset.id; current=null; context=[]; position=0; render(); break;
-    case 'theme': theme=!theme; render(); break;
-    case 'themeChoice':
-      if (b.dataset.right==='1') { themeRun().step++; save(false); render(); }
-      else document.getElementById('exThemeFeedback').textContent='再试一次，留意句中的关键词。';
+    case 'home': openPage(returnPage); break;
+    case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; exam=''; source=''; query=''; sceneFilter=''; openPage(tab==='test'?'testCenter':tab); break;
+    case 'notebook': openPage('notebook'); break;
+    case 'readScene': tab='p'; exam=''; source=''; query=''; sceneFilter=b.dataset.id; current=null; context=[]; position=0; openPage('p'); break;
+    case 'theme': openPage('relay'); break;
+    case 'themeChoice': {
+      const run=themeRun(), q=run.questions[run.step];
+      if(!q) break;
+      const correct=q.options[Number(b.dataset.index)]===byId.get(q.id)[q.field];
+      playFeedback(correct?'correct':'wrong');
+      if(correct) { run.step++; save(false); render(); }
+      else {
+        b.disabled=true;
+        b.classList.add('ex-incorrect');
+        document.getElementById('exThemeFeedback').textContent='这个选项不合适。再看一下题干，试试其他选项。';
+      }
       break;
-    case 'rewardThree': case 'chest': if (themeRun().step>=3) rewards(b.dataset.ex); break;
+    }
+    case 'rewardThree': case 'chest': if(themeRun().step>=relaySteps) rewards(b.dataset.ex); break;
     case 'favorite': if(c) tagDialog(c); break;
     case 'tagSaved': tagDialog(byId.get(b.dataset.id)); break;
     case 'openSaved': {
       const saved=byId.get(b.dataset.id);
-      libraryPage=false; tab=saved.kind; context=[]; showCard(saved); break;
+      tab=saved.kind; context=[]; current=saved.id; openPage(tab,'notebook'); break;
     }
     case 'context': context.push(c.id); showCard(byId.get(b.dataset.id)); break;
     case 'back': showCard(byId.get(context.pop())); break;
@@ -350,11 +444,20 @@ root.addEventListener('click',ev=>{
     case 'word': showDetail(b.dataset.word); break;
     case 'listen': if (c) speak(c.en); break;
     case 'encounter': window.WILDWORDS?.encounter(); break;
+    case 'startQuiz': if(!quiz||quiz.finished||window.confirm('开始新测试会结束当前测试。继续吗？')) startQuiz(b.dataset.id); break;
+    case 'resumeQuiz': openPage('test'); break;
     case 'answer': {
       const q=quiz.questions[quiz.index];
       if (q.answer!==null) break;
       q.answer=q.options[Number(b.dataset.index)];
-      if (q.answer===q.correct) { event('correct'); delete data.wrong[q.c.id]; }
+      const correct=q.answer===q.correct;
+      quiz.streak=correct?(quiz.streak||0)+1:0;
+      playFeedback(correct?'correct':'wrong');
+      if(correct) {
+        event('correct'); delete data.wrong[q.c.id];
+        const milestone=quiz.streak, activeQuiz=quiz;
+        setTimeout(()=>{if(mainTab==='expressions'&&page==='test'&&quiz===activeQuiz&&!quiz.finished)window.WDShowStudyCombo?.(milestone);},400);
+      }
       else data.wrong[q.c.id]=true;
       save(); render(); break;
     }
@@ -364,19 +467,19 @@ root.addEventListener('click',ev=>{
       else {
         quiz.finished=true;
         if (!quiz.recorded) {
-          quiz.recorded=true; event('tests');
-          data.quizHistory.unshift({date:dayKey(),correct:quiz.questions.filter(q=>q.answer===q.correct).length,total:quiz.questions.length});
+          quiz.recorded=true; event('tests'); playFeedback('finish');
+          data.quizHistory.unshift({date:dayKey(),mode:quiz.mode,correct:quiz.questions.filter(q=>q.answer===q.correct).length,total:quiz.questions.length});
           data.quizHistory.length=Math.min(data.quizHistory.length,100);
           save();
         }
       }
       render(); break;
     case 'reviewQuiz': quiz.finished=false; quiz.index=0; render(); break;
-    case 'resetQuiz': quiz=null; render(); break;
+    case 'resetQuiz': quiz=null; openPage('testCenter'); break;
   }
 });
 window.WDExpressions={
-  open() {
+  open(next='home') {
     const stage=document.getElementById('studyStage');
     if (stage?.classList.contains('active')) switchTab('learn');
     mainTab='expressions';
@@ -385,20 +488,20 @@ window.WDExpressions={
     document.querySelector('.hero').style.display='none';
     document.querySelectorAll('[data-main-tab]').forEach(b=>b.classList.toggle('active',b.dataset.mainTab==='expressions'));
     document.querySelectorAll('.wrap > .section').forEach(s=>s.classList.toggle('active',s===root));
-    render();
+    openPage(next);
     window.scrollTo(0,0);
   },
   fromWord(word) {
     const token = String(word).toLowerCase();
     const match = cards.find(c=>c.en.toLowerCase().match(/[a-z]+/g)?.includes(token));
     if (!match) return false;
-    tab=match.kind; libraryPage=false; reading=false; explore=false; context=[]; current=match.id; this.open();
+    tab=match.kind; context=[]; current=match.id; this.open(tab);
     return true;
   },
   hasWord(word) { return cards.some(c=>c.en.toLowerCase().match(/[a-z]+/g)?.includes(String(word).toLowerCase())); },
   showEncounter() {
     if(mainTab!=='expressions' || root.querySelector('[data-ex="encounter"]')) return;
-    root.querySelector('.ex-theme-top')?.insertAdjacentHTML('afterend',button('encounter','🐾 表达奇遇'));
+    (root.querySelector('.ex-stage-bar')||root.querySelector('.ex-theme-top'))?.insertAdjacentHTML('beforeend',button('encounter','🐾 表达奇遇'));
   },
   snapshot() { return data; },
   importBackup(incoming) {
@@ -416,6 +519,18 @@ window.WDExpressions={
   stats() { return { learned:Object.keys(data.learned).length, tests:Object.values(data.days).reduce((n,d)=>n+(d.tests||0),0), themes:Object.values(data.days).reduce((n,d)=>n+(d.themes||0),0) }; },
   totals(days) { return Object.fromEntries(['studied','correct','tests','themes'].map(k=>[k,days.reduce((n,d)=>n+(data.days[d]?.[k]||0),0)])); }
 };
+const exploration=document.createElement('details');
+exploration.className='panel ex-word-exploration';
+exploration.innerHTML='<summary>词汇探索</summary>'+exploreView();
+document.getElementById('vocabularyCatalog')?.after(exploration);
+exploration.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-ex]');
+  if(b?.dataset.ex==='wordNode') {
+    wordNode=Number(b.dataset.id);
+    exploration.querySelector('.ex-map').outerHTML=exploreView();
+    exploration.querySelector('[data-id="'+wordNode+'"]')?.focus();
+  } else if(b?.dataset.ex==='word') showDetail(b.dataset.word);
+});
 const originalDetail=showDetail;
 showDetail=function(word) {
   originalDetail(word);
