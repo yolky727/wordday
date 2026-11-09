@@ -77,6 +77,10 @@ function learned(card) {
       if(!reviewed.includes(card.id)) reviewed.push(card.id);
     }
   }
+  // Daily progress is a distinct-card set, including explicit review sessions.
+  const todaySet=data.dailyLearned[today]??={p:[],s:[]};
+  const dayItems=todaySet[card.kind]??=[];
+  if(!dayItems.includes(card.id)) dayItems.push(card.id);
   const due = new Date();
   due.setDate(due.getDate() + [1,3,7,14,30][Math.min(record.times-1,4)]);
   record.last = today;
@@ -109,7 +113,7 @@ function cardView(c) {
     (c.note?'<div class="ex-note"><b>句子主干</b> <span lang="en">'+esc(c.main)+'</span><br><b>句型</b> '+esc(c.note)+'</div>':'<p class="ex-note"><b>同场景例句</b> '+esc(related[0]?.en)+'</p>')+
     '<details><summary>'+(c.kind==='p'?'同场景短语辨析':'同场景句型对照')+'</summary>'+comparison.map(r=>'<p><b lang="en">'+esc(r.en)+'</b> · '+esc(r.zh)+'</p>').join('')+'</details>'+
     '<div class="ex-links">'+related.map(r=>button('context',esc(r.en),'secondary','data-id="'+r.id+'"')).join('')+'</div>'+
-    '<footer>'+(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.type)+'</a>':'<span>原创练习</span>')+(word?button('word','查词','secondary','data-word="'+word+'"'):'')+button('listen','发音')+button('learned','记住了','')+'</footer></article>';
+    '<footer>'+(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.type)+'</a>':'<span>原创练习</span>')+(word?button('word','查词','secondary','data-word="'+word+'"'):'')+button('listen','发音')+button('learned','记住了','','data-card-id="'+esc(c.id)+'"')+'</footer></article>';
 }
 function learning() {
   const list = studyPool();
@@ -497,7 +501,7 @@ root.addEventListener('click',ev=>{
   const b=ev.target.closest('[data-ex]');
   if (!b) return;
   if(['themeChoice','rewardThree','chest'].includes(b.dataset.ex) && renderedDay!==dayKey()) { render(); return; }
-  const c=byId.get(current)||pool(tab,exam,source,query,sceneFilter)[position];
+  const c=byId.get(b.dataset.cardId)||byId.get(current)||studyPool()[Math.min(position,studyPool().length-1)];
   switch(b.dataset.ex) {
     case 'home': openPage(returnPage); break;
     case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; if(tab!=='test')restoreLearningFilters(tab); openPage(tab==='test'?'testCenter':tab); break;
@@ -540,16 +544,18 @@ root.addEventListener('click',ev=>{
     case 'next': current=null; position++; render(); break;
     case 'learned':
       if (c) {
+        // Capture the displayed card by stable ID, never by a stale list index.
         const before=studyPool();
         const index=before.findIndex(item=>item.id===c.id);
-        const next=before[index+1];
+        const nextId=before[index+1]?.id || before[index-1]?.id || null;
         learned(c);
-        if(context.length) current=context.pop();
-        else {
+        if(context.length) {
+          current=context.pop();
+        } else {
           const after=studyPool();
+          const nextIndex=nextId?after.findIndex(item=>item.id===nextId):-1;
+          position=nextIndex>=0?nextIndex:Math.min(Math.max(0,index),Math.max(0,after.length-1));
           current=null;
-          if(next && after.some(item=>item.id===next.id)) position=after.findIndex(item=>item.id===next.id);
-          else position=Math.min(Math.max(0,index),Math.max(0,after.length-1));
           if(!after.length && source==='') toast('当前范围全部学习完成！');
         }
         render();
