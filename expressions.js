@@ -44,7 +44,7 @@ const opts = {
   source:[['','全部内容'],['learned','已学'],['favorites','收藏'],['wrong','错题'],['official','官方样题']],
   count:[['5','5 题'],['10','10 题'],['20','20 题']]
 };
-let tab = 'p', exam = '', source = '', query = '', sceneFilter = '', current = null, position = 0, context = [], quiz = null, quizError = '', busy = false, wordNode = 0, renderedDay = dayKey();
+let tab = 'p', exam = '', source = '', query = '', sceneFilter = '', current = null, position = 0, context = [], quiz = data.quizDraft?.questions?.length ? data.quizDraft : null, quizError = '', busy = false, wordNode = 0, renderedDay = dayKey();
 let page = 'home', returnPage = 'home', settingsOpen = false;
 const quizPrefs = {exam:'', source:'', count:'10'};
 const testModes = [['p','短语测试'],['s','句子测试'],['mixed','综合测试']];
@@ -123,6 +123,8 @@ function startQuiz(mode) {
   });
   quiz = { mode,questions,index:0,finished:false,streak:0 };
   page='test';
+  data.quizDraft=quiz;
+  save(false);
   settingsOpen=false;
   render();
 }
@@ -153,11 +155,19 @@ function test(center=false) {
     return '<div class="ex-empty"><h3>测试完成</h3><p>'+rows+'</p>'+button('reviewQuiz','回看整题')+button('resetQuiz','新测试','')+'</div>';
   }
   const {c,options,answer,correct,prompt,field} = quiz.questions[quiz.index];
-  return '<article class="ex-card"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span><span>⚡ 连对 '+(quiz.streak||0)+'</span></div><h3'+(field==='en'?'':' lang="en"')+'>'+esc(prompt)+'</h3>'+
-    '<div class="ex-options">'+options.map((opt,i)=>button('answer',esc(opt),'secondary '+(answer!==null?(opt===correct?'ex-correct':opt===answer?'ex-incorrect':''):''),'data-index="'+i+'" '+(answer===null?'':'disabled'))).join('')+'</div>'+
+  return '<article class="ex-card ex-question"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span><span>⚡ 连对 '+(quiz.streak||0)+'</span></div><progress max="'+quiz.questions.length+'" value="'+(quiz.index+1)+'" aria-label="测试进度"></progress><h3'+(field==='en'?'':' lang="en"')+'>'+esc(prompt)+'</h3>'+
+    '<div class="ex-options">'+options.map((opt,i)=>button('answer','<span class="ex-option-index" aria-hidden="true">'+String.fromCharCode(65+i)+'</span><span>'+esc(opt)+'</span>','secondary '+(answer!==null?(opt===correct?'ex-correct':opt===answer?'ex-incorrect':''):''),'data-index="'+i+'" '+(answer===null?'':'disabled'))).join('')+'</div>'+
     (answer===null?'':'<p class="ex-note">'+(answer===correct?'答对了':'正确答案 · '+esc(correct))+(field==='note'?' · 主干 '+esc(c.main):c.note?' · '+esc(c.note):' · '+esc(c.title))+'</p>')+
+    '<div class="ex-quiz-actions">'+button('quizFavorite',data.favorites[c.id]?'★ 已收藏':'☆ 收藏')+(quiz.recorded?'':button('saveQuiz','保存并退出'))+'</div>'+
     '<div class="ex-steps">'+button('quizPrev','← 上一题','secondary',quiz.index===0?'disabled':'')+
     button('quizNext',quiz.index===quiz.questions.length-1?'查看结果':'下一题 →','',answer===null?'disabled':'')+'</div></article>';
+}
+function wrongBook() {
+  const list=cards.filter(c=>data.wrong[c.id]);
+  if(!list.length) return '<p class="ex-empty">答错的表达会自动收录在这里。</p>';
+  return '<div class="ex-wrong-tools">'+button('practiceWrong','重练错题','')+'</div><div class="ex-notebook">'+list.map(c=>
+    '<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(c.zh)+'</small></span>'+
+    button('openWrong','复习','secondary','data-id="'+c.id+'"')+'</div>').join('')+'</div>';
 }
 function notebook() {
   const list = cards.filter(c=>data.favorites[c.id]);
@@ -189,7 +199,7 @@ function themeContent() {
       const receipt=window.WILDWORDS.data.expressionRewards?.[themeKey()+'/'+kind];
       return receipt?(receipt.shown<receipt.ids.length?'继续翻牌':'查看奖励'):initial;
     };
-    return '<div class="ex-theme-content"><h3>本期接力已完成</h3><div class="ex-actions">'+button('rewardThree',label('rewardThree','翻开 3 张奖励卡'))+button('chest',label('chest','开启主题宝箱'),'')+'</div></div>';
+    return '<div class="ex-theme-content"><h3>本期接力已完成</h3><div class="ex-actions">'+button('rewardThree',label('rewardThree','翻开 3 张奖励卡'))+button('chest',label('chest','开启主题卡包'),'')+'</div></div>';
   }
   const question=run.questions[run.step], item=byId.get(question?.id||run.response);
   const label=question?({zh:'选中文意思',en:'选英文表达',main:'找出句子主干'})[question.field]:'场景回应';
@@ -222,7 +232,7 @@ function readView() {
   const [title,en,zh,scene]=list[calendarDay()%list.length];
   return '<article class="ex-card"><small>每日短读 · 原创</small><h3>'+esc(title)+'</h3><p lang="en">'+esc(en)+'</p><details><summary>查看译文</summary><p>'+esc(zh)+'</p></details>'+button('readScene','查看相关表达','secondary','data-id="'+scene+'"')+'</article>';
 }
-const titles={p:'短语卡',s:'句子卡',test:'表达测试',relay:'表达接力',notebook:'素材本'};
+const titles={p:'短语卡',s:'句子卡',test:'表达测试',relay:'表达接力',notebook:'素材本',wrong:'表达错题本'};
 function openPage(next, back='home') {
   page=next;
   returnPage=back;
@@ -245,17 +255,27 @@ function render() {
   existingCenter?.close();
   if(page!=='home'&&!testCenter) {
     const body=page==='relay'?'<p class="ex-stage-topic">'+esc(scenes[themeScene()][0])+'</p>'+themeContent():
-      page==='notebook'?notebook():page==='test'?test():learning();
-    root.innerHTML='<div class="ex-stage"><div class="ex-stage-inner'+(page==='test'?' ex-test-shell':'')+'"><header class="ex-stage-bar">'+button('home',returnPage==='notebook'?'← 素材本':'← 表达')+
+      page==='notebook'?notebook():page==='wrong'?wrongBook():page==='test'?test():learning();
+    root.innerHTML='<div class="ex-stage"><div class="ex-stage-inner'+(page==='test'?' ex-test-shell':'')+'"><header class="ex-stage-bar">'+button('home',returnPage==='notebook'?'← 素材本':returnPage==='wrong'?'← 错题本':'← 表达')+
       '<h2 class="ex-stage-heading" tabindex="-1">'+(page==='test'?'WORDDAY / TEST':titles[page])+'</h2>'+encounter+'</header>'+body+'</div></div>';
     root.querySelector('.ex-stage').scrollTop=scroll;
     return;
   }
-  const entries=[['p','01','短语卡','学搭配，看例句'],['s','02','句子卡','读译文，拆主干'],['test','03','表达测试',quiz&&!quiz.finished?'继续上次测试':'测短语、句意与句型']];
+  const entries=[
+    ['p','PHRASES','短语卡','学搭配，看例句','M7 13h16v13H7z M17 20h16v13H17z M7 18h10 M23 26h10'],
+    ['s','SENTENCES','句子卡','读译文，拆主干','M10 9H30V33H10z M14 15h12 M14 21h12 M14 27h7'],
+    ['test','PRACTICE','表达测试',quiz&&!quiz.finished?'继续上次测试':'检验短语、句意和句型','M8 12h7v7H8z M22 15h10 M8 24h7v7H8z M22 27h10 M8 26l3 3 6-8']
+  ];
+  const entry=([id,label,title,desc,path])=>button('tab',
+    '<span class="ex-entry-copy"><small class="ex-entry-label" aria-hidden="true">'+label+'</small><b>'+title+'</b><span>'+desc+'</span></span>'+
+    '<svg class="ex-entry-art" viewBox="0 0 40 40" aria-hidden="true"><path d="'+path+'"/></svg><i class="ex-entry-arrow" aria-hidden="true">↗</i>',
+    'secondary ex-entry','data-id="'+id+'"');
   root.innerHTML='<header class="ex-header"><div><p class="ex-eyebrow">WORDDAY / EXPRESSIONS</p><h2>表达</h2><p>从一个场景，练到一句能用的话。</p></div></header>'+
-    '<div class="ex-practice-entries">'+entries.map(([id,number,title,desc])=>button('tab','<small>'+number+'</small><span><b>'+title+'</b><span>'+desc+'</span></span><i aria-hidden="true">→</i>','secondary ex-entry','data-id="'+id+'"')).join('')+'</div>'+
+    '<div class="ex-practice-entries"><section aria-labelledby="exLearnGroup"><h3 id="exLearnGroup">学习表达</h3><div class="ex-study-entries">'+entries.slice(0,2).map(entry).join('')+'</div></section>'+
+    '<section aria-labelledby="exTestGroup"><h3 id="exTestGroup">检验掌握</h3>'+entry(entries[2])+'</section></div>'+
     '<section class="panel ex-theme"><div class="ex-theme-top"><div><p class="ex-eyebrow">每三天一题组</p><h3>'+esc(scenes[themeScene()][0])+'</h3></div>'+button('theme','表达接力','')+'</div>'+encounter+'</section>'+
     '<section class="panel ex-daily-reading">'+readView()+'</section>'+
+    '<section class="panel ex-notebook-entry ex-wrong-entry"><div><p class="ex-eyebrow">REVIEW</p><h3>表达错题本</h3><p>'+Object.keys(data.wrong).length+' 条待复习</p></div>'+button('wrong','查看错题')+'</section>'+
     '<section class="panel ex-notebook-entry"><div><h3>素材本</h3><p>'+Object.keys(data.favorites).length+' 条收藏</p></div>'+button('notebook','查看收藏')+'</section>';
   if(testCenter) {
     const center=document.createElement('dialog');
@@ -335,18 +355,45 @@ async function rewards(kind, mode='open', rewardDay=themeKey()) {
 }
 function reveal(kind,{ids,shown},rewardDay) {
   const W = window.WILDWORDS, left=ids.length-shown, last=W.animals.find(c=>c.id===ids[shown-1]);
-  const art = '<div class="ex-chest" aria-hidden="true"><div class="ex-chest-lid"></div><div class="ex-chest-base"><span>✦</span></div></div>';
+  const art = `<div class="ex-pack" aria-hidden="true">
+    <svg viewBox="0 0 220 260" fill="none">
+      <defs>
+        <linearGradient id="ex-pack-foil" x1="46" y1="22" x2="181" y2="239" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#fff0bd"/><stop offset=".45" stop-color="#e0bc77"/><stop offset="1" stop-color="#a97338"/>
+        </linearGradient>
+        <linearGradient id="ex-pack-seal" x1="42" y1="0" x2="178" y2="0" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#a9793d"/><stop offset=".46" stop-color="#fff0ba"/><stop offset="1" stop-color="#bd8d50"/>
+        </linearGradient>
+      </defs>
+      <path d="M43 49H177L173 76V202L178 226Q179 231 174 233H46Q41 231 42 226L47 202V76Z" fill="url(#ex-pack-foil)" stroke="#9d703b"/>
+      <path d="M52 67L60 82V196L52 216M168 67L160 82V196L168 216" stroke="#fff5ce" stroke-opacity=".62"/>
+      <path d="M52 63L74 72H128L157 57" stroke="#fff6d7" stroke-opacity=".64"/>
+      <path d="M77 98H143M77 184H143" stroke="#765124" stroke-opacity=".56"/>
+      <text x="110" y="90" fill="#57391c" font-size="8" letter-spacing="2.1" text-anchor="middle" font-family="system-ui">WORDDAY</text>
+      <path d="M110 113Q114 134 134 138Q114 142 110 163Q106 142 86 138Q106 134 110 113Z" fill="#765124"/>
+      <path d="M110 119Q113 135 128 138Q113 141 110 157Q107 141 92 138Q107 135 110 119Z" fill="#fff0bd"/>
+      <text x="110" y="201" fill="#57391c" font-size="7" letter-spacing="1.6" text-anchor="middle" font-family="system-ui">RELAY EDITION</text>
+      <path d="M43 215H177L178 229Q178 233 174 233H46Q42 233 42 229Z" fill="url(#ex-pack-seal)" stroke="#a5763c"/>
+      <path d="M50 220H170M50 224H170M50 228H170" stroke="#795129" stroke-opacity=".45"/>
+      <path class="ex-pack-mouth" d="M48 51L57 47L66 52L75 48L86 52L97 47L108 51L120 47L131 51L142 48L153 52L164 47L173 51" stroke="#5d381b" stroke-width="2"/>
+      <g class="ex-pack-strip">
+        <path d="M45 25H175Q179 25 179 29L177 52L164 47L153 52L142 48L131 51L120 47L108 51L97 47L86 52L75 48L66 52L57 47L43 52L41 29Q41 25 45 25Z" fill="url(#ex-pack-seal)" stroke="#a5763c"/>
+        <path d="M49 31H171M49 36H171M49 41H171" stroke="#795129" stroke-opacity=".43"/>
+      </g>
+    </svg></div>`;
   const sparks = '<div class="ex-sparks" aria-hidden="true">'+Array.from({length:14},(_,i)=>'<i style="--i:'+i+'">✦</i>').join('')+'</div>';
   const card = c => W.card(c,false,!!W.data.advanced[c.id],'');
-  openDialog(kind==='chest'?'主题宝箱':'主题奖励','<div class="ex-reveal '+(last?'ex-flip':'')+'">'+(last?'<div class="ex-reward-card">'+card(last)+'</div>'+sparks:art)+'</div>'+
-    '<div class="ex-reward-foot"><span>剩余卡牌 <b>'+left+'</b></span>'+(left?'<button class="ex-next-reward">'+(shown?'翻开下一张':'开箱')+'</button>':'<button class="ex-next-reward">完成</button>')+'</div>'+
+  openDialog(kind==='chest'?'主题卡包':'主题奖励','<div class="ex-reveal '+(last?'ex-flip':'')+'">'+(last?'<div class="ex-reward-card '+(kind==='chest'&&shown===1?'ex-pack-first':'')+'">'+card(last)+'</div>'+sparks:art)+'</div>'+
+    '<div class="ex-reward-foot"><span>剩余卡牌 <b>'+left+'</b></span>'+(left?'<button class="ex-next-reward">'+(shown?'翻开下一张':'拆卡包')+'</button>':'<button class="ex-next-reward">完成</button>')+'</div>'+
     (shown===ids.length?'<details class="ex-reward-summary"><summary>本次获得</summary><div>'+ids.map(id=>card(W.animals.find(c=>c.id===id))).join('')+'</div></details>':''));
   dialog.querySelector('.ex-next-reward').addEventListener('click',()=>{
     if (!left) { closeDialog(); return; }
     if (!shown&&kind==='chest') {
       dialog.querySelector('.ex-next-reward').disabled=true;
-      dialog.querySelector('.ex-chest')?.classList.add('opening');
-      setTimeout(()=>{if(dialog.open) rewards(kind,'reveal',rewardDay);},matchMedia('(prefers-reduced-motion: reduce)').matches?0:420);
+      const pack=dialog.querySelector('.ex-pack');
+      pack?.classList.add('opening');
+      const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('wd26-reduced');
+      setTimeout(()=>{if(dialog.open&&pack?.isConnected) rewards(kind,'reveal',rewardDay);},reduced?0:460);
     } else rewards(kind,'reveal',rewardDay);
   });
 }
@@ -406,6 +453,16 @@ root.addEventListener('click',ev=>{
     case 'home': openPage(returnPage); break;
     case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; exam=''; source=''; query=''; sceneFilter=''; openPage(tab==='test'?'testCenter':tab); break;
     case 'notebook': openPage('notebook'); break;
+    case 'wrong': openPage('wrong'); break;
+    case 'openWrong': {
+      const item=byId.get(b.dataset.id);
+      tab=item.kind; current=item.id; position=0; context=[]; exam=''; source='wrong'; query=''; sceneFilter='';
+      openPage(tab,'wrong'); break;
+    }
+    case 'practiceWrong':
+      quizPrefs.source='wrong'; quizPrefs.exam='';
+      openPage('testCenter');
+      break;
     case 'readScene': tab='p'; exam=''; source=''; query=''; sceneFilter=b.dataset.id; current=null; context=[]; position=0; openPage('p'); break;
     case 'theme': openPage('relay'); break;
     case 'themeChoice': {
@@ -446,6 +503,13 @@ root.addEventListener('click',ev=>{
     case 'encounter': window.WILDWORDS?.encounter(); break;
     case 'startQuiz': if(!quiz||quiz.finished||window.confirm('开始新测试会结束当前测试。继续吗？')) startQuiz(b.dataset.id); break;
     case 'resumeQuiz': openPage('test'); break;
+    case 'quizFavorite': tagDialog(quiz.questions[quiz.index].c); break;
+    case 'saveQuiz':
+      data.quizDraft=quiz;
+      save(false);
+      openPage('home');
+      toast('测试已保存，可从表达测试继续');
+      break;
     case 'answer': {
       const q=quiz.questions[quiz.index];
       if (q.answer!==null) break;
@@ -461,13 +525,13 @@ root.addEventListener('click',ev=>{
       else data.wrong[q.c.id]=true;
       save(); render(); break;
     }
-    case 'quizPrev': quiz.index--; render(); break;
+    case 'quizPrev': quiz.index--; if(!quiz.recorded)save(false); render(); break;
     case 'quizNext':
-      if (quiz.index<quiz.questions.length-1) quiz.index++;
+      if (quiz.index<quiz.questions.length-1) { quiz.index++; if(!quiz.recorded)save(false); }
       else {
         quiz.finished=true;
         if (!quiz.recorded) {
-          quiz.recorded=true; event('tests'); playFeedback('finish');
+          quiz.recorded=true; delete data.quizDraft; event('tests'); playFeedback('finish');
           data.quizHistory.unshift({date:dayKey(),mode:quiz.mode,correct:quiz.questions.filter(q=>q.answer===q.correct).length,total:quiz.questions.length});
           data.quizHistory.length=Math.min(data.quizHistory.length,100);
           save();
@@ -475,7 +539,7 @@ root.addEventListener('click',ev=>{
       }
       render(); break;
     case 'reviewQuiz': quiz.finished=false; quiz.index=0; render(); break;
-    case 'resetQuiz': quiz=null; openPage('testCenter'); break;
+    case 'resetQuiz': quiz=null; delete data.quizDraft; save(false); openPage('testCenter'); break;
   }
 });
 window.WDExpressions={
