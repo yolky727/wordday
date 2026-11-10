@@ -229,3 +229,9 @@ body:has(#expressions.active .ex-stage) #detailModal{z-index:90!important}
 #expressions .ex-question h3{font-size:clamp(20px,5vw,24px);line-height:1.35;overflow-wrap:anywhere}
 #expressions .ex-question .ex-options button{font-size:14px;line-height:1.5;font-weight:650;min-height:58px;padding:14px 17px;grid-template-columns:27px minmax(0,1fr)}
 #expressions .ex-question .ex-options button .ex-option-index{font-size:12px}
+
+/* 3.1.10: restrained theme-linked pack dust */
+.ex-pack-particles{fill:color-mix(in srgb,var(--green) 30%,var(--paper) 70%);stroke:color-mix(in srgb,var(--green) 45%,var(--paper) 55%);stroke-width:.28;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--green) 24%,transparent))}
+.ex-pack-particles circle{opacity:.58;animation-duration:4.2s}
+.ex-pack-particles circle:nth-child(4n){opacity:.35}
+@keyframes ex-pack-twinkle{from{opacity:.22;transform:translateY(2px)}to{opacity:.7;transform:translateY(-3px)}}

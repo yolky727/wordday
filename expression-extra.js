@@ -29,4 +29,9 @@ free up some space~腾出一些空间;copy files to a drive~把文件复制到�
 freeze a card~冻结银行卡;confirm the transaction~确认交易;spot a duplicate payment~发现一笔重复付款;check the exchange rate~查询汇率;request a new card~申请补发新卡;keep a record~保留记录
 borrow a projector~借投影仪;confirm the room capacity~确认场地容纳人数;ask for wheelchair access~询问无障碍通行;clear the room afterwards~活动后清理场地;pick up the keys~领取钥匙;put up a sign~贴一块指示牌
 switch to headphones~换用耳机;rejoin the meeting~重新加入会议;turn on captions~打开字幕;adjust the volume~调整音量;check your input device~检查音频输入设备;type a message in the chat~在聊天栏发消息
+discuss a reading list~讨论阅读清单;compare lecture notes~对照课堂笔记;ask for an extension~申请延期;make time for revision~腾出时间复习;share a useful resource~分享有用资源;meet a course requirement~满足课程要求
+refine a research question~完善研究问题;review the literature~回顾文献;identify a limitation~指出局限;cite a reliable source~引用可靠来源;support a claim~支持论点;consider the counterargument~考虑反方论证
+clarify the scope~明确工作范围;share a status update~同步进展;revise the timeline~调整时间表;raise a blocker~提出阻碍;confirm the next steps~确认后续步骤;document the decision~记录决定
+consider broader implications~考虑更广泛影响;debate policy trade-offs~讨论政策权衡;assess social impact~评估社会影响;protect vulnerable groups~保护弱势群体;encourage civic participation~鼓励公民参与;promote equal access~促进平等获取
+clear the air~消除误会;be up for something~愿意做某事;have second thoughts~改变主意;come across the wrong way~给人错误印象;be in two minds~拿不定主意;call it a day~收工
 `.trim().split('\n').map(line=>line.split(';'));

@@ -333,7 +333,7 @@ function render() {
     root.innerHTML='<div class="ex-stage"><div class="ex-stage-inner'+(page==='test'?' ex-test-shell':'')+'"><header class="ex-stage-bar">'+button('home',returnPage==='notebook'?'← 素材本':returnPage==='wrong'?'← 错题本':'← 表达')+
       '<h2 class="ex-stage-heading" tabindex="-1">'+(page==='test'?'WORDDAY / TEST':titles[page])+'</h2>'+encounter+'</header>'+body+'</div></div>';
     root.querySelector('.ex-stage').scrollTop=scroll;
-    if(page==='p'||page==='s') { window.scrollTo(0,pageY); requestAnimationFrame(()=>window.scrollTo(0,pageY)); }
+    if(page==='p'||page==='s') { const stage=root.querySelector('.ex-stage'); if(stage)stage.scrollTop=scroll; window.scrollTo({top:pageY,behavior:'instant'}); requestAnimationFrame(()=>window.scrollTo({top:pageY,behavior:'instant'})); }
     return;
   }
   const entries=[
@@ -593,7 +593,6 @@ root.addEventListener('click',ev=>{
           if(next<0&&source==='') toast('今日学习批次已完成，可以返回查看已学卡片');
         }
         render();
-        root.querySelector('.ex-stage')?.scrollTo(0,0);
       }
       break;
     case 'word': showDetail(b.dataset.word); break;
