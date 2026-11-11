@@ -1,0 +1,157 @@
+/* WORDDAY 3.2 / Swiss hierarchy, restrained glass, native theme colours. */
+#expressions {--xs-glass:color-mix(in srgb,var(--paper) 83%,transparent);--xs-tint:color-mix(in srgb,var(--paper) 92%,var(--green));--xs-edge:color-mix(in srgb,var(--green) 24%,var(--line));font-feature-settings:"ss01","cv11"}
+#expressions .xs-glass {background:var(--xs-glass);border:1px solid var(--xs-edge);border-radius:23px;box-shadow:inset 0 1px 0 color-mix(in srgb,var(--paper) 80%,transparent),0 8px 30px #00000004;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+#expressions .xs-caption {color:var(--muted);font-size:12px;line-height:1.65}
+#expressions .xs-meta {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#expressions .xs-tags {display:flex;gap:7px;flex-wrap:wrap}
+#expressions .xs-chip {font-size:10px;font-weight:650;padding:5px 8px;border:1px solid var(--xs-edge);border-radius:20px;color:var(--green);background:color-mix(in srgb,var(--paper) 60%,transparent)}
+#expressions .xs-launch {display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);margin-bottom:27px;overflow:hidden}
+#expressions .xs-launch-copy {padding:25px;background:color-mix(in srgb,var(--green) 8%,transparent)}
+#expressions .xs-launch-copy h3 {font-size:clamp(25px,5vw,37px);line-height:1.2;letter-spacing:-.045em;margin:17px 0 12px;max-width:12em}
+#expressions .xs-launch-copy>p:not(.ex-eyebrow) {font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:22px}
+#expressions .xs-launch-action {display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:14px;padding:23px;border-left:1px solid var(--xs-edge)}
+#expressions .xs-launch-action strong {font-size:21px;line-height:1.4}
+#expressions .xs-launch footer {grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--xs-edge);padding:7px;gap:5px}
+#expressions .xs-launch footer button {background:transparent;font-size:12px;padding:12px 5px;color:var(--ink);border:0}
+#expressions .xs-launch button {min-height:45px}
+#expressions .ex-stage {padding:env(safe-area-inset-top) 18px calc(40px + env(safe-area-inset-bottom));background:var(--bg)}
+#expressions .ex-stage-inner {max-width:780px;width:100%}
+#expressions .ex-stage-bar {border:1px solid var(--xs-edge);border-radius:18px;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);padding:9px;margin:13px 0 26px;top:calc(env(safe-area-inset-top) + 8px);box-shadow:0 5px 24px #00000006}
+#expressions .ex-stage-bar button {min-height:43px;padding:10px 13px;flex:none}
+#expressions .ex-stage-heading {font-size:15px;letter-spacing:.015em;line-height:1.3;text-align:right;overflow-wrap:normal}
+#expressions .ex-test-shell .ex-stage-bar {background:color-mix(in srgb,var(--paper) 90%,transparent)}
+#expressions .ex-test-shell {background:transparent;border:0;padding:0;margin-top:0}
+#expressions .ex-test-title {align-items:flex-start;gap:8px;flex-wrap:wrap;margin:25px 0}
+#expressions .ex-test-title h2 {font-size:27px;letter-spacing:-.04em}
+#expressions .ex-test-window {padding:18px;border-radius:25px;background:color-mix(in srgb,var(--paper) 94%,transparent);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px)}
+#expressions .ex-test-choices {background:var(--xs-tint);border:1px solid var(--xs-edge);border-radius:22px;padding:25px 20px;color:var(--ink)}
+#expressions .ex-test-choices h3 {color:var(--ink);font-size:30px;margin:12px 0}
+#expressions .ex-test-choices .lock-icon {color:var(--green);font-size:29px}
+#expressions .ex-test-choices p {color:var(--muted);line-height:1.7}
+#expressions .ex-card {border:1px solid var(--xs-edge);border-radius:22px;background:var(--xs-glass);padding:25px 22px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+#expressions .ex-card h3 {font-size:clamp(28px,6vw,39px);line-height:1.28;margin-top:24px}
+#expressions .ex-card .ex-zh {font-size:17px;line-height:1.65}
+#expressions .ex-options {gap:12px;margin-top:24px}
+#expressions .ex-options button {min-height:66px;padding:17px 18px;font-size:17px;line-height:1.55;border:1px solid var(--xs-edge);border-radius:15px;background:var(--xs-tint);color:var(--ink);white-space:normal}
+#expressions .ex-options button:focus-visible,#expressions button:focus-visible {outline:2px solid var(--green);outline-offset:4px}
+#expressions .ex-options .ex-correct {background:color-mix(in srgb,var(--paper) 80%,#62a382)}
+#expressions .ex-options .ex-incorrect {background:color-mix(in srgb,var(--paper) 85%,#cf7375)}
+#expressions .ex-settings {padding:17px 18px;border-radius:18px;background:var(--xs-glass);border-color:var(--xs-edge)}
+#expressions summary {cursor:pointer;line-height:1.5;min-height:24px}
+#expressions .field {background:var(--paper);color:var(--ink);border:1px solid var(--xs-edge);font-size:16px;line-height:1.5;border-radius:12px;min-height:45px}
+#expressions label {line-height:1.5}
+#expressions button {touch-action:manipulation}
+#expressions .ex-card footer button {min-height:44px;font-size:14px}
+#expressions .ex-notebook {display:grid;gap:10px}
+#expressions .ex-notebook>div {background:var(--xs-glass);border:1px solid var(--xs-edge);border-radius:16px;padding:18px;gap:12px;flex-wrap:wrap}
+#expressions .ex-notebook b {font-size:18px;line-height:1.5}
+#expressions .ex-notebook small {line-height:1.65;margin-top:7px}
+#expressions .ex-notebook button {min-height:42px}
+#expressions .ex-study-complete,#expressions .ex-test-result {border-radius:23px;padding:30px 22px;border:1px solid var(--xs-edge);background:var(--xs-glass)}
+#expressions .xs-page-title {margin:35px 0 25px}
+#expressions .xs-page-title h2 {font-size:clamp(29px,6vw,40px);line-height:1.25;letter-spacing:-.045em;margin:14px 0}
+#expressions .xs-page-title>p:last-child {font-size:15px;color:var(--muted);line-height:1.8;max-width:43em}
+#expressions .xs-library-form {padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:15px;align-items:end}
+#expressions .xs-library-form label {display:grid;gap:6px;font-size:12px;color:var(--muted);min-width:0}
+#expressions .xs-library-form .field {width:100%;margin:0}
+#expressions .xs-library-form .xs-search {grid-column:1/-1}
+#expressions .xs-library-form>button {grid-column:1/-1;min-height:43px}
+#expressions .xs-lesson-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-bottom:25px}
+#expressions .xs-lesson {padding:24px;display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-width:0}
+#expressions .xs-lesson h3 {font-size:24px;letter-spacing:-.035em;margin:8px 0 0}
+#expressions .xs-lesson p {font-size:14px;line-height:1.8;color:var(--muted);margin:0}
+#expressions .xs-lesson small {font-size:11px;color:var(--muted);margin-top:auto}
+#expressions .xs-lesson button {align-self:stretch;min-height:44px;margin-top:7px;font-size:13px}
+#expressions .xs-lesson-heading {padding:9px 0 20px}
+#expressions .xs-lesson-heading h2 {font-size:clamp(30px,7vw,45px);line-height:1.2;letter-spacing:-.045em;margin:17px 0 25px}
+#expressions .xs-route {display:grid;grid-template-columns:repeat(5,1fr);gap:5px;font-size:11px;color:var(--muted)}
+#expressions .xs-route span {border-bottom:2px solid var(--line);padding-bottom:9px;text-align:center}
+#expressions .xs-route .active {color:var(--green);font-weight:750;border-color:var(--green)}
+#expressions .xs-route .done {border-color:color-mix(in srgb,var(--green) 50%,transparent)}
+#expressions .xs-brief,#expressions .xs-question,#expressions .xs-turn {padding:clamp(20px,5vw,35px);margin:4px 0 20px}
+#expressions .xs-brief h3,#expressions .xs-question h3 {font-size:26px;line-height:1.35;letter-spacing:-.035em;margin:18px 0}
+#expressions .xs-brief>p:not(.ex-eyebrow),#expressions .xs-question>p {line-height:1.85;font-size:16px}
+#expressions .xs-note {background:var(--xs-tint);padding:17px;border:1px solid var(--xs-edge);border-radius:14px;margin:20px 0;font-size:14px;line-height:1.8;overflow-wrap:anywhere}
+#expressions .xs-note p {margin:6px 0 0}
+#expressions .xs-mode {border:0;padding:0;margin:25px 0;display:grid;gap:10px}
+#expressions .xs-mode legend {font-weight:700;margin-bottom:12px;font-size:13px}
+#expressions .xs-mode label {display:grid;grid-template-columns:auto 1fr;gap:3px 10px;border:1px solid var(--xs-edge);border-radius:13px;padding:14px;font-size:15px;cursor:pointer}
+#expressions .xs-mode label:has(input:checked) {background:var(--xs-tint);border-color:var(--green)}
+#expressions .xs-mode small {grid-column:2;font-size:12px;color:var(--muted)}
+#expressions .xs-mode input,#expressions .xs-checklist input {accent-color:var(--green);width:18px;height:18px;margin:2px 0}
+#expressions .xs-brief>button,#expressions .xs-question>button {width:100%;min-height:49px;font-size:15px}
+#expressions .xs-turn>.xs-caption {display:block;margin-top:28px}
+#expressions .xs-turn blockquote {font-family:Georgia,serif;font-size:clamp(25px,6vw,34px);line-height:1.4;letter-spacing:-.025em;margin:10px 0 25px;overflow-wrap:anywhere}
+#expressions .xs-task {border-left:2px solid var(--green);padding:0 0 0 15px;margin:25px 0;font-size:15px;line-height:1.85}
+#expressions .xs-task b {font-size:11px;letter-spacing:.08em;color:var(--green)}
+#expressions .xs-task p {margin:5px 0}
+#expressions .xs-chunks {border:1px solid var(--xs-edge);border-radius:14px;padding:14px;margin-bottom:25px}
+#expressions .xs-chunks summary {font-size:13px;color:var(--muted)}
+#expressions .xs-chunks>div {display:grid;gap:4px;padding:13px 0;border-top:1px solid var(--line);margin-top:10px;font-size:14px}
+#expressions .xs-chunks small {color:var(--muted);font-size:12px}
+#expressions .xs-response>label {display:block;font-size:12px;font-weight:650;margin-bottom:9px}
+#expressions .xs-response textarea,#expressions .xs-card-recall textarea {width:100%;min-height:145px;resize:vertical;padding:15px;font-size:17px;line-height:1.75;box-sizing:border-box}
+#expressions .xs-response>button {width:100%;min-height:49px;font-size:15px}
+#expressions .xs-composer-bar {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px}
+#expressions .xs-composer-bar span {font-size:11px;color:var(--muted)}
+#expressions .xs-composer-bar button {min-height:43px;font-size:13px}
+#expressions .xs-audio {display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:15px}
+#expressions audio {width:100%;height:42px;max-width:100%}
+#expressions .xs-feedback {margin-top:34px;padding-top:25px;border-top:1px solid var(--xs-edge)}
+#expressions .xs-feedback h3 {font-size:24px;line-height:1.35;letter-spacing:-.025em}
+#expressions .xs-checklist {display:grid;gap:10px;margin:20px 0}
+#expressions .xs-checklist label {display:flex;align-items:flex-start;gap:12px;border:1px solid var(--xs-edge);border-radius:13px;padding:14px;cursor:pointer}
+#expressions .xs-checklist b {font-size:14px;line-height:1.5}
+#expressions .xs-checklist small {display:block;color:var(--muted);font-size:11px;margin-top:4px}
+#expressions .xs-model {background:var(--xs-tint);border:1px solid var(--xs-edge);border-radius:15px;padding:17px;margin:20px 0}
+#expressions .xs-model summary {font-weight:700;font-size:14px}
+#expressions .xs-model p[lang] {font-family:Georgia,serif;font-size:22px;line-height:1.55;overflow-wrap:anywhere}
+#expressions .xs-model p:not([lang]) {font-size:13px;color:var(--muted);line-height:1.85}
+#expressions .xs-edit-note {display:grid;gap:10px;margin:25px 0;font-size:13px}
+#expressions .xs-feedback>button {width:100%;min-height:49px;font-size:15px}
+#expressions .xs-session-foot {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 20px}
+#expressions .xs-session-foot button {min-height:45px;font-size:14px}
+#expressions .xs-session-foot span {font-size:10px;color:var(--muted)}
+#expressions .xs-transcript {padding:15px 18px;margin-bottom:16px;font-size:13px}
+#expressions .xs-transcript p {line-height:1.8}
+#expressions .xs-complete {padding:40px 26px;text-align:center}
+#expressions .xs-complete-mark {font-family:Georgia,serif;font-size:86px;color:var(--green);height:103px;margin:20px auto}
+#expressions .xs-complete h2 {font-size:clamp(28px,7vw,40px);letter-spacing:-.045em;line-height:1.3}
+#expressions .xs-complete>p {color:var(--muted);line-height:1.8}
+#expressions .xs-summary-grid {display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--xs-edge);border-radius:17px;margin:30px 0;text-align:left}
+#expressions .xs-summary-grid>div {padding:20px;display:grid;gap:10px}
+#expressions .xs-summary-grid>div+div {border-left:1px solid var(--xs-edge)}
+#expressions .xs-summary-grid b {font-family:Georgia,serif;font-size:27px;font-weight:400;white-space:nowrap}
+#expressions .xs-summary-grid span {font-size:11px;color:var(--muted)}
+#expressions .xs-complete>button {display:block;width:100%;min-height:48px;margin:10px 0;font-size:15px}
+#expressions .xs-review-state {padding:28px;margin-bottom:25px}
+#expressions .xs-review-state>b {font-family:Georgia,serif;font-size:57px;line-height:1}
+#expressions .xs-review-state>span {color:var(--muted);margin-left:14px;font-size:13px}
+#expressions .xs-review-state>p {color:var(--muted);line-height:1.8;font-size:14px;max-width:40em}
+#expressions .xs-empty {text-align:center;padding:35px 24px;margin:20px 0}
+#expressions .xs-empty h3 {font-size:24px;letter-spacing:-.03em}
+#expressions .xs-empty p {font-size:14px;color:var(--muted);line-height:1.8}
+#expressions .xs-empty button {min-height:45px;margin-top:15px}
+#expressions .xs-journal-stats {display:flex;gap:10px;flex-wrap:wrap;margin:25px 0;font-size:12px;color:var(--muted)}
+#expressions .xs-journal-stats span {padding:10px;border:1px solid var(--xs-edge);border-radius:12px}
+#expressions .xs-journal-item {padding:20px;margin-bottom:13px}
+#expressions .xs-journal-item>summary {font-size:19px}
+#expressions .xs-journal-item>summary small {display:block;font-size:11px;color:var(--muted);margin:8px 0 0}
+#expressions .xs-journal-body {margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+#expressions .xs-journal-body section {width:100%;border-top:1px solid var(--line);padding:22px 0}
+#expressions .xs-journal-body section>small {font-size:11px;color:var(--green);font-weight:700}
+#expressions .xs-journal-body h4 {font-size:14px;color:var(--muted);line-height:1.8;margin:10px 0}
+#expressions .xs-journal-body blockquote {font-family:Georgia,serif;font-size:22px;line-height:1.65;margin:17px 0;overflow-wrap:anywhere}
+#expressions .xs-journal-body details {font-size:13px;color:var(--muted);line-height:1.8}
+#expressions .xs-journal-body>button {min-height:43px}
+#expressions .xs-card-recall {padding:22px;margin:5px 0 18px}
+#expressions .xs-card-recall h3 {font-size:26px;line-height:1.5;letter-spacing:-.035em;margin:16px 0}
+#expressions .xs-card-recall textarea {min-height:105px;margin:15px 0}
+#expressions .xs-card-recall button {min-height:45px;width:100%;font-size:14px}
+#expressions .ex-result-review>div {padding:20px;border:1px solid var(--xs-edge);border-radius:16px;background:var(--xs-glass);margin:10px 0;line-height:1.7}
+@media(max-width:560px){#expressions .xs-launch{grid-template-columns:1fr}#expressions .xs-launch-copy{padding:24px 22px}#expressions .xs-launch-action{border-left:0;border-top:1px solid var(--xs-edge);padding:18px 22px;display:grid;grid-template-columns:1fr auto;gap:9px 13px;align-items:center}#expressions .xs-launch-action strong{font-size:18px}#expressions .xs-launch-action .xs-caption{grid-column:1}#expressions .xs-launch-action button{grid-column:2;grid-row:1/3;font-size:13px}#expressions .xs-lesson-grid{grid-template-columns:1fr}#expressions .xs-lesson{padding:22px}#expressions .xs-summary-grid>div{padding:17px 12px}#expressions .xs-summary-grid b{font-size:23px}#expressions .ex-stage{padding-inline:14px}#expressions .ex-stage-bar:has([data-ex=encounter]){flex-wrap:wrap}#expressions .ex-quiz-actions button{font-size:14px;min-height:44px}#expressions .ex-steps button{font-size:14px;min-height:45px}#expressions .ex-note{font-size:14px;line-height:1.8}#expressions .ex-stage-bar .ex-stage-heading{font-size:14px}}
+@media(prefers-reduced-motion:reduce){#expressions *{scroll-behavior:auto!important;transition:none!important}}
+#expressions textarea,#expressions input,#expressions select{font-family:inherit}
+#expressions .ex-question .ex-options button{font-size:18px;min-height:68px;line-height:1.6;padding:17px 18px}
+#expressions .ex-question .ex-options button .ex-option-index{font-size:12px}
+:root[data-theme="midnight"] #expressions button:not(.secondary):not(.outline):not(.danger){color:var(--deep)}

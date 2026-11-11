@@ -113,7 +113,8 @@ function dailyDeck() {
   const old=data.dailyDecks[id]||[];
   const today=data.dailyLearned[date]?.[tab]||[];
   // Keep already studied cards in today's deck so Back always works.
-  const ids=[...new Set([...old,...today])].filter(x=>byId.has(x));
+  const allowed=new Set(available.map(c=>c.id));
+  const ids=[...new Set([...old,...today])].filter(x=>allowed.has(x));
   const remaining=available.filter(c=>!ids.includes(c.id)&&!data.learned[c.id]?.times);
   const goal=Math.max(target,today.length);
   for(const c of remaining.slice(0,Math.max(0,goal-ids.length))) ids.push(c.id);
@@ -134,7 +135,7 @@ function showCard(c) {
   current = c.id;
   render();
 }
-function cardView(c) {
+function sourceCardView(c) {
   const word=c.en.toLowerCase().match(/[a-z]+/g)?.filter(w=>w.length>4).find(w=>findWord(w));
   const related = cards.filter(r=>r.scene===c.scene && r.kind!==c.kind).slice(0,c.kind==='p'?2:3);
   const comparison = cards.filter(r=>r.scene===c.scene&&r.kind===c.kind&&r.id!==c.id).slice(0,2);
@@ -146,9 +147,15 @@ function cardView(c) {
     '<div class="ex-links">'+related.map(r=>button('context',esc(r.en),'secondary','data-id="'+r.id+'"')).join('')+'</div>'+
     '<footer>'+(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.type)+'</a>':'<span>原创练习</span>')+(word?button('word','查词','secondary','data-word="'+word+'"'):'')+button('listen','发音')+button('notLearned','未掌握','secondary','data-card-id="'+esc(c.id)+'"')+button('learned','已掌握','','data-card-id="'+esc(c.id)+'"')+'</footer></article>';
 }
+function cardView(c) {
+  data.cardRecall32??={};
+  let r=data.cardRecall32[c.id];
+  if(!r||r.day!==dayKey())r=data.cardRecall32[c.id]={day:dayKey(),draft:'',shown:false};
+  return '<section class="xs-card-recall xs-glass"><div class="xs-meta"><p class="ex-eyebrow">RETRIEVE BEFORE READING</p><span>'+esc(c.kind==='p'?'短语 · 主动提取':'句子 · 组织意思')+'</span></div><h3>'+esc(c.zh)+'</h3><p class="xs-caption">'+esc(c.title)+' · 先说一遍，或用自己的英语写下来。表达不必逐字一致。</p><textarea class="field" data-recall-id="'+esc(c.id)+'" placeholder="先别急着看答案。你会怎么说？" maxlength="1000">'+esc(r.draft)+'</textarea>'+button('revealCard',r.shown?'收起参考表达':'揭晓表达与用法','secondary','data-id="'+esc(c.id)+'"')+'</section>'+(r.shown?sourceCardView(c):'<p class="xs-caption">点击揭晓后，可听发音、查看搭配、收藏，并记录掌握情况。</p>');
+}
 function learning() {
   const list = studyPool();
-  const c = (current && list.find(item=>item.id===current)) || list[Math.min(position,list.length-1)];
+  const c = (current && byId.get(current)) || list[Math.min(position,list.length-1)];
   const done=new Set(data.dailyLearned[dayKey()]?.[tab]||[]);
   const goal=Math.max(tab==='p'?7:3,Number(data.targets[tab]||0));
   return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...majorScenes.map(name=>[name,name])],sceneFilter)+
@@ -171,9 +178,10 @@ function startQuiz(mode) {
     if(other) selected[selected.length-1]=other;
   }
   const questions=selected.map((c,index)=>{
-    const field=c.kind==='p'&&index%2===1?'en':c.kind==='s'&&index%2===1?'note':'zh';
+    const field=index%2===1?'en':'zh';
     const correct=c[field], prompt=field==='en'?c.zh:c.en;
-    const distractors=shuffle(cards.filter(r=>r.kind===c.kind&&r.exam===c.exam&&r[field]&&r[field]!==correct));
+    const candidates=cards.filter(r=>r.kind===c.kind&&r[field]&&r[field]!==correct);
+    const distractors=[...shuffle(candidates.filter(r=>r.scene===c.scene)),...shuffle(candidates.filter(r=>r.scene!==c.scene&&r.exam===c.exam)),...shuffle(candidates)];
     const options=[correct];
     for(const r of distractors) if(options.length<4&&!options.includes(r[field])) options.push(r[field]);
     return {c,options:shuffle(options),correct,prompt,field,answer:null};
@@ -263,16 +271,14 @@ function themeRun() {
     }
     return saved;
   }
-  const list=cards.filter(c=>c.scene===themeScene()&&!c.url);
-  const phrases=list.filter(c=>c.kind==='p');
-  const sentences=list.filter(c=>c.kind==='s');
-  const positions=shuffle([0,1,2,3]);
-  const specs=[[phrases[0],'zh'],[phrases[1],'en'],[sentences[0],'zh'],[phrases[2],'en'],[sentences[1],relaySentenceField(sentences[1])]];
-  const questions=specs.map(([c,field],i)=>relayQuestion(c,field,i===4?(positions[3]+1)%4:positions[i]));
-  return data.themes[key]={step:0,questions,response:sentences[1].id};
+  const practical=window.WDExpressionStudioLessons[Math.floor(calendarDay()/3)%window.WDExpressionStudioLessons.length];
+  return data.themes[key]={step:0,questions:[],studio32:practical.id};
+
 }
+function relayTitle(){const run=themeRun();return run.studio32?window.WDExpressionStudioLessons.find(l=>l.id===run.studio32)?.title||scenes[themeScene()][0]:scenes[themeScene()][0];}
 function themeContent() {
   const run=themeRun();
+  if(run.studio32&&run.step<relaySteps){const l=window.WDExpressionStudioLessons.find(l=>l.id===run.studio32);return '<section class="xs-glass xs-brief"><p class="ex-eyebrow">THREE-DAY CHALLENGE</p><h3>这次，用英语把事情办成。</h3><p>'+esc(l.brief)+'</p><div class="xs-note"><b>本期路线</b><p>理解沟通目标 → 三轮主动回应 → 换条件迁移。先说或写，再对照参考；不再靠凑词数完成接力。</p></div><button type="button" data-studio="relayStart" data-id="'+l.id+'" data-period="'+esc(themeKey())+'">开始本期实练挑战 →</button><p class="xs-caption">完成后返回领取原有接力奖励；同一期只发放一次。旧版本已完成或正在进行的接力继续保留。</p></section>';}
   if(run.step>=relaySteps) {
     const rewardRow=(kind,title,description,mark)=>{
       const receipt=window.WILDWORDS.data.expressionRewards?.[themeKey()+'/'+kind];
@@ -281,8 +287,8 @@ function themeContent() {
       return '<li><span class="ex-relay-reward-mark" aria-hidden="true">'+mark+'</span><div><strong>'+title+'</strong><small>'+description+' · '+status+'</small></div>'+
         button(kind,action,kind==='chest'&&!receipt?'':'secondary','aria-label="'+action+' · '+title+'"')+'</li>';
     };
-    return '<section class="ex-relay-complete"><div class="ex-relay-banner"><div><p class="ex-eyebrow">WORDDAY / RELAY</p><h3>本期接力已完成</h3><p>'+esc(scenes[themeScene()][0])+'</p></div>'+
-      '<div class="ex-relay-meter" aria-label="已完成 '+relaySteps+' 个步骤">'+relaySteps+'<span> / '+relaySteps+'</span><small>练习完成</small></div></div>'+
+    return '<section class="ex-relay-complete"><div class="ex-relay-banner"><div><p class="ex-eyebrow">WORDDAY / RELAY</p><h3>本期接力已完成</h3><p>'+esc(relayTitle())+'</p></div>'+
+      '<div class="ex-relay-meter" aria-label="练习完成">'+(run.studio32?5:relaySteps)+'<span> / '+(run.studio32?5:relaySteps)+'</span><small>练习完成</small></div></div>'+
       '<div class="ex-relay-rewards"><h4>接力奖励</h4><ul>'+rewardRow('rewardThree','三张奖励卡','固定三张','◇')+rewardRow('chest','主题卡包','逐张揭晓','✦')+'</ul></div></section>';
   }
   const question=run.questions[run.step], item=byId.get(question?.id||run.response);
@@ -316,7 +322,8 @@ function readView() {
   const [title,en,zh,scene]=list[calendarDay()%list.length];
   return '<article class="ex-card"><small>每日短读 · 原创</small><h3>'+esc(title)+'</h3><p lang="en">'+esc(en)+'</p><details><summary>查看译文</summary><p>'+esc(zh)+'</p></details>'+button('readScene','查看相关表达','secondary','data-id="'+scene+'"')+'</article>';
 }
-const titles={p:'短语卡',s:'句子卡',test:'表达测试',relay:'表达接力',notebook:'素材本',wrong:'表达错题本'};
+const studio=window.WDCreateExpressionStudio({root,data,save,event,esc,button,dayKey,speak,navigate:next=>openPage(next),challengeComplete:(period,id)=>{const run=data.themes[period];if(period!==themeKey()||run?.studio32!==id)return false;if(run.step<relaySteps){run.step=relaySteps;event('themes');}return true;}});
+const titles={studio:'情境实练',studioPractice:'情境实练',studioReview:'间隔复练',studioJournal:'我的表达',p:'短语卡',s:'句子卡',test:'表达测试',relay:'表达接力',notebook:'素材本',wrong:'表达错题本'};
 function openPage(next, back='home') {
   page=next;
   returnPage=back;
@@ -339,30 +346,32 @@ function render() {
   }
   existingCenter?.close();
   if(page!=='home'&&!testCenter) {
-    const body=page==='relay'?(themeRun().step<relaySteps?'<p class="ex-stage-topic">'+esc(scenes[themeScene()][0])+'</p>':'')+themeContent():
+    const body=page.startsWith('studio')?studio.view(page):page==='relay'?(themeRun().step<relaySteps?'<p class="ex-stage-topic">'+esc(relayTitle())+'</p>':'')+themeContent():
       page==='notebook'?notebook():page==='wrong'?wrongBook():page==='test'?test():learning();
     root.innerHTML='<div class="ex-stage"><div class="ex-stage-inner'+(page==='test'?' ex-test-shell':'')+'"><header class="ex-stage-bar">'+button('home',returnPage==='notebook'?'← 素材本':returnPage==='wrong'?'← 错题本':'← 表达')+
       '<h2 class="ex-stage-heading" tabindex="-1">'+(page==='test'?'WORDDAY / TEST':titles[page])+'</h2>'+encounter+'</header>'+body+'</div></div>';
     root.querySelector('.ex-stage').scrollTop=scroll;
+    studio.mounted(page);
     if(page==='p'||page==='s') { const stage=root.querySelector('.ex-stage'); if(stage)stage.scrollTop=scroll; window.scrollTo({top:pageY,behavior:'instant'}); requestAnimationFrame(()=>window.scrollTo({top:pageY,behavior:'instant'})); }
     return;
   }
   const entries=[
-    ['p','PHRASES','短语卡','学搭配，看例句','M7 13h16v13H7z M17 20h16v13H17z M7 18h10 M23 26h10'],
-    ['s','SENTENCES','句子卡','读译文，拆主干','M10 9H30V33H10z M14 15h12 M14 21h12 M14 27h7'],
-    ['test','PRACTICE','表达测试',quiz&&!quiz.finished?'继续上次测试':'检验短语、句意和句型','M8 12h7v7H8z M22 15h10 M8 24h7v7H8z M22 27h10 M8 26l3 3 6-8']
+    ['p','PHRASES','短语卡','先提取搭配，再看用法','M7 13h16v13H7z M17 20h16v13H17z M7 18h10 M23 26h10'],
+    ['s','SENTENCES','句子卡','先组织意思，再拆句','M10 9H30V33H10z M14 15h12 M14 21h12 M14 27h7'],
+    ['test','PRACTICE','表达测试',quiz&&!quiz.finished?'继续上次测试':'辨析表达，记录错题','M8 12h7v7H8z M22 15h10 M8 24h7v7H8z M22 27h10 M8 26l3 3 6-8']
   ];
   const entry=([id,label,title,desc,path])=>button('tab',
     '<span class="ex-entry-copy"><small class="ex-entry-label" aria-hidden="true">'+label+'</small><b>'+title+'</b><span>'+desc+'</span></span>'+
     '<svg class="ex-entry-art" viewBox="0 0 40 40" aria-hidden="true"><path d="'+path+'"/></svg><i class="ex-entry-arrow" aria-hidden="true">↗</i>',
     'secondary ex-entry','data-id="'+id+'"');
   root.innerHTML='<header class="ex-header"><div><p class="ex-eyebrow">WORDDAY / EXPRESSIONS</p><h2>表达</h2><p>从一个场景，练到一句能用的话。</p></div></header>'+
-    '<div class="ex-practice-entries"><section aria-labelledby="exLearnGroup"><h3 id="exLearnGroup">学习表达</h3><div class="ex-study-entries">'+entries.slice(0,2).map(entry).join('')+'</div></section>'+
-    '<section aria-labelledby="exTestGroup"><h3 id="exTestGroup">检验掌握</h3>'+entry(entries[2])+'</section></div>'+
-    '<section class="panel ex-theme"><div class="ex-theme-top"><div><p class="ex-eyebrow">每三天一题组</p><h3>'+esc(scenes[themeScene()][0])+'</h3></div>'+button('theme','表达接力','')+'</div>'+encounter+'</section>'+
+    studio.home()+'<div class="ex-practice-entries"><section aria-labelledby="exLearnGroup"><h3 id="exLearnGroup">打好表达底子</h3><div class="ex-study-entries">'+entries.slice(0,2).map(entry).join('')+'</div></section>'+
+    '<section aria-labelledby="exTestGroup"><h3 id="exTestGroup">快速辨析</h3>'+entry(entries[2])+'</section></div>'+
+    '<section class="panel ex-theme"><div class="ex-theme-top"><div><p class="ex-eyebrow">每三天一题组</p><h3>'+esc(relayTitle())+'</h3></div>'+button('theme','表达接力','')+'</div>'+encounter+'</section>'+
     '<section class="panel ex-daily-reading">'+readView()+'</section>'+
     '<section class="panel ex-notebook-entry ex-wrong-entry"><div><p class="ex-eyebrow">REVIEW</p><h3>表达错题本</h3><p>'+Object.keys(data.wrong).length+' 条待复习</p></div>'+button('wrong','查看错题')+'</section>'+
     '<section class="panel ex-notebook-entry"><div><h3>素材本</h3><p>'+Object.keys(data.favorites).length+' 条收藏</p></div>'+button('notebook','查看收藏')+'</section>';
+  studio.mounted(page);
   if(testCenter) {
     const center=document.createElement('dialog');
     center.className='ex-dialog ex-test-window';
@@ -498,6 +507,7 @@ function reveal(kind,{ids,shown},rewardDay) {
 
 }
 root.addEventListener('input',ev=>{
+  if(ev.target.matches('[data-recall-id]')){data.cardRecall32[ev.target.dataset.recallId].draft=ev.target.value;save(false);return;}
   if(ev.target.matches('[data-notebook=query]')) { notebookQuery=ev.target.value; const start=ev.target.selectionStart; render(); const el=root.querySelector('[data-notebook=query]'); el?.focus(); el?.setSelectionRange(start,start); return; }
   if(ev.target.matches('.ex-reply textarea') && renderedDay===dayKey()) {
     themeRun().draft=ev.target.value;
@@ -552,7 +562,8 @@ root.addEventListener('click',ev=>{
   if(['themeChoice','rewardThree','chest'].includes(b.dataset.ex) && renderedDay!==dayKey()) { render(); return; }
   const c=byId.get(b.dataset.cardId)||byId.get(current)||studyPool()[Math.min(position,studyPool().length-1)];
   switch(b.dataset.ex) {
-    case 'home': openPage(returnPage); break;
+    case 'home': if(!studio.guard())break;openPage(returnPage); break;
+    case 'revealCard': {const r=data.cardRecall32?.[b.dataset.id];if(r){r.shown=!r.shown;save(false);render();}break;}
     case 'tab': tab=b.dataset.id; current=null; position=0; context=[]; if(tab!=='test'){restoreLearningFilters(tab);restoreDailyPosition();} openPage(tab==='test'?'testCenter':tab); break;
     case 'notebook': openPage('notebook'); break;
     case 'wrong': openPage('wrong'); break;
@@ -682,7 +693,7 @@ window.WDExpressions={
   snapshot() { return data; },
   importBackup(incoming) {
     if(!incoming || typeof incoming!=='object') return;
-    for(const field of ['learned','favorites','wrong','days','themes']) {
+    for(const field of ['learned','favorites','wrong','days','themes','cardRecall32']) {
       const records=incoming[field];
       if(records && typeof records==='object' && !Array.isArray(records)) data[field]={...records,...data[field]};
     }
@@ -690,12 +701,17 @@ window.WDExpressions={
       const history=[...data.quizHistory,...incoming.quizHistory];
       data.quizHistory=[...new Map(history.map(row=>[JSON.stringify(row),row])).values()].slice(0,100);
     }
+    if(incoming.studio&&typeof incoming.studio==='object'){
+      data.studio.records={...(incoming.studio.records||{}),...data.studio.records};
+      data.studio.history=[...new Map([...data.studio.history,...(Array.isArray(incoming.studio.history)?incoming.studio.history:[])].filter(h=>h&&h.id).map(h=>[h.id,h])).values()].sort((a,b)=>b.date.localeCompare(a.date));
+      if(!data.studio.active&&incoming.studio.active)data.studio.active=incoming.studio.active;
+    }
     save();
   },
-  stats() { return { learned:Object.keys(data.learned).length, tests:Object.values(data.days).reduce((n,d)=>n+(d.tests||0),0), themes:Object.values(data.days).reduce((n,d)=>n+(d.themes||0),0) }; },
+  stats() { return {...studio.stats(), learned:Object.keys(data.learned).length, tests:Object.values(data.days).reduce((n,d)=>n+(d.tests||0),0), themes:Object.values(data.days).reduce((n,d)=>n+(d.themes||0),0) }; },
   goalProgress(day,kind) {return {done:new Set(data.dailyLearned[day]?.[kind]||[]).size,target:Math.max(kind==='p'?7:3,Number(data.targets[kind]||0))};},
   reviewCount(days) {return days.reduce((n,d)=>n+new Set(data.reviewDone[d]||[]).size,0);},
-  totals(days) { return Object.fromEntries(['studied','correct','tests','themes'].map(k=>[k,days.reduce((n,d)=>n+(data.days[d]?.[k]||0),0)])); }
+  totals(days) { return Object.fromEntries(['studied','correct','tests','themes','sessions','recalled'].map(k=>[k,days.reduce((n,d)=>n+(data.days[d]?.[k]||0),0)])); }
 };
 const exploration=document.createElement('details');
 exploration.className='panel ex-word-exploration';
