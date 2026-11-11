@@ -243,7 +243,7 @@ function showTaskPack(){
     </svg></div>`;
  const sparks='<div class="ex-sparks" aria-hidden="true">'+Array.from({length:14},(_,i)=>'<i style="--i:'+i+'">✦</i>').join('')+'</div>';
  const card=last?W.card(last,false,!!W.data.advanced[last.id],''):'';
- frame('获得灵宠卡牌','<div class="ex-reveal '+(shown?'ex-flip':'')+'" style="text-align:center;min-height:290px;cursor:pointer" data-b="taskReveal" role="button" tabindex="0">'+(shown?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+card+'</div>'+sparks:(total===1?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+W.card(rewardCard[0],false,!!W.data.advanced[rewardCard[0].id],'')+'</div>':art))+'</div><p class="a-hint">'+(shown?'第 '+shown+' / '+total+' 张 · 已加入图鉴与库存':(total===1?'已加入图鉴与库存':'轻点卡包拆开 · '+total+' 张奖励卡'))+'</p>'+(shown===total?'<details class="ex-reward-summary"><summary>本次获得 · '+total+' 张</summary><ul>'+rewardCard.map(a=>'<li><span class="ex-summary-emoji">'+text(a.emoji)+'</span><strong>'+text(a.cn)+'</strong></li>').join('')+'</ul></details>'+btn('rewardBack','返回任务',''):''));
+ frame('获得灵宠卡牌','<div class="ex-reveal '+(shown?'ex-flip':'')+'" style="text-align:center;min-height:290px;cursor:pointer" data-b="taskReveal" role="button" tabindex="0">'+(shown?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+card+'</div>'+sparks:(total===1?'<div class="ex-reward-card" style="max-width:230px;margin:auto">'+W.card(rewardCard[0],false,!!W.data.advanced[rewardCard[0].id],'')+'</div>':art))+'</div><p class="a-hint">'+(shown?'第 '+shown+' / '+total+' 张 · 已加入图鉴与库存':(total===1?'已加入图鉴与库存':'轻点卡包拆开 · '+total+' 张奖励卡'))+'</p>'+(shown===total?'<details class="ex-reward-summary"><summary>本次获得 · '+total+' 张</summary><ul>'+rewardCard.map(a=>'<li>'+W.card(a,true,!!W.data.advanced[a.id],'')+'</li>').join('')+'</ul></details>'+btn('rewardBack','返回任务',''):''));
 }
 
 async function claim(index){
@@ -336,7 +336,7 @@ dialog.addEventListener('click',ev=>{const b=ev.target.closest('[data-b]');if(!b
  if(op==='taskReveal'){if(!rewardCard||taskRevealStep>=rewardCard.length)return;const advance=()=>{taskRevealStep=Math.min(rewardCard.length,taskRevealStep+1);window.WD28CardFX?.sound('acquire');showTaskPack()};if(taskRevealStep===0){dialog.querySelector('.ex-pack')?.classList.add('opening');setTimeout(advance,matchMedia('(prefers-reduced-motion: reduce)').matches?0:460)}else advance();return}if(op==='rewardBack'){rewardCard=null;return taskPage()}if(op==='close')return close();if(op==='start')return start();if(op==='pick'){selection=selection.includes(arg)?selection.filter(n=>n!==arg):[...selection,arg];store.lineup=selection.slice();save();return lobby()}
  if(op==='day'||op==='week'){taskTab=op;return taskPage()}if(op==='claim')return claim(+arg);
  if(!game)return;if(!game.finished&&game.deadline&&Date.now()>=game.deadline){tick();return}
- if(op==='again'){clearTimers();scene='lobby';return lobby()}if(op==='next'){B.advance(game);return step()}
+ if(op==='again'){clearTimers();selection=selection.filter(n=>advanced().includes(n)).slice(0,4);store.lineup=selection.slice();save();return start()}if(op==='next'){B.advance(game);return step()}
  if(op==='slot'){if(B.play(game,0,+arg))step();return}if(op==='skills'){skillPanel=!skillPanel;chosenSkill=null;return paint()}
  if(op==='opt'){const o=B.options(game,0)[+arg];if(o&&B.activate(game,0,o))step();return}if(op==='confirm'){if(chosenSkill&&B.activate(game,0,chosenSkill))step();return}
  if(op==='pass'){B.pass(game,0);return step()}if(op==='play'&&chosenSlot!==null&&B.play(game,0,chosenSlot))step();
@@ -355,5 +355,5 @@ window.addEventListener('storage',event=>{
  if(event.key===key&&event.newValue){try{const update=JSON.parse(event.newValue);if(update.daily&&update.total){store=update;selection=Array.isArray(store.lineup)?[...new Set(store.lineup)].slice(0,4):[];game=store.active||null;chosenSlot=null;skillPanel=false;chosenSkill=null;homeContent();paint()}}catch{}}
 });
 document.dispatchEvent(new Event('wd28badges'));
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.1.10';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.1.11';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

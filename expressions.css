@@ -235,3 +235,29 @@ body:has(#expressions.active .ex-stage) #detailModal{z-index:90!important}
 .ex-pack-particles circle{opacity:.58;animation-duration:4.2s}
 .ex-pack-particles circle:nth-child(4n){opacity:.35}
 @keyframes ex-pack-twinkle{from{opacity:.22;transform:translateY(2px)}to{opacity:.7;transform:translateY(-3px)}}
+
+/* 3.1.11: consistent test palette, complete card summaries and study completion */
+.ex-test-shell,.ex-test-shell .ex-stage-bar,.ex-test-result{background:var(--paper);}
+.ex-test-shell .ex-question,.ex-test-shell .ex-test-choices{background:color-mix(in srgb,var(--paper) 88%,var(--bg));}
+.ex-test-shell .ex-options button{background:color-mix(in srgb,var(--paper) 58%,white);color:var(--ink);border:1px solid var(--line);text-align:left;}
+.ex-test-shell .ex-options button.ex-correct{border-color:#87b997;background:#dceee0;color:#244532;}
+.ex-test-shell .ex-options button.ex-incorrect{border-color:#c98b8b;background:#f4dede;color:#673333;}
+.ex-study-complete,.ex-test-result{border:1px solid var(--line);border-radius:22px;padding:clamp(22px,6vw,42px);margin:18px 0;}
+.ex-study-complete h2{font-size:clamp(23px,6vw,32px);margin:8px 0 20px;}
+.ex-complete-check{font-size:90px;line-height:1.6;color:var(--accent);}
+.ex-study-complete button{margin:8px 8px 0 0;}
+.ex-result-score{font-size:clamp(76px,18vw,112px);font-weight:800;text-align:center;line-height:1.2;}
+.ex-result-score small{font-size:22px;}
+.ex-test-result h2,.ex-test-result>p{text-align:center;}
+.ex-result-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0;}
+.ex-result-metrics>div{display:grid;justify-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;padding:20px 6px;}
+.ex-result-metrics b{font-size:clamp(22px,6vw,35px);}
+.ex-result-metrics span{color:var(--muted);font-size:12px;}
+.ex-result-review>div{border-bottom:1px solid var(--line);padding:16px 0;overflow-wrap:anywhere;}
+.ex-result-review p{color:var(--muted);}
+.ex-reward-summary li{display:block;padding:0;border:0;background:transparent;overflow:visible;}
+.ex-reward-summary .wild-card.small{width:100%;max-width:100%;min-width:0;box-sizing:border-box;}
+.ex-luminous-pack .ex-pack{color:#ad83df;filter:drop-shadow(0 0 14px #c9a1fa);}
+.ex-luminous-pack .ex-pack-particles circle{fill:#ead9ff;opacity:.8;}
+.ex-luminous-pack .ex-sparks{color:#d8baff;}
+.ex-luminous-pack .ex-sparks i{text-shadow:0 0 8px #d3adff;}
