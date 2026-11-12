@@ -38,6 +38,11 @@ function luminousFX(a,advanced){
  const art=luminousArt[a.name][Number(advanced)];
  return '<svg class="luminous-fx '+type+'" viewBox="0 0 100 134" preserveAspectRatio="none" aria-hidden="true">'+art+'</svg>';
 }
+// Static reward snapshots keep the native emoji in its own non-shrinking box.
+// They intentionally omit animated filters that WebKit may clip while scrolling.
+function summaryCard(a,advanced=false){
+ return `<div class="wild-card small reward-snapshot ${advanced?'advanced':''}" data-rarity="${a.rarity}"${a.rarity===4?' data-luminous="'+a.name+'"':''}><span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span><span class="reward-animal-slot">${specimen(a)}</span><div class="reward-name"><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
+}
 function card(a,small=false,advanced=false,cls=''){
  const classes=['wild-card',small?'small':'',advanced?'advanced':'',cls].filter(Boolean).join(' ');
  const count=a.rarity===4?(advanced?16:5):advanced?(a.rarity===3?16:a.rarity===2?10:a.rarity===1?4:0):0;
@@ -176,5 +181,5 @@ window.addEventListener('storage',ev=>{if(ev.key!==KEY||!ev.newValue)return;try{
 let lastActive=0;document.addEventListener('input',ev=>{if(ev.target.closest('#expressions'))lastActive=Date.now()});document.addEventListener("visibilitychange",()=>{if(document.hidden)lastActive=0});document.addEventListener('click',ev=>{const btn=ev.target.closest('button');if(!btn||overlay.classList.contains('show'))return;if(!btn.closest('#learn,#quiz,#review,#studyStage,#expressions'))return;lastActive=Date.now()},true);setInterval(()=>{if(document.hidden||!['learn','expressions'].includes(mainTab)||overlay.classList.contains('show')||document.querySelector('dialog[open]')||(Date.now()-lastActive>45000&&!window.WDExpressionAudioActive))return;data.activeSeconds+=10;if(data.activeSeconds>=120){data.activeSeconds-=120;if(!Object.values(data.encounters).some(x=>x?.status==='ready')){data.encounters[today()]={status:'ready',created:Date.now()};notify('🐾 有萌物奇遇！');window.WDExpressions?.showEncounter()}}persist();updateBadges();const eb=$('wildOpenEncounter');if(eb)eb.style.display=Object.values(data.encounters).some(x=>x.status==='ready')?'inline-block':'none'},10000);
 $('wildPawDraw')?.addEventListener('click',encounter);
 }
-install();window.WILDWORDS={animals,data,daily,album,fusion,randomCard,sample,card,encounter,refreshIdeas:updateBadges};
+install();window.WILDWORDS={animals,data,daily,album,fusion,randomCard,sample,card,summaryCard,encounter,refreshIdeas:updateBadges};
 })();

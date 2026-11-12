@@ -136,7 +136,6 @@ function showCard(c) {
   render();
 }
 function sourceCardView(c) {
-  const word=c.en.toLowerCase().match(/[a-z]+/g)?.filter(w=>w.length>4).find(w=>findWord(w));
   const related = cards.filter(r=>r.scene===c.scene && r.kind!==c.kind).slice(0,c.kind==='p'?2:3);
   const comparison = cards.filter(r=>r.scene===c.scene&&r.kind===c.kind&&r.id!==c.id).slice(0,2);
   return '<article class="ex-card"><div class="ex-meta"><span>'+esc(c.title)+' · '+c.exam+' 练习</span>'+
@@ -145,7 +144,7 @@ function sourceCardView(c) {
     (c.note?'<div class="ex-note"><b>句子主干</b> <span lang="en">'+esc(c.main)+'</span><br><b>句型</b> '+esc(c.note)+'</div>':'<p class="ex-note"><b>同场景例句</b> '+esc(related[0]?.en)+'</p>')+
     '<details><summary>'+(c.kind==='p'?'同场景短语辨析':'同场景句型对照')+'</summary>'+comparison.map(r=>'<p><b lang="en">'+esc(r.en)+'</b> · '+esc(r.zh)+'</p>').join('')+'</details>'+
     '<div class="ex-links">'+related.map(r=>button('context',esc(r.en),'secondary','data-id="'+r.id+'"')).join('')+'</div>'+
-    '<footer>'+(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.type)+'</a>':'<span>原创练习</span>')+(word?button('word','查词','secondary','data-word="'+word+'"'):'')+button('listen','发音')+button('notLearned','未掌握','secondary','data-card-id="'+esc(c.id)+'"')+button('learned','已掌握','','data-card-id="'+esc(c.id)+'"')+'</footer></article>';
+    '<footer>'+(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.type)+'</a>':'<span>原创练习</span>')+button('listen','发音')+button('notLearned','未掌握','secondary','data-card-id="'+esc(c.id)+'"')+button('learned','已掌握','','data-card-id="'+esc(c.id)+'"')+'</footer></article>';
 }
 function cardView(c) {
   data.cardRecall32??={};
@@ -161,7 +160,7 @@ function learning() {
   return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...majorScenes.map(name=>[name,name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
     '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form></details>'+
-    '<div class="ex-daily-goal"><label>每日'+(tab==='p'?'短语':'句子')+'目标 <input type="number" class="field" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'"></label>'+button('saveGoal','确定')+'<small>今日已学 '+new Set(data.dailyLearned[dayKey()]?.[tab]||[]).size+' 个</small></div>'+
+    '<section class="ex-daily-goal xs-goal-slider"><div class="xs-goal-title"><label for="exGoal">每日'+(tab==='p'?'短语':'句子')+'目标</label><output for="exGoal" id="exGoalValue">'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'<small> 个</small></output></div><div class="xs-goal-track">'+button('goalAdjust','−','secondary','data-step="-1" aria-label="目标减少一个"')+'<input type="range" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" step="1" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'" aria-label="每日'+(tab==='p'?'短语':'句子')+'目标数量">'+button('goalAdjust','+','secondary','data-step="1" aria-label="目标增加一个"')+'</div><div class="xs-goal-presets">'+[tab==='p'?7:3,10,20,30,50,100].map(n=>button('goalPreset',n+' 个','secondary','data-value="'+n+'"')).join('')+'</div><footer><small>今日已学 '+new Set(data.dailyLearned[dayKey()]?.[tab]||[]).size+' 个 · 最低 '+(tab==='p'?7:3)+' 个</small>'+button('saveGoal','确定目标')+'</footer></section>' +
     (source==='official'?'<p class="ex-official-links"><a href="https://cet.neea.edu.cn/html1/folder/16113/1588-1.htm" target="_blank" rel="noopener noreferrer">四六级官方样卷</a> · <a href="https://ielts.org/take-a-test/preparation-resources/sample-test-questions" target="_blank" rel="noopener noreferrer">IELTS 官方完整样题</a></p>':'')+
     (source===''&&done.size>=goal?'<section class="ex-study-complete"><p class="ex-eyebrow">SESSION COMPLETE</p><div class="ex-complete-check">✓</div><h2>今天的目标，完成了。</h2><p>已记录 '+done.size+' 个'+(tab==='p'?'短语':'句子')+'，学习进度已保存。</p>'+button('increaseGoal','再学 '+(tab==='p'?7:3)+' 个'+(tab==='p'?'短语':'句子'))+button('home','返回学习首页','secondary')+'</section>':c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
       '<span>'+ (context.length?'关联表达':(source===''?Math.min(done.size,goal)+' / '+goal+' · 第 '+(position+1)+' 张':(position+1)+' / '+list.length))+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
@@ -482,7 +481,7 @@ function reveal(kind,{ids,shown},rewardDay) {
     '<div class="ex-reward-foot">'+(left?'<span>轻点屏幕'+action+'</span>':'')+'<span>剩余卡牌 <b>'+left+'</b></span></div>'+
     (left?'':'<details class="ex-reward-summary"><summary>本次获得 · '+ids.length+' 张</summary><ul>'+ids.map(id=>{
       const a=W.animals.find(animal=>animal.id===id);
-      return '<li data-rarity="'+a.rarity+'">'+W.card(a,true,!!W.data.advanced[a.id],'')+'</li>';
+      return '<li data-rarity="'+a.rarity+'">'+W.summaryCard(a,!!W.data.advanced[a.id])+'</li>';
     }).join('')+'</ul></details>'));
   if(!left) return;
   const surface=dialog.querySelector('.ex-reveal');
@@ -507,6 +506,7 @@ function reveal(kind,{ids,shown},rewardDay) {
 
 }
 root.addEventListener('input',ev=>{
+  if(ev.target.id==='exGoal'){const out=root.querySelector('#exGoalValue');if(out)out.innerHTML=Number(ev.target.value)+'<small> 个</small>';return;}
   if(ev.target.matches('[data-recall-id]')){data.cardRecall32[ev.target.dataset.recallId].draft=ev.target.value;save(false);return;}
   if(ev.target.matches('[data-notebook=query]')) { notebookQuery=ev.target.value; const start=ev.target.selectionStart; render(); const el=root.querySelector('[data-notebook=query]'); el?.focus(); el?.setSelectionRange(start,start); return; }
   if(ev.target.matches('.ex-reply textarea') && renderedDay===dayKey()) {
@@ -660,6 +660,7 @@ root.addEventListener('click',ev=>{
       }
       render(); break;
     case 'increaseGoal': data.targets[tab]=Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+(tab==='p'?7:3);save();restoreDailyPosition();render();break;
+    case 'goalAdjust':case 'goalPreset':{const input=root.querySelector('#exGoal');if(!input)break;input.value=b.dataset.ex==='goalPreset'?b.dataset.value:Math.min(200,Math.max(Number(input.min),Number(input.value)+Number(b.dataset.step)));input.dispatchEvent(new Event('input',{bubbles:true}));break;}
     case 'saveGoal': {const min=tab==='p'?7:3;const input=root.querySelector('#exGoal');const n=Number(input?.value);if(!Number.isInteger(n)||n<min||n>200){alert('每日目标需在 '+min+' 到 200 之间');break;}data.targets[tab]=n;save();render();break;}
     case 'reviewQuiz': quiz.finished=false; quiz.index=0; render(); break;
     case 'resetQuiz': quiz=null; delete data.quizDraft; save(false); openPage('testCenter'); break;
