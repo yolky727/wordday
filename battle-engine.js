@@ -1,8 +1,9 @@
 /* Serializable battle rules. Indices address the four original slots throughout a match. */
 (function(root){
 'use strict';
-const passives={渡渡鸟:"永存 · 出战结算后回到可选手牌，次数不限。",独角兽:"净辉 · 在阵容中时，对方整场无法发动主动技能。",龙:"龙威 · 首次赢得回合后公开对方随机一张尚可出战的牌。",凤凰:"余烬 · 每场首次落败后回到可选手牌。"};
+const passives={猛犸象:"亘古 · 己方增加一次技能机会，对方有独角兽时失效。冰封 · 上一回合己方落败，本回合出场获得小幅战力提升。",长颈龙:"冥想 · 获胜后，己方下一张出场牌获得一次小幅战力优势。",渡渡鸟:"永存 · 出战结算后回到可选手牌，次数不限。",独角兽:"净辉 · 在阵容中时，对方整场无法发动主动技能。",龙:"龙威 · 首次赢得回合后公开对方随机一张尚可出战的牌。",凤凰:"余烬 · 每场首次落败后回到可选手牌。"};
 const byName={
+"霸王龙":["暴君降临 / 远古号令","暴君降临：本回合最强；远古号令：首回合选牌时削弱自身，强化其余三张。各消耗一次技能机会。","tyrant"],"长颈龙":["星穹远望","揭示对方稀有度最高的两张卡牌，并列随机。","stargaze"],
 "蛇":["伏击毒牙", "亮牌后，若基础判定落败且对手体型不大于自己，反转为胜。", "snake"],"蝎子":["尾针追偿", "发动后若落败，下一回合对方若落败，照常获得我方分数，并额外扣对方1分，最低为0。", "scorpion"],"大猩猩":["丛林点将", "先手指定对方未出战牌。优先自选可胜目标，其次自选平局目标，否则随机。", "gorilla"],"红毛猩猩":["雨林观察", "若本回合获胜，公开对方尚可出战的手牌。", "orangutan"],"鸽子":["逆风归航", "上一回合我方落败时，将当前结果提升一档。", "dove"],"独角兽":["棱光契约", "指定未出战队友，该牌下次平局为我方加1分。本回合独角兽落败时对方不得分。", "unicorn"],"龙":["逆鳞悬赏", "本回合胜方额外获得1分，平局照常。", "dragon"],"凤凰":["涅槃重生", "恢复一张已出战、当前不可选的队友牌，下回合起可再次出战。", "phoenix"],
 "熊猫":["竹林停战", "本回合判平，双方出战牌回手。", "truce"],
 "企鹅":["冰面滑行", "换一张未出战的己方手牌应战，企鹅留在手中。", "swap"],
@@ -65,9 +66,14 @@ function newGame(pool,owned,advanced,chosen=[],rarity={}){
  if(own.length<4)throw Error('需发现至少 4 种萌物');
  if(chosen.length>4||new Set(chosen).size!==chosen.length||chosen.some(n=>!own.includes(n)||!advanced.includes(n)))throw Error('手选卡必须是已进阶的不同萌物');
  const hands=[[...chosen,...shuffled(own.filter(n=>!chosen.includes(n)))].slice(0,4),shuffled(pool).slice(0,4)];
- const g={rulesVersion:'2.9',id:Date.now()+'-'+Math.random(),hands,rarity,evolved:[advanced.filter(n=>hands[0].includes(n)),[]],spent:[null,null],played:[[],[]],score:[0,0],history:[],round:0,first:pick([0,1]),intel:[{},{}],bless:[{},{}],finished:false};
+ const g={rulesVersion:'3.3',skillLog:[[],[]],power:[{},{}],meditation:[null,null],id:Date.now()+'-'+Math.random(),hands,rarity,evolved:[advanced.filter(n=>hands[0].includes(n)),hands[1].filter(n=>['霸王龙','猛犸象','长颈龙'].includes(n))],spent:[null,null],played:[[],[]],score:[0,0],history:[],round:0,first:pick([0,1]),intel:[{},{}],bless:[{},{}],finished:false};
  begin(g);return g;
 }
+function usage(g,s){g.skillLog??=g.spent.map(v=>v?[v]:[]);return g.skillLog[s]}
+function skillLimit(g,s){return g.hands[1-s].includes('独角兽')?0:g.hands[s].includes('猛犸象')?2:1}
+function skillsLeft(g,s){return Math.max(0,skillLimit(g,s)-usage(g,s).length)}
+const rarityRank=r=>r===4?6:r;
+function newDuel(hands,evolved,rarity={}){const g=newGame([...new Set(hands.flat())],hands[0],[],[],rarity);g.online=true;g.hands=hands.map(x=>x.slice());g.evolved=evolved.map(x=>x.slice());return g;}
 function begin(g){
  for(const seen of g.intel)for(const [i,v] of Object.entries(seen))if(v.until>0&&v.until<=g.round)delete seen[i];
  g.round++;
@@ -76,7 +82,7 @@ function begin(g){
  g.actor=g.lead<0?0:g.lead;
  g.phase=g.lead<0?'duel':'lead';
  g.cards=[null,null];g.fx={};g.notes=[];g.draw=false;g.wins=[false,false];g.reviewed=[false,false];g.interrupt=null;
- if(g.round===5){g.played=[[],[]];g.cards[1]=pick([0,1,2,3])}
+ if(g.round===5){g.played=[[],[]];if(!g.online)g.cards[1]=pick([0,1,2,3])}
  clock(g);
 }
 function clock(g){g.deadline=Date.now()+20000}
@@ -95,6 +101,12 @@ function predicted(g){
  if(names[0]===names[1]){
   const delta=Number(!!g.evolved?.[0]?.includes(slotName(g,0)))-Number(!!g.evolved?.[1]?.includes(slotName(g,1)));
   if(delta)return {...pair,delta,kind:'同牌进阶优势'};
+ }
+ // Small boosts only adjust close comprehensive comparisons; confirmed counters remain authoritative.
+ if(pair.kind==='综合属性'&&names[0]!=='龙'&&names[1]!=='龙'){
+  const weights=[.35,.30,.20,.10,.05],score=n=>root.WDBattleRules.profiles[n].reduce((sum,v,i)=>sum+v*weights[i],0);
+  const bonus=s=>(g.power?.[s]?.[g.cards[s]]||0)+(g.meditation?.[s]===g.round? .65:0)+(slotName(g,s)==='猛犸象'&&g.history.at(-1)?.winner===1-s? .65:0);
+  const extra=bonus(0)-bonus(1);if(extra){const d=score(names[0])-score(names[1])+extra;return {...pair,delta:Math.abs(d)<.12?0:Math.sign(d),kind:'传奇战力增益'};}
  }
  return pair;
 }
@@ -141,10 +153,12 @@ function resolve(g){
  if(delta===0&&!g.draw&&g.lionCarry!=null)delta=g.lionCarry===0?1:-1;
  if(g.fx.truce)retained.fill(true);
  for(let s=0;s<2;s++)if(g.spent[s]?.round===g.round&&g.spent[s].kind==='koala'&&delta*(s===0?1:-1)<0)retained[s]=true;
+ const tyrants=[0,1].filter(s=>g.fx.tyrant?.[s]);
+ if(tyrants.length){delta=tyrants.length===2?0:tyrants[0]===0?1:-1;protection.fill(false);}
  return {pair,delta,protection,retained};
 }
 function options(g,s){
- if(g.finished||g.hands[1-s].includes('独角兽')||g.spent[s]||g.actor!==s||g.fx.seal===1-s||!['lead','reply','duel','show'].includes(g.phase))return [];
+ if(g.finished||g.hands[1-s].includes('独角兽')||!skillsLeft(g,s)||g.actor!==s||g.fx.seal===1-s||!['lead','reply','duel','show'].includes(g.phase))return [];
  const results=[];
  const show=g.phase==='show',lead=g.phase==='lead',reply=g.phase==='reply';
  const enemy=show||reply&&(!g.fx.hide||g.fx.unhide)?nameAt(g,1-s):null;
@@ -152,7 +166,10 @@ function options(g,s){
   if(show&&g.cards[s]!==i)continue;
   const kind=byName[g.hands[s][i]]?.[2];
   if(!kind)continue;
+  if(kind==='tyrant'){if(show&&!usage(g,s).some(v=>v.name==='霸王龙'&&v.kind==='tyrant'))results.push({i,k:'tyrant'});if(!show&&g.round===1&&!g.played[s].length&&!usage(g,s).some(v=>v.kind==='distribute'))results.push({i,k:'distribute'});continue;}
+  if(usage(g,s).some(v=>v.name===g.hands[s][i]))continue;
   if(['turn','hide','ban','peek'].includes(kind)&&!lead)continue;
+  if(kind==='stargaze'&&show)continue;
   if(kind==='giraffe'&&!(reply&&g.fx.hide&&!g.fx.unhide))continue;
   if(kind==='double'&&(!lead&&!reply||g.round===5))continue;
   if(kind==='wolf'&&g.round>=4)continue;
@@ -205,6 +222,7 @@ function reveal(g){
 function play(g,s,i){
  if(g.actor!==s||g.interrupt||!['lead','reply','duel'].includes(g.phase)||!available(g,s).includes(i))return false;
  g.cards[s]=i;
+ if(g.online&&g.phase==='duel'&&g.cards[1-s]===null){g.actor=1-s;clock(g);return true;}
  if(g.phase==='lead'){g.phase='reply';g.actor=1-s;clock(g)}else reveal(g);
  return true;
 }
@@ -225,6 +243,8 @@ function settle(g){
  }
  const reason=g.draw||r.protection.some(Boolean)?'技能保护':r.delta!==r.pair.delta?'技能改判':r.pair.kind;
  delete g.lionCarry;
+ if(g.meditation)for(let s=0;s<2;s++)if(g.meditation[s]===g.round)g.meditation[s]=null;
+ if(winner>=0&&slotName(g,winner)==='长颈龙'){g.meditation??=[null,null];g.meditation[winner]=g.round+1;g.notes.push('冥想：下一回合队友获得小幅战力提升');}
  if(winner>=0&&entries[winner]==='lion')g.lionCarry=winner;
  for(let s=0;s<2;s++){
   if(r.protection[s]&&entries[s]==='otter'&&g.round<4)g.nextLead=1-s;
@@ -259,8 +279,12 @@ function activate(g,s,choice){
  const o=options(g,s).find(v=>v.i===choice.i&&v.k===choice.k&&v.target===choice.target);
  if(!o)return false;
  const n=g.hands[s][o.i],k=o.k;
- g.spent[s]={round:g.round,name:n,skill:byName[n][0],kind:k};
- g.notes.push((s?'沃尔德':'玩家')+'发动「'+byName[n][0]+'」');
+ const title=k==='distribute'?'远古号令':k==='tyrant'?'暴君降临':byName[n][0];
+ usage(g,s);g.spent[s]={round:g.round,name:n,skill:title,kind:k};g.skillLog[s].push({...g.spent[s]});
+ g.notes.push((s?'沃尔德':'玩家')+'发动「'+title+'」');
+ if(k==='tyrant'){g.fx.tyrant??=[false,false];g.fx.tyrant[s]=true;}
+ if(k==='distribute'){g.power??=[{},{}];g.power[s][o.i]=-1.8;for(let i=0;i<4;i++)if(i!==o.i)g.power[s][i]=.65;clock(g);return true;}
+ if(k==='stargaze'){const slots=shuffled([0,1,2,3]).sort((a,b)=>rarityRank(g.rarity?.[g.hands[1-s][b]]??0)-rarityRank(g.rarity?.[g.hands[1-s][a]]??0));for(const i of slots.slice(0,2))g.intel[s][i]={name:g.hands[1-s][i],until:0};clock(g);return true;}
  if(k==='gorilla'){
   g.cards[s]=o.i;g.cards[1-s]=o.target??pick(available(g,1-s));reveal(g);return true;
  }
@@ -270,7 +294,7 @@ function activate(g,s,choice){
  if(k==='giraffe'){g.fx.unhide=true;clock(g);return true}
  if(k==='peek')g.intel[s][o.target]={name:g.hands[1-s][o.target],until:0};
  if(k==='ban'){
-  const ids=available(g,1-s),rank=i=>g.rarity?.[g.hands[1-s][i]]??0;
+  const ids=available(g,1-s),rank=i=>rarityRank(g.rarity?.[g.hands[1-s][i]]??0);
   const top=Math.max(...ids.map(rank));
   g.fx.ban={side:1-s,slot:pick(ids.filter(i=>rank(i)===top))};
  }
@@ -314,7 +338,7 @@ function automatic(g,s,allowSkill=true){
  const candidates=available(g,s);
  const score=n=>visible?4*matchup(n,seen).delta:0;
  const best=candidates.map(i=>({i,score:score(g.hands[s][i])+Math.random()})).sort((a,b)=>b.score-a.score)[0];
- const tactical=opts.filter(o=>['turn','hide','ban','peek','giraffe','seal','wolf','double','mimic','gorilla'].includes(o.k));
+ const tactical=opts.filter(o=>['turn','hide','ban','peek','giraffe','seal','wolf','double','mimic','gorilla','stargaze','distribute'].includes(o.k));
  if(tactical.length&&Math.random()<.28){
   const o=pick(tactical);
   const n=g.hands[s][o.k==='mimic'?o.target:o.i];
@@ -322,5 +346,5 @@ function automatic(g,s,allowSkill=true){
  }
  return play(g,s,best.i);
 }
-root.WDBattle={style,matchup,byName,passives,newGame,available,rest,base,predicted,nameAt,options,activate,pass,play,advance,automatic,displayedLead,shuffled,eats};
+root.WDBattle={usage,skillLimit,skillsLeft,rarityRank,newDuel,resolve,style,matchup,byName,passives,newGame,available,rest,base,predicted,nameAt,options,activate,pass,play,advance,automatic,displayedLead,shuffled,eats};
 })(typeof window==='undefined'?globalThis:window);

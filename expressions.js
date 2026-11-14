@@ -61,6 +61,9 @@ function restoreLearningFilters(kind) {
   const saved=data.learningFilters?.[kind]||{};
   exam=saved.exam||''; source=saved.source||''; query=saved.query||''; sceneFilter=saved.scene||'';
 }
+const validText=v=>typeof v==='string'&&v.trim().length>0;
+function repairQuiz(q){if(!q?.questions?.length)return null;for(const row of q.questions){const c=byId.get(row.c?.id);if(!c||!validText(c.en)||!validText(c.zh))return null;if(!validText(row.correct)||!validText(row.prompt)||row.options?.some(v=>!validText(v))){row.c=c;row.field=row.field==='en'?'en':'zh';row.correct=c[row.field];row.prompt=c[row.field==='en'?'zh':'en'];const values=shuffle(cards.filter(x=>x.kind===c.kind&&validText(x[row.field])&&x[row.field]!==row.correct).map(x=>x[row.field]));row.options=shuffle([row.correct,...[...new Set(values)].slice(0,3)]);row.answer=null;}else row.c=c;}return q;}
+quiz=repairQuiz(quiz);if(quiz)data.quizDraft=quiz;else delete data.quizDraft;
 const testModes = [['p','短语测试'],['s','句子测试'],['mixed','综合测试']];
 const button = (action, label, cls='secondary', attrs='') => '<button type="button" data-ex="'+action+'" class="'+cls+'" '+attrs+'>'+label+'</button>';
 const select = (name, label, choices, value) => '<label><span>'+label+'</span><select class="field" name="'+name+'" data-filter="'+name+'">'+choices.map(([key,label])=>'<option value="'+esc(key)+'" '+(key===value?'selected':'')+'>'+esc(label)+'</option>').join('')+'</select></label>';
@@ -159,15 +162,15 @@ function learning() {
   const goal=Math.max(tab==='p'?7:3,Number(data.targets[tab]||0));
   return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...majorScenes.map(name=>[name,name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
-    '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form></details>'+
-    '<section class="ex-daily-goal xs-goal-slider"><div class="xs-goal-title"><label for="exGoal">每日'+(tab==='p'?'短语':'句子')+'目标</label><output for="exGoal" id="exGoalValue">'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'<small> 个</small></output></div><div class="xs-goal-track">'+button('goalAdjust','−','secondary','data-step="-1" aria-label="目标减少一个"')+'<input type="range" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" step="1" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'" aria-label="每日'+(tab==='p'?'短语':'句子')+'目标数量">'+button('goalAdjust','+','secondary','data-step="1" aria-label="目标增加一个"')+'</div><div class="xs-goal-presets">'+[tab==='p'?7:3,10,20,30,50,100].map(n=>button('goalPreset',n+' 个','secondary','data-value="'+n+'"')).join('')+'</div><footer><small>今日已学 '+new Set(data.dailyLearned[dayKey()]?.[tab]||[]).size+' 个 · 最低 '+(tab==='p'?7:3)+' 个</small>'+button('saveGoal','确定目标')+'</footer></section>' +
+    '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form>'+
+    '<section class="ex-daily-goal xs-goal-slider"><div class="xs-goal-title"><label for="exGoal">每日'+(tab==='p'?'短语':'句子')+'目标</label><output for="exGoal" id="exGoalValue">'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'<small> 个</small></output></div><div class="xs-goal-track">'+button('goalAdjust','−','secondary','data-step="-1" aria-label="目标减少一个"')+'<input type="range" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" step="1" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'" aria-label="每日'+(tab==='p'?'短语':'句子')+'目标数量">'+button('goalAdjust','+','secondary','data-step="1" aria-label="目标增加一个"')+'</div><div class="xs-goal-presets">'+[tab==='p'?7:3,10,20,30,50,100].map(n=>button('goalPreset',n+' 个','secondary','data-value="'+n+'"')).join('')+'</div><footer><small>今日已学 '+new Set(data.dailyLearned[dayKey()]?.[tab]||[]).size+' 个 · 最低 '+(tab==='p'?7:3)+' 个</small>'+button('saveGoal','确定目标')+'</footer></section></details>' +
     (source==='official'?'<p class="ex-official-links"><a href="https://cet.neea.edu.cn/html1/folder/16113/1588-1.htm" target="_blank" rel="noopener noreferrer">四六级官方样卷</a> · <a href="https://ielts.org/take-a-test/preparation-resources/sample-test-questions" target="_blank" rel="noopener noreferrer">IELTS 官方完整样题</a></p>':'')+
     (source===''&&done.size>=goal?'<section class="ex-study-complete"><p class="ex-eyebrow">SESSION COMPLETE</p><div class="ex-complete-check">✓</div><h2>今天的目标，完成了。</h2><p>已记录 '+done.size+' 个'+(tab==='p'?'短语':'句子')+'，学习进度已保存。</p>'+button('increaseGoal','再学 '+(tab==='p'?7:3)+' 个'+(tab==='p'?'短语':'句子'))+button('home','返回学习首页','secondary')+'</section>':c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
       '<span>'+ (context.length?'关联表达':(source===''?Math.min(done.size,goal)+' / '+goal+' · 第 '+(position+1)+' 张':(position+1)+' / '+list.length))+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
       '<p class="ex-empty">'+(source===''?'当前范围已全部学完！可以在「筛选与搜索」中选择「已学」进行复习。':'这个范围暂无内容。试试换个筛选条件。')+'</p>');
 }
 function startQuiz(mode) {
-  const list = shuffle(pool(mode,quizPrefs.exam,quizPrefs.source));
+  const list = shuffle(pool(mode,quizPrefs.exam,quizPrefs.source).filter(c=>validText(c.en)&&validText(c.zh)));
   if (!list.length) { quizError='该范围暂无题目，请换一个范围。'; render(); return; }
   quizError = '';
   const count=Number(quizPrefs.count);
@@ -179,7 +182,7 @@ function startQuiz(mode) {
   const questions=selected.map((c,index)=>{
     const field=index%2===1?'en':'zh';
     const correct=c[field], prompt=field==='en'?c.zh:c.en;
-    const candidates=cards.filter(r=>r.kind===c.kind&&r[field]&&r[field]!==correct);
+    const candidates=cards.filter(r=>r.kind===c.kind&&validText(r[field])&&r[field]!==correct);
     const distractors=[...shuffle(candidates.filter(r=>r.scene===c.scene)),...shuffle(candidates.filter(r=>r.scene!==c.scene&&r.exam===c.exam)),...shuffle(candidates)];
     const options=[correct];
     for(const r of distractors) if(options.length<4&&!options.includes(r[field])) options.push(r[field]);
