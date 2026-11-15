@@ -3,7 +3,7 @@
 'use strict';
 const passives={猛犸象:"亘古 · 己方增加一次技能机会，对方有独角兽时失效。冰封 · 上一回合己方落败，本回合出场获得小幅战力提升。",长颈龙:"冥想 · 获胜后，己方下一张出场牌获得一次小幅战力优势。",渡渡鸟:"永存 · 出战结算后回到可选手牌，次数不限。",独角兽:"净辉 · 在阵容中时，对方整场无法发动主动技能。",龙:"龙威 · 首次赢得回合后公开对方随机一张尚可出战的牌。",凤凰:"余烬 · 每场首次落败后回到可选手牌。"};
 const byName={
-"霸王龙":["暴君降临 / 远古号令","暴君降临：本回合最强；远古号令：首回合选牌时削弱自身，强化其余三张。各消耗一次技能机会。","tyrant"],"长颈龙":["星穹远望","揭示对方稀有度最高的两张卡牌，并列随机。","stargaze"],
+"霸王龙":["暴君降临 / 远古号令","暴君降临：本回合最强；远古号令：出场前或技能阶段削弱自身，强化其余尚未出战队友。各消耗一次技能机会。","tyrant"],"长颈龙":["星穹远望","揭示对方稀有度最高的两张卡牌，并列随机。","stargaze"],
 "蛇":["伏击毒牙", "亮牌后，若基础判定落败且对手体型不大于自己，反转为胜。", "snake"],"蝎子":["尾针追偿", "发动后若落败，下一回合对方若落败，照常获得我方分数，并额外扣对方1分，最低为0。", "scorpion"],"大猩猩":["丛林点将", "先手指定对方未出战牌。优先自选可胜目标，其次自选平局目标，否则随机。", "gorilla"],"红毛猩猩":["雨林观察", "若本回合获胜，公开对方尚可出战的手牌。", "orangutan"],"鸽子":["逆风归航", "上一回合我方落败时，将当前结果提升一档。", "dove"],"独角兽":["棱光契约", "指定未出战队友，该牌下次平局为我方加1分。本回合独角兽落败时对方不得分。", "unicorn"],"龙":["逆鳞悬赏", "本回合胜方额外获得1分，平局照常。", "dragon"],"凤凰":["涅槃重生", "恢复一张已出战、当前不可选的队友牌，下回合起可再次出战。", "phoenix"],
 "熊猫":["竹林停战", "本回合判平，双方出战牌回手。", "truce"],
 "企鹅":["冰面滑行", "换一张未出战的己方手牌应战，企鹅留在手中。", "swap"],
@@ -166,7 +166,7 @@ function options(g,s){
   if(show&&g.cards[s]!==i)continue;
   const kind=byName[g.hands[s][i]]?.[2];
   if(!kind)continue;
-  if(kind==='tyrant'){if(show&&!usage(g,s).some(v=>v.name==='霸王龙'&&v.kind==='tyrant'))results.push({i,k:'tyrant'});if(!show&&g.round===1&&!g.played[s].length&&!usage(g,s).some(v=>v.kind==='distribute'))results.push({i,k:'distribute'});continue;}
+  if(kind==='tyrant'){if(show&&!usage(g,s).some(v=>v.name==='霸王龙'&&v.kind==='tyrant'))results.push({i,k:'tyrant'});if(g.round<5&&available(g,s).some(j=>j!==i)&&!usage(g,s).some(v=>v.kind==='distribute'))results.push({i,k:'distribute'});continue;}
   if(usage(g,s).some(v=>v.name===g.hands[s][i]))continue;
   if(['turn','hide','ban','peek'].includes(kind)&&!lead)continue;
   if(kind==='stargaze'&&show)continue;
@@ -283,7 +283,7 @@ function activate(g,s,choice){
  usage(g,s);g.spent[s]={round:g.round,name:n,skill:title,kind:k};g.skillLog[s].push({...g.spent[s]});
  g.notes.push((s?'沃尔德':'玩家')+'发动「'+title+'」');
  if(k==='tyrant'){g.fx.tyrant??=[false,false];g.fx.tyrant[s]=true;}
- if(k==='distribute'){g.power??=[{},{}];g.power[s][o.i]=-1.8;for(let i=0;i<4;i++)if(i!==o.i)g.power[s][i]=.65;clock(g);return true;}
+ if(k==='distribute'){g.power??=[{},{}];g.power[s][o.i]=-1.8;for(let i=0;i<4;i++)if(i!==o.i&&!g.played[s].includes(i))g.power[s][i]=.65;clock(g);return true;}
  if(k==='stargaze'){const slots=shuffled([0,1,2,3]).sort((a,b)=>rarityRank(g.rarity?.[g.hands[1-s][b]]??0)-rarityRank(g.rarity?.[g.hands[1-s][a]]??0));for(const i of slots.slice(0,2))g.intel[s][i]={name:g.hands[1-s][i],until:0};clock(g);return true;}
  if(k==='gorilla'){
   g.cards[s]=o.i;g.cards[1-s]=o.target??pick(available(g,1-s));reveal(g);return true;
