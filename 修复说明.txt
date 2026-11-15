@@ -1,0 +1,18 @@
+WORDDAY 3.3.1 图鉴比例修复补丁 r3
+
+适用于已安装3.3.1的用户。
+把本补丁4个文件上传到原GitHub仓库的index.html同一层，替换同名文件：
+index.html
+wildwords331fix.js
+patch331fix.css
+service-worker.js
+
+不要删除原来的其他文件；不要覆盖online-config.js。
+不用执行SQL，不用部署Edge Function。
+等GitHub Pages发布完成，完全关闭再打开WORDDAY。
+底部应显示“3.3.1 · 图鉴修正版”，可据此区分旧页面。
+不需要清除网站数据，不影响打卡、卡牌、进阶或好友资料。
+
+修复：图鉴用独立3:4外框约束完整卡面，避免最小高度或内容撑长；新JS/CSS文件名避免与旧同名资源混用。
+已在Chrome浏览器320/390/430/768四种iframe视口宽度核对实际宽高、emoji和编号边界；
+旧220px最小高度样式同时存在时也保持3:4。未在真实iPhone Safari执行测试。
