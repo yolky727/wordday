@@ -160,14 +160,14 @@ function learning() {
   const c = (current && byId.get(current)) || list[Math.min(position,list.length-1)];
   const done=new Set(data.dailyLearned[dayKey()]?.[tab]||[]);
   const goal=Math.max(tab==='p'?7:3,Number(data.targets[tab]||0));
-  return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选与搜索</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...majorScenes.map(name=>[name,name])],sceneFilter)+
+  return '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>筛选</summary><form class="ex-controls ex-filter-form">'+select('exam','考试方向',opts.exam,exam)+select('scene','场景',[['','全部场景'],...majorScenes.map(name=>[name,name])],sceneFilter)+
     select('source','范围',[...opts.source,['due','到期复习']],source)+
     '<div class="ex-search"><label><span>搜索表达</span><input class="field" type="search" name="q" value="'+esc(query)+'" placeholder="英文、中文或场景"></label><button type="submit">确定</button></div></form>'+
     '<section class="ex-daily-goal xs-goal-slider"><div class="xs-goal-title"><label for="exGoal">每日'+(tab==='p'?'短语':'句子')+'目标</label><output for="exGoal" id="exGoalValue">'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'<small> 个</small></output></div><div class="xs-goal-track">'+button('goalAdjust','−','secondary','data-step="-1" aria-label="目标减少一个"')+'<input type="range" id="exGoal" min="'+(tab==='p'?7:3)+'" max="200" step="1" value="'+Math.max(tab==='p'?7:3,Number(data.targets[tab]||0))+'" aria-label="每日'+(tab==='p'?'短语':'句子')+'目标数量">'+button('goalAdjust','+','secondary','data-step="1" aria-label="目标增加一个"')+'</div><div class="xs-goal-presets">'+[tab==='p'?7:3,10,20,30,50,100].map(n=>button('goalPreset',n+' 个','secondary','data-value="'+n+'"')).join('')+'</div><footer><small>今日已学 '+new Set(data.dailyLearned[dayKey()]?.[tab]||[]).size+' 个 · 最低 '+(tab==='p'?7:3)+' 个</small>'+button('saveGoal','确定目标')+'</footer></section></details>' +
     (source==='official'?'<p class="ex-official-links"><a href="https://cet.neea.edu.cn/html1/folder/16113/1588-1.htm" target="_blank" rel="noopener noreferrer">四六级官方样卷</a> · <a href="https://ielts.org/take-a-test/preparation-resources/sample-test-questions" target="_blank" rel="noopener noreferrer">IELTS 官方完整样题</a></p>':'')+
     (source===''&&done.size>=goal?'<section class="ex-study-complete"><p class="ex-eyebrow">SESSION COMPLETE</p><div class="ex-complete-check">✓</div><h2>今天的目标，完成了。</h2><p>已记录 '+done.size+' 个'+(tab==='p'?'短语':'句子')+'，学习进度已保存。</p>'+button('increaseGoal','再学 '+(tab==='p'?7:3)+' 个'+(tab==='p'?'短语':'句子'))+button('home','返回学习首页','secondary')+'</section>':c?cardView(c)+'<div class="ex-steps">'+(context.length?button('back','← 返回上一张'):button('prev','← 上一张','secondary',position<=0?'disabled':''))+
       '<span>'+ (context.length?'关联表达':(source===''?Math.min(done.size,goal)+' / '+goal+' · 第 '+(position+1)+' 张':(position+1)+' / '+list.length))+'</span>'+button('next','下一张 →','secondary',context.length||position>=list.length-1?'disabled':'')+'</div>':
-      '<p class="ex-empty">'+(source===''?'当前范围已全部学完！可以在「筛选与搜索」中选择「已学」进行复习。':'这个范围暂无内容。试试换个筛选条件。')+'</p>');
+      '<p class="ex-empty">'+(source===''?'当前范围已全部学完！可以在「筛选」中选择「已学」进行复习。':'这个范围暂无内容。试试换个筛选条件。')+'</p>');
 }
 function startQuiz(mode) {
   const list = shuffle(pool(mode,quizPrefs.exam,quizPrefs.source).filter(c=>validText(c.en)&&validText(c.zh)));
@@ -198,7 +198,7 @@ function startQuiz(mode) {
 function test(center=false) {
   if (center) {
     const available=pool('mixed',quizPrefs.exam,quizPrefs.source).length;
-    return '<div class="ex-test-title"><h2>自由测试中心</h2><span>随时开始 · 三种模式</span></div>'+
+    return '<div class="ex-test-title"><h2>测试中心</h2><span>三种模式</span></div>'+
       '<details class="ex-settings" '+(settingsOpen?'open':'')+'><summary>题目设置</summary><div class="ex-controls ex-test-filters">'+
       select('exam','考试方向',opts.exam,quizPrefs.exam)+select('source','出题范围',opts.source,quizPrefs.source)+
       select('count','题数',opts.count,quizPrefs.count)+'</div></details>'+
@@ -249,7 +249,7 @@ function notebook() {
     '<input class="field" data-notebook="query" value="'+esc(notebookQuery)+'" placeholder="搜索素材" aria-label="搜索素材" />'+
     '</div><p class="ex-note">已筛选 '+filtered.length+' / '+saved.length+' 条收藏</p><div class="ex-notebook">'+
     (filtered.map(c=>'<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(c.zh)+' · '+esc(c.exam)+' · '+esc((data.favorites[c.id]||[]).join(' · '))+'</small></span>'+
-    button('openSaved','查看','secondary','data-id="'+c.id+'"')+button('tagSaved','标签','secondary','data-id="'+c.id+'"')+'</div>').join('')||'<p class="ex-empty">没有符合当前筛选的收藏内容。</p>')+'</div>';
+    button('openSaved','查看','secondary','data-id="'+c.id+'"')+button('tagSaved','标签','secondary','data-id="'+c.id+'"')+'</div>').join('')||'<p class="ex-empty">暂无结果</p>')+'</div>';
 }
 function relayQuestion(c, field, slot) {
   const correct=c[field];
@@ -289,7 +289,7 @@ function themeContent() {
       return '<li><span class="ex-relay-reward-mark" aria-hidden="true">'+mark+'</span><div><strong>'+title+'</strong><small>'+description+' · '+status+'</small></div>'+
         button(kind,action,kind==='chest'&&!receipt?'':'secondary','aria-label="'+action+' · '+title+'"')+'</li>';
     };
-    return '<section class="ex-relay-complete"><div class="ex-relay-banner"><div><p class="ex-eyebrow">WORDDAY / RELAY</p><h3>本期接力已完成</h3><p>'+esc(relayTitle())+'</p></div>'+
+    return '<section class="ex-relay-complete"><div class="ex-relay-banner"><div><p class="ex-eyebrow">WORDDAY / RELAY</p><h3>接力完成</h3><p>'+esc(relayTitle())+'</p></div>'+
       '<div class="ex-relay-meter" aria-label="练习完成">'+(run.studio32?5:relaySteps)+'<span> / '+(run.studio32?5:relaySteps)+'</span><small>练习完成</small></div></div>'+
       '<div class="ex-relay-rewards"><h4>接力奖励</h4><ul>'+rewardRow('rewardThree','三张奖励卡','固定三张','◇')+rewardRow('chest','主题卡包','逐张揭晓','✦')+'</ul></div></section>';
   }
@@ -366,7 +366,7 @@ function render() {
     '<span class="ex-entry-copy"><small class="ex-entry-label" aria-hidden="true">'+label+'</small><b>'+title+'</b><span>'+desc+'</span></span>'+
     '<svg class="ex-entry-art" viewBox="0 0 40 40" aria-hidden="true"><path d="'+path+'"/></svg><i class="ex-entry-arrow" aria-hidden="true">↗</i>',
     'secondary ex-entry','data-id="'+id+'"');
-  root.innerHTML='<header class="ex-header"><div><p class="ex-eyebrow">WORDDAY / EXPRESSIONS</p><h2>表达</h2><p>从一个场景，练到一句能用的话。</p></div></header>'+
+  root.innerHTML='<header class="ex-header"><div><p class="ex-eyebrow">WORDDAY / EXPRESSIONS</p><h2>表达</h2><p></p></div></header>'+
     studio.home()+'<div class="ex-practice-entries"><section aria-labelledby="exLearnGroup"><h3 id="exLearnGroup">打好表达底子</h3><div class="ex-study-entries">'+entries.slice(0,2).map(entry).join('')+'</div></section>'+
     '<section aria-labelledby="exTestGroup"><h3 id="exTestGroup">快速辨析</h3>'+entry(entries[2])+'</section></div>'+
     '<section class="panel ex-theme"><div class="ex-theme-top"><div><p class="ex-eyebrow">每三天一题组</p><h3>'+esc(relayTitle())+'</h3></div>'+button('theme','表达接力','')+'</div>'+encounter+'</section>'+
@@ -377,7 +377,7 @@ function render() {
   if(testCenter) {
     const center=document.createElement('dialog');
     center.className='ex-dialog ex-test-window';
-    center.setAttribute('aria-label','表达自由测试中心');
+    center.setAttribute('aria-label','表达测试中心');
     center.innerHTML='<header class="ex-stage-bar">'+button('home','← 表达','secondary','autofocus')+
       '<h2 class="ex-stage-heading">WORDDAY / TEST</h2></header><div class="ex-test-window-body">'+test(true)+'</div>';
     center.addEventListener('cancel',ev=>{ev.preventDefault();openPage('home');});

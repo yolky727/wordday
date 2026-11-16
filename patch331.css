@@ -11,5 +11,5 @@
 /* Snapshot boxes are used only for compact battle hands and pack summaries. */
 .online-hand .reward-snapshot,.online-enemy .reward-snapshot{display:flex;flex-direction:column;aspect-ratio:3/4;justify-content:space-between;gap:5px}.online-hand .reward-animal-slot,.online-enemy .reward-animal-slot{display:grid;place-items:center;min-height:40px}.online-hand .wild-emoji,.online-enemy .wild-emoji{font-size:clamp(24px,6vw,42px)!important;line-height:1.5!important;height:auto!important}.online-hand .reward-name,.online-enemy .reward-name{position:static}.online-field .wild-card{width:100%}
 
-#wildOverlay .wild-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wild-grid .wild-card{min-height:220px;height:auto;aspect-ratio:3/4}.wild-grid .wild-card .wild-emoji{flex-shrink:0;line-height:1.5}.wild-grid .wild-card .wild-id{flex-shrink:0}
+/* Album dimensions, aspect ratio and columns inherit the original 3.3 styles. */
 .online-skills button small{display:block;margin-top:6px;font-size:11px;color:inherit;opacity:.8}

@@ -70,7 +70,7 @@ function newGame(pool,owned,advanced,chosen=[],rarity={}){
  begin(g);return g;
 }
 function usage(g,s){g.skillLog??=g.spent.map(v=>v?[v]:[]);return g.skillLog[s]}
-function skillLimit(g,s){return g.hands[1-s].includes('独角兽')?0:g.hands[s].includes('猛犸象')?2:1}
+function skillLimit(g,s){return g.hands[1-s].includes('独角兽')?0:g.skillCaps?.[s]??(g.hands[s].includes('猛犸象')?2:1)}
 function skillsLeft(g,s){return Math.max(0,skillLimit(g,s)-usage(g,s).length)}
 const rarityRank=r=>r===4?6:r;
 function newDuel(hands,evolved,rarity={}){const g=newGame([...new Set(hands.flat())],hands[0],[],[],rarity);g.online=true;g.hands=hands.map(x=>x.slice());g.evolved=evolved.map(x=>x.slice());return g;}
