@@ -26,3 +26,26 @@ body.card35-no-cn .wild-card .wild-cn,body.card35-no-cn .battle34-card .wild-cn{
 [data-luminous=Phoenix] .particle35.cinder35{width:2px;height:7px;border-radius:80% 20% 70% 30%;animation-name:cinder35}
 @keyframes wisp35{0%{opacity:0;transform:translate(-3px,12px) rotate(24deg) scaleY(.6)}35%{opacity:.72}75%{opacity:.4;transform:translate(3px,-9px) rotate(12deg) scaleY(1.1)}100%{opacity:0;transform:translate(6px,-18px) rotate(5deg) scaleY(.4)}}
 @keyframes cinder35{0%{opacity:0;transform:translate(-4px,15px) rotate(-18deg) scale(.65)}25%{opacity:.85}60%{opacity:.6;transform:translate(5px,-12px) rotate(12deg)}100%{opacity:0;transform:translate(-2px,-40px) rotate(-12deg) scale(.3)}}
+
+/* Arena 3.6: preserve the two-column lobby and scroll only the mode selector. */
+#arena34 .ar34-ranks{max-height:288px;max-height:min(288px,34dvh);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;padding:2px;align-content:start;grid-auto-rows:minmax(82px,auto)}
+#arena34 .ar36-description{color:var(--green);margin:12px 0;font-size:14px}
+#arena34 .ar36-exchange{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:12px 0}
+#arena34 .ar36-exchange>button{min-width:0;padding:8px;background:transparent}
+#arena34 .ar36-exchange .wild-card{width:100%;aspect-ratio:3/4;height:auto;min-height:0}
+#arena34 .ar36-replay{margin-top:4px;font-size:12px}
+#arenaEnding36{box-sizing:border-box;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border:0;border-radius:0;padding:max(32px,env(safe-area-inset-top)) 24px max(28px,env(safe-area-inset-bottom));background:#11251f;color:#edf4ed;overflow:auto;text-align:center}
+#arenaEnding36::backdrop{background:#11251f}
+.ar36-story{position:relative;z-index:1;max-width:540px;margin:max(9dvh,36px) auto 36px;line-height:1.9}
+.ar36-story p{font-size:clamp(18px,4.6vw,24px);margin:0 0 30px}
+.ar36-story p,.ar36-end,.ar36-titles{opacity:0;animation:ar36-fade 1.4s ease forwards;animation-delay:var(--delay)}
+.ar36-end{font:italic 26px Georgia,serif;margin:36px 0;color:#accbb0}
+.ar36-titles{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+.ar36-titles span{padding:7px 12px;border:1px solid #94b59c55;border-radius:20px;font-size:13px;color:#bfd9c2}
+#arenaEnding36>button{position:relative;z-index:1;color:#d5e6d7;background:#334a3e;border:1px solid #617467;padding:12px 28px;border-radius:16px}
+.ar36-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden}.ar36-stars i{position:absolute;left:var(--x);top:var(--y);width:2px;height:2px;background:#a1c2a6;border-radius:50%;opacity:.25;animation:ar36-star 4s ease-in-out infinite;animation-delay:var(--delay)}
+.ar36-revealed .ar36-story>*{animation:none;opacity:1}
+@keyframes ar36-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ar36-star{50%{opacity:.65}}
+@media(prefers-reduced-motion:reduce){.ar36-story>*,.ar36-stars i{animation:none!important;opacity:1}}
+.wd26-reduced .ar36-story>*,.wd26-reduced .ar36-stars i{animation:none!important;opacity:1}

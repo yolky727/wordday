@@ -12,7 +12,7 @@ function readStore(){try{return JSON.parse(localStorage.getItem(key))||{}}catch{
 let arenaRun=false,externalRewardBack=null;
 let store=readStore();store.loginDays??=[];if(!store.loginDays.includes(dateKey())){store.loginDays.push(dateKey());store.loginDays=store.loginDays.slice(-400);localStorage.setItem(key,JSON.stringify(store))}store.reviewDone??={};store.daily??={};store.total??={games:0,wins:0,points:0,skills:0};let game=store.active||null;if(game&&!game.finished&&!['2.8.3','2.9','3.3'].includes(game.rulesVersion)){game=null;store.active=null;localStorage.setItem(key,JSON.stringify(store))}
 function save(){if(arenaRun){window.WDArena34?.saveGame(game).catch(()=>toast('保存失败'));return;}if(game){game.evolved??=[advanced().filter(n=>game.hands[0].includes(n)),[]];game.rulesVersion='3.3';game.rarity??=Object.fromEntries(W.animals.map(a=>[a.cn,a.rarity]))}store.active=game;localStorage.setItem(key,JSON.stringify(store))}
-function record(){if(arenaRun){window.WDArena34?.complete(game).then(()=>{if(dialog.open&&finalVisible)paint()}).catch(()=>toast('保存失败'));return;}
+function record(){if(arenaRun){window.WDArena34?.complete(game).then(()=>{if(dialog.open&&finalVisible){paint();window.WDArena34?.showEnding()}}).catch(()=>toast('保存失败'));return;}
  if(game?.finished)creditVictory(game);
  if(!game?.finished||game.recorded)return;
  const day=dateKey(),won=game.score[0]>game.score[1];
@@ -72,7 +72,7 @@ function plan(){
  clearTimers();if(!dialog.open||scene!=='fight'||!game)return;
  const g=game,round=g.round,phase=g.phase,actor=g.actor;
  const later=(ms,action)=>{autoTimer=setTimeout(()=>{if(dialog.open&&scene==='fight'&&game===g&&g.round===round&&g.phase===phase&&g.actor===actor)action()},ms)};
- if(phase==='end'){if(!finalVisible)later(1350,()=>{finalVisible=true;battleSound(g.score[0]>g.score[1]?'matchWin':g.score[0]<g.score[1]?'matchLoss':'roundDraw');paint()});return}
+ if(phase==='end'){if(!finalVisible)later(1350,()=>{finalVisible=true;battleSound(g.score[0]>g.score[1]?'matchWin':g.score[0]<g.score[1]?'matchLoss':'roundDraw');paint();if(arenaRun)window.WDArena34?.showEnding()});return}
  if(phase==='report'){later(1550,()=>{B.advance(g);step()});return}
  if(actor===1){later(600,()=>{B.automatic(g,1);step()});return}
  if(phase==='show'&&!g.interrupt&&!skillPanel){
@@ -361,5 +361,5 @@ window.addEventListener('storage',event=>{
 });
 document.dispatchEvent(new Event('wd28badges'));
 window.WDBattleArenaUI34={start(g,mode){clearTimers();arenaRun=true;game=g;scene='fight';finalVisible=!!g.finished;skillPanel=false;dialog.showModal();step()},rewards(cards,back){arenaRun=false;game=store.active||null;externalRewardBack=back;rewardCard=cards;taskRevealStep=cards.length===1?1:0;scene='reward';if(!dialog.open)dialog.showModal();showTaskPack()}};
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.4';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.6';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();
