@@ -16,7 +16,7 @@ const usedEmoji=new Set();
 const activeAnimals=originalAnimals.filter(a=>{if(!allowedNames.has(a.name)||usedEmoji.has(a.emoji))return false;usedEmoji.add(a.emoji);return true});
 animals.length=0;animals.push(...activeAnimals);
 const exactEmoji=new Set(animals.map(a=>a.name));
-function specimen(a){return `<span class="wild-emoji" aria-label="${esc(a.cn)}" role="img">${a.emoji}</span>`}
+function specimen(a){return `<span class="wild-emoji" aria-label="${esc(a.name)}" role="img">${a.emoji}</span>`}
 const activeById=new Map(animals.map(a=>[a.id,a]));
 const tier=['COMMON','RARE','EPIC','MYTHIC','LUMINOUS','LEGENDARY'],tcn=['普通','稀有','史诗','奇珍','流光','传奇'];
 const KEY='wordday_wildwords_25';let data;try{data=JSON.parse(localStorage.getItem(KEY)||'null')}catch{};if(!data||typeof data!=='object')data={};data.inventory=data.inventory||{};data.discovered=data.discovered||{};data.advanced=data.advanced||{};data.daily=data.daily||{};data.encounters=data.encounters||{};data.activeSeconds=Number(data.activeSeconds)||0;data.lastActivity=Date.now();
@@ -35,7 +35,7 @@ function wireClose(){const b=$('wildClose');if(b)b.onclick=close}
 const luminousArt={"Unicorn": ["<path stroke=\"#3ecaff\" d=\"M-7 53 Q12 16 61 -3 M52 137 Q91 127 108 93\"/><path stroke=\"#ff72d0\" d=\"M-6 43 Q24 18 75 -4 M39 140 Q85 118 105 105\"/>", "<path stroke=\"#3ecaff\" d=\"M-7 53 Q12 16 61 -3 M52 137 Q91 127 108 93\"/><path stroke=\"#ff72d0\" d=\"M-6 43 Q24 18 75 -4 M39 140 Q85 118 105 105\"/><path stroke=\"#a48bff\" d=\"M-8 65 Q16 28 43 22 M65 135 Q91 115 109 73\"/>"], "Dragon": ["<g class=\"dragon-strike\"><path class=\"dragon-bloom\" d=\"M69 -3 72 8 81 10 78 15 88 18 85 23 96 30 95 37 104 43 M81 10 87 5 95 7 101 1 M88 18 93 16 97 21 103 20 M96 30 90 32 93 40\"/><path class=\"dragon-core\" d=\"M69 -3 72 8 81 10 78 15 88 18 85 23 96 30 95 37 104 43 M81 10 87 5 95 7 101 1 M88 18 93 16 97 21 103 20 M96 30 90 32 93 40\"/></g><g class=\"dragon-strike\"><path class=\"dragon-bloom\" d=\"M-3 88 6 93 4 100 12 106 10 112 22 116 20 122 30 125 36 136 M12 106 19 102 26 105 29 110 M22 116 30 115 35 120 42 119 M4 100 -2 104\"/><path class=\"dragon-core\" d=\"M-3 88 6 93 4 100 12 106 10 112 22 116 20 122 30 125 36 136 M12 106 19 102 26 105 29 110 M22 116 30 115 35 120 42 119 M4 100 -2 104\"/></g>", "<g class=\"dragon-strike\"><path class=\"dragon-bloom\" d=\"M69 -3 72 8 81 10 78 15 88 18 85 23 96 30 95 37 104 43 M81 10 87 5 95 7 101 1 M88 18 93 16 97 21 103 20 M96 30 90 32 93 40\"/><path class=\"dragon-core\" d=\"M69 -3 72 8 81 10 78 15 88 18 85 23 96 30 95 37 104 43 M81 10 87 5 95 7 101 1 M88 18 93 16 97 21 103 20 M96 30 90 32 93 40\"/></g><g class=\"dragon-strike\"><path class=\"dragon-bloom\" d=\"M-3 88 6 93 4 100 12 106 10 112 22 116 20 122 30 125 36 136 M12 106 19 102 26 105 29 110 M22 116 30 115 35 120 42 119 M4 100 -2 104\"/><path class=\"dragon-core\" d=\"M-3 88 6 93 4 100 12 106 10 112 22 116 20 122 30 125 36 136 M12 106 19 102 26 105 29 110 M22 116 30 115 35 120 42 119 M4 100 -2 104\"/></g><g class=\"dragon-strike\"><path class=\"dragon-bloom\" d=\"M103 72 94 76 97 82 90 86 92 94 83 100 87 105 79 112 M90 86 83 86 78 93 M92 94 100 98\"/><path class=\"dragon-core\" d=\"M103 72 94 76 97 82 90 86 92 94 83 100 87 105 79 112 M90 86 83 86 78 93 M92 94 100 98\"/></g><g class=\"dragon-strike\"><path class=\"dragon-bloom\" d=\"M-3 29 5 25 4 20 12 17 10 12 19 9 22 -2 M12 17 19 19 24 15\"/><path class=\"dragon-core\" d=\"M-3 29 5 25 4 20 12 17 10 12 19 9 22 -2 M12 17 19 19 24 15\"/></g>"], "Phoenix": ["<path d=\"M0 134V94q12 12 10 24q8-4 5-13q13 10 11 23q12-3 17-14q5 11 1 20Z\"/><path d=\"M53 134q19-8 18-20q6 5 7 11q11-9 5-21q12 4 12 14q8-14 5-26v42Z\"/>", "<path d=\"M0 134V94q12 12 10 24q8-4 5-13q13 10 11 23q12-3 17-14q5 11 1 20Z\"/><path d=\"M53 134q19-8 18-20q6 5 7 11q11-9 5-21q12 4 12 14q8-14 5-26v42Z\"/><path d=\"M98 133q-16-18-4-42q-1 13 6 19q-2-13 0-22v45Z\"/>"]};
 function luminousFX(a,advanced){
  const type={Unicorn:'aurora',Dragon:'lightning',Phoenix:'flames'}[a.name];
- const art=luminousArt[a.name][Number(advanced)];
+ const art=luminousArt[a.name][a.name==='Unicorn'?0:Number(advanced)];
  return '<svg class="luminous-fx '+type+'" viewBox="0 0 100 134" preserveAspectRatio="none" aria-hidden="true">'+art+'</svg>';
 }
 // Static reward snapshots keep the native emoji in its own non-shrinking box.
@@ -49,7 +49,8 @@ function card(a,small=false,advanced=false,cls=''){
  const count=a.rarity===5?24:a.rarity===4?(advanced?32:8):advanced?(a.rarity===3?16:a.rarity===2?10:a.rarity===1?4:0):0;
  const sparks=count?'<span class="wild-rarity-sparks" aria-hidden="true">'+Array.from({length:count},(_,i)=>'<i style="--spark-index:'+i+';'+(i>=16?'left:'+((i%2?78:7)+(i*7%13))+'%;top:'+(10+i*19%80)+'%;right:auto;bottom:auto;':'')+'"></i>').join('')+'</span>':'';
  const arc=advanced&&a.rarity===3?'<svg class="wild-prism-arc" aria-hidden="true" focusable="false" viewBox="0 0 160 210" preserveAspectRatio="none"><path class="wild-prism-blue" d="M58 214 Q140 192 163 126 Q146 192 58 214Z"/><path class="wild-prism-rose" d="M62 214 Q151 200 163 139 Q148 193 62 214Z"/><path class="wild-prism-core" d="M58 214 Q146 193 163 130 Q145 194 58 214Z"/></svg>':'';
- return `<div class="${classes}" data-rarity="${a.rarity}"${a.rarity===4?' data-luminous="'+a.name+'"':''}>${a.rarity===4?luminousFX(a,advanced):''}${arc}${arc.replace('wild-prism-arc','wild-prism-arc wild-prism-top')}${sparks}<span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
+ const html=`<div class="${classes}" data-rarity="${a.rarity}"${a.rarity===4?' data-luminous="'+a.name+'"':''}>${a.rarity===4?luminousFX(a,advanced):''}${arc}${arc.replace('wild-prism-arc','wild-prism-arc wild-prism-top')}${sparks}<span class="wild-tier">WILDWORDS · ${tier[a.rarity]}</span>${specimen(a)}<div><div class="wild-en">${esc(a.name)}</div><div class="wild-cn">${esc(a.cn)}</div></div><span class="wild-id">NO. ${String(a.id+1).padStart(3,'0')}</span></div>`;
+ return window.WDCard35?.decorate?window.WDCard35.decorate(html,a,advanced):html;
 }
 function award(a,withSound=true){if(a.rarity===5)return;if(withSound)window.WD28CardFX?.sound('acquire');data.discovered[a.id]=true;data.inventory[a.id]=qty(a.id)+1;persist();updateAvatars();document.dispatchEvent(new Event('wd28badges'))}
 let pending=null;
@@ -74,6 +75,7 @@ function inspectCard(a){
  const copies=document.createElement('p');
  copies.className='wild-inspect-foot';copies.textContent=a.rarity===5?'传奇典藏 · 唯一进阶卡':'基础卡 '+qty(a.id)+' 张'+(advanced?' · 已进阶':'');
  $('wildBody').append(copies);
+ const clue=window.WDBattle?.clues35?.[a.cn];if(clue){const hint=document.createElement('p');hint.className='card35-clue';hint.textContent='✧ '+clue;$('wildBody').append(hint);}
  const passive=window.WDBattle?.passives[a.cn],skillInfo=window.WDBattle?.byName[a.cn];
  if(passive||skillInfo){
   const details=document.createElement('details');

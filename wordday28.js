@@ -38,7 +38,7 @@ let scene='lobby',selection=Array.isArray(store.lineup)?[...new Set(store.lineup
 const text=s=>esc(s),btn=(action,label,cls='secondary',disabled=false)=>'<button type="button" class="'+cls+'" data-b="'+action+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
 function show(){returnFocus=document.activeElement;if(!dialog.open)dialog.showModal();paint()}
 function close(){dialog.close();returnFocus?.focus?.()}
-function frame(title,body){dialog.classList.toggle('arena283',scene==='fight');dialog.classList.toggle('arena34-fight',arenaRun&&scene==='fight');dialog.innerHTML='<header class="b28-head"><h2 id="wd28Title">'+title+'</h2>'+btn('close','关闭')+'</header>'+body}
+function frame(title,body){dialog.classList.toggle('result35',scene==='fight'&&!!game?.finished&&finalVisible);dialog.classList.toggle('arena283',scene==='fight');dialog.classList.toggle('arena34-fight',arenaRun&&scene==='fight');dialog.innerHTML='<header class="b28-head"><h2 id="wd28Title">'+title+'</h2>'+btn('close','关闭')+'</header>'+body}
 function en(n){return byName.get(n)?.name||({'暗牌':'Hidden'}[n])||String(n||'').split(' 或 ').map(x=>byName.get(x)?.name||x).join(' / ')}
 function skill(n){return B.byName[n]}
 function fighter(n){return text(en(n))}
@@ -51,7 +51,7 @@ function ecologyNote(a,b){
  const note={'豹/熊猫':'此条关系对应豹对大熊猫幼体的捕食。','狗/考拉':'此条关系对应野犬与考拉。','海豹/企鹅':'海豹卡在此代表豹海豹。','虎鲸/水獭':'此条关系对应有记录的部分虎鲸种群与海獭。','虎鲸/鲨鱼':'不同虎鲸种群食性不同，此处采用捕食鲨鱼的种群。'};
  return note[a+'/'+b]||note[b+'/'+a]||'';
 }
-function rules(){return '<details><summary>对战规则</summary><p>集齐 4 种灵宠可开战。首回合随机先手，之后轮流先手；每次选牌限时 20 秒，超时自动行动。前四回合每张牌出战一次，比较胜场；平分后从原四张牌中秘密选择一张决胜，仍平则整场平局。</p><p>你已确认的对阵结果优先，其次为老鼠对大象等特殊克制，其余综合体型、攻击手段、防御、食物链和特殊性。不同环境以双方均可行动的游戏场地比较，分值用于游戏平衡。</p><p>长按手牌约半秒发动技能；换牌和庇护再选目标。也可用“选择技能”按钮。亮牌后长按我方出战牌也可发动。通常每方整场一次技能机会，猛犸象可增加一次；对方有独角兽时主动技能与额外机会均失效。每个主动技能每局最多使用一次，含决胜局；已发动的技能不会被追溯取消。同一动物对阵时，进阶卡优先获胜，进阶状态相同则基础判平；技能改判仍有效。胜负不消耗库存。</p></details>'}
+function rules(){return '<details><summary>对战规则</summary><p>集齐 4 种灵宠可开战。首回合随机先手，之后轮流先手；每次选牌限时 20 秒，超时自动行动。前四回合每张牌出战一次，比较胜场；平分后从原四张牌中秘密选择一张决胜，仍平则整场平局。</p><p>你已确认的对阵结果优先，其次为特殊克制，其余综合体型、攻击手段、防御、食物链和特殊性。不同环境以双方均可行动的游戏场地比较，分值用于游戏平衡。</p><p>长按手牌约半秒发动技能；换牌和庇护再选目标。也可用“选择技能”按钮。亮牌后长按我方出战牌也可发动。通常每方整场一次技能机会，猛犸象可增加一次；对方有独角兽时主动技能与额外机会均失效。凤凰涅槃独立于公共次数且不受净辉影响。某些阵容能压制净辉，可从卡牌线索中发现。每个主动技能每局最多使用一次，含决胜局；已发动的技能不会被追溯取消。同一动物对阵时，进阶卡优先获胜，进阶状态相同则基础判平；技能改判仍有效。胜负不消耗库存。</p></details>'}
 function start(){if(owned().length<4)return;game=B.newGame(pool,owned(),advanced(),selection,Object.fromEntries(W.animals.map(a=>[a.cn,a.rarity])));game.rewardEligible285=true;scene='fight';finalVisible=false;chosenSlot=null;step()}
 let autoTimer=0,autoPassAt=0,finalVisible=false;
 function clearTimers(){clearTimeout(autoTimer);autoTimer=0;autoPassAt=0}
@@ -89,7 +89,7 @@ function panel(){
  if(false&&chosenSkill){html+='<p>发动后将消耗本场唯一机会。</p>'+btn('confirm','确认发动 · '+text(labelOption(chosenSkill)),'')}
  return html+btn('skills','收起技能')+'</div>';
 }
-function art(n,enemy=false){const a=byName.get(n);if(!a)return '<div class="wild-card small a-concealed"><span class="wild-en">'+fighter(n)+'</span></div>';return window.WDBattleUI34.card(a,!enemy&&advanced().includes(n),true)}
+function art(n,enemy=false){const a=byName.get(n);if(!a)return '<div class="wild-card small a-concealed"><span class="wild-en">'+fighter(n)+'</span></div>';return window.WDBattleUI34.card(a,game?.evolved?.[enemy?1:0]?.includes(n)||false,true,enemy)}
 function face(n,side=''){return '<div class="a-face '+side+'" '+(side==='player'?'data-hold="'+game.cards[0]+'" tabindex="0" role="button" aria-label="长按或按空格发动技能"':'')+'>'+art(n,side==='opponent')+'</div>'}
 function fight(){
  const g=game;if(!g){scene='lobby';return lobby()}
@@ -105,7 +105,10 @@ function fight(){
     const top=6+(i*29)%86;
     return '<i style="--x:'+left+'%;--y:'+top+'%;--delay:'+(i%7)*90+'ms"></i>';
    }).join('')+'</div>':'';
-   frame('对战结算','<div class="a-final wd29-final '+result+'" role="status">'+sparks+'<small>'+(win?'VICTORY':draw?'DRAW':'DEFEAT')+'</small><h3>'+(win?'你赢了':draw?'平局':'失败')+'</h3><div class="result284-score"><div><span>我方</span><b>'+g.score[0]+'</b></div><i>:</i><div><span>沃尔德</span><b>'+g.score[1]+'</b></div></div><p>'+g.history.length+' 回合 · 战绩已保存</p></div>'+(arenaRun?window.WDArena34.result(g):victoryProgress())+history+'<div class="b28-actions">'+(arenaRun?'':btn('again','再战一场',''))+btn('close','返回妙想')+'</div>');return
+   const mode=arenaRun?window.WDArena34.modes.find(m=>m.id===g.arenaMode):null;
+   const progress=arenaRun?window.WDArena34.progress35(g):victoryProgress();
+   const actions=arenaRun?window.WDArena34.actions35(g):btn('again','再战一场','')+btn('close','返回妙想');
+   frame('对战结算',window.WDBattleUI35.result({win,draw,players:['我方','沃尔德'],score:g.score,rounds:g.history.length,mode:mode?.name||'灵宠对战',progress,history,actions}));return
  }
  let html=tally+'<div class="b28-oplabel">沃尔德手牌</div><div class="b28-hand">'+g.hands[1].map((n,i)=>{
   const used=g.played[1].includes(i),current=i===g.cards[1],known=g.intel[0][i];const shown=current&&reveal?B.nameAt(g,1):used?n:current&&g.lead===1?B.displayedLead(g,0):known?.name;
@@ -125,8 +128,8 @@ function fight(){
     html+='<div class="a-hand">'+g.hands[0].map((n,i)=>btn('slot:'+i,art(n),'secondary a-card '+(advanced().includes(n)?'b28-evolved':''),!legal.includes(i))).join('')+'</div><small class="a-hint">点击或拖动出牌</small>';
   }
  }
- html+='<div class="b28-actions">'+btn('skills',B.skillsLeft(g,0)?'技能 · '+B.skillsLeft(g,0)+' 次':'技能已用尽','secondary',!B.skillsLeft(g,0)||report||g.actor===1)+(!report&&g.actor===0&&!g.interrupt&&g.phase==='show'?btn('pass','跳过技能'): '')+(g.spent[0]?'<small>第 '+g.spent[0].round+' 回合 · '+fighter(g.spent[0].name)+' · '+text(g.spent[0].skill)+'</small>':'')+'</div>';
- if(skillPanel&&!report&&B.skillsLeft(g,0))html+=panel();
+ html+='<div class="b28-actions">'+btn('skills',B.options(g,0).some(o=>o.k==='phoenix')?'技能 · 涅槃可用':B.skillsLeft(g,0)?'技能 · '+B.skillsLeft(g,0)+' 次':'技能已用尽','secondary',!B.options(g,0).length||report||g.actor===1)+(!report&&g.actor===0&&!g.interrupt&&g.phase==='show'?btn('pass','跳过技能'): '')+(g.spent[0]?'<small>第 '+g.spent[0].round+' 回合 · '+fighter(g.spent[0].name)+' · '+text(g.spent[0].skill)+'</small>':'')+'</div>';
+ if(skillPanel&&!report&&B.options(g,0).length)html+=panel();
  if(!report&&g.actor===0&&g.interrupt)html+=btn('pass','允许侦察');
  if(Object.keys(g.intel[0]).length)html+='<p class="b28-alert">已侦察：'+Object.entries(g.intel[0]).map(([i,v])=>'#'+(+i+1)+' '+fighter(v.name)).join(' · ')+'</p>';
  if(!arenaRun)html+='<p class="victory285-mini">胜利进度 '+window.WD285Rewards.view().progress+' / 3</p>';html+=history;frame('灵宠对战',html);plan();tick(false)
@@ -299,7 +302,7 @@ function tick(advance=true){
 }
 function releaseSkill(slot){
  if(!game||game.actor!==0)return;
- if(!B.skillsLeft(game,0)){toast('本场技能机会已用尽，或被独角兽封锁');return}
+ if(!B.options(game,0).length){toast('本轮暂无可用技能');return}
  const opts=B.options(game,0).filter(o=>o.i===slot);
  if(!opts.length){toast(skill(game.hands[0][slot])?'本轮技能暂不可用':'这张卡没有特殊技能');return}
  if(opts.length===1){if(B.activate(game,0,opts[0]))step();return}
