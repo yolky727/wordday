@@ -10,6 +10,7 @@ const load = (name, fallback) => {
 const data = Object.assign({ learned:{}, favorites:{}, wrong:{}, days:{}, themes:{}, quizHistory:[], targets:{p:7,s:3}, dailyLearned:{}, reviewDone:{} }, load(key, {}));
 data.targets ??= {p:7,s:3}; data.dailyLearned ??= {}; data.reviewDone ??= {}; data.dailyDecks ??= {};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const learningHtml=value=>'<span data-l37-learning>'+esc(value)+'</span>';
 const dayKey = () => {
   const d = new Date();
   return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
@@ -62,7 +63,20 @@ function restoreLearningFilters(kind) {
   exam=saved.exam||''; source=saved.source||''; query=saved.query||''; sceneFilter=saved.scene||'';
 }
 const validText=v=>typeof v==='string'&&v.trim().length>0;
-function repairQuiz(q){if(!q?.questions?.length)return null;for(const row of q.questions){const c=byId.get(row.c?.id);if(!c||!validText(c.en)||!validText(c.zh))return null;if(!validText(row.correct)||!validText(row.prompt)||row.options?.some(v=>!validText(v))){row.c=c;row.field=row.field==='en'?'en':'zh';row.correct=c[row.field];row.prompt=c[row.field==='en'?'zh':'en'];const values=shuffle(cards.filter(x=>x.kind===c.kind&&validText(x[row.field])&&x[row.field]!==row.correct).map(x=>x[row.field]));row.options=shuffle([row.correct,...[...new Set(values)].slice(0,3)]);row.answer=null;}else row.c=c;}return q;}
+function repairQuiz(q){
+ if(!q?.questions?.length)return null;
+ for(const [index,row] of q.questions.entries()){
+  const c=byId.get(row.c?.id);if(!c||!validText(c.en)||!validText(c.zh))return null;
+  const legacy=row.field==='cloze37', answered=row.answer!==null&&row.answer!==undefined, wasCorrect=row.answer===row.correct;
+  if(legacy||!validText(row.correct)||!validText(row.prompt)||row.options?.some(v=>!validText(v))){
+   row.c=c;row.field=legacy?(index%2?'en':'zh'):row.field==='en'?'en':'zh';row.correct=c[row.field];row.prompt=c[row.field==='en'?'zh':'en'];
+   const values=shuffle(cards.filter(x=>x.kind===c.kind&&validText(x[row.field])&&x[row.field]!==row.correct).map(x=>x[row.field]));
+   row.options=shuffle([row.correct,...[...new Set(values)].slice(0,3)]);
+   row.answer=legacy&&answered?(wasCorrect?row.correct:row.options.find(x=>x!==row.correct)):null;
+  }else row.c=c;
+ }
+ return q;
+}
 quiz=repairQuiz(quiz);if(quiz)data.quizDraft=quiz;else delete data.quizDraft;
 const testModes = [['p','短语测试'],['s','句子测试'],['mixed','综合测试']];
 const button = (action, label, cls='secondary', attrs='') => '<button type="button" data-ex="'+action+'" class="'+cls+'" '+attrs+'>'+label+'</button>';
@@ -141,11 +155,11 @@ function showCard(c) {
 function sourceCardView(c) {
   const related = cards.filter(r=>r.scene===c.scene && r.kind!==c.kind).slice(0,c.kind==='p'?2:3);
   const comparison = cards.filter(r=>r.scene===c.scene&&r.kind===c.kind&&r.id!==c.id).slice(0,2);
-  return '<article class="ex-card"><div class="ex-meta"><span>'+esc(c.title)+' · '+c.exam+' 练习</span>'+
+  return '<article class="ex-card"><div class="ex-meta"><span>'+learningHtml(c.title)+' · '+c.exam+' 练习</span>'+
     button('favorite',data.favorites[c.id]?'★ 收藏标签':'☆ 收藏','secondary','aria-label="设置收藏标签"')+'</div>'+
-    '<h3 lang="en">'+esc(c.en)+'</h3><p class="ex-zh">'+esc(c.zh)+'</p>'+
-    (c.note?'<div class="ex-note"><b>句子主干</b> <span lang="en">'+esc(c.main)+'</span><br><b>句型</b> '+esc(c.note)+'</div>':'<p class="ex-note"><b>同场景例句</b> '+esc(related[0]?.en)+'</p>')+
-    '<details><summary>'+(c.kind==='p'?'同场景短语辨析':'同场景句型对照')+'</summary>'+comparison.map(r=>'<p><b lang="en">'+esc(r.en)+'</b> · '+esc(r.zh)+'</p>').join('')+'</details>'+
+    '<h3 lang="en">'+esc(c.en)+'</h3><p class="ex-zh">'+learningHtml(c.zh)+'</p>'+
+    (c.note?'<div class="ex-note"><b>句子主干</b> <span lang="en">'+learningHtml(c.main)+'</span><br><b>句型</b> '+learningHtml(c.note)+'</div>':'<p class="ex-note"><b>同场景例句</b> '+esc(related[0]?.en)+'</p>')+
+    '<details><summary>'+(c.kind==='p'?'同场景短语辨析':'同场景句型对照')+'</summary>'+comparison.map(r=>'<p><b lang="en">'+esc(r.en)+'</b> · '+learningHtml(r.zh)+'</p>').join('')+'</details>'+
     '<div class="ex-links">'+related.map(r=>button('context',esc(r.en),'secondary','data-id="'+r.id+'"')).join('')+'</div>'+
     '<footer>'+(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+esc(c.type)+'</a>':'<span>原创练习</span>')+button('listen','发音')+button('notLearned','未掌握','secondary','data-card-id="'+esc(c.id)+'"')+button('learned','已掌握','','data-card-id="'+esc(c.id)+'"')+'</footer></article>';
 }
@@ -153,7 +167,7 @@ function cardView(c) {
   data.cardRecall32??={};
   let r=data.cardRecall32[c.id];
   if(!r||r.day!==dayKey())r=data.cardRecall32[c.id]={day:dayKey(),draft:'',shown:false};
-  return '<section class="xs-card-recall xs-glass"><div class="xs-meta"><p class="ex-eyebrow">RETRIEVE BEFORE READING</p><span>'+esc(c.kind==='p'?'短语 · 主动提取':'句子 · 组织意思')+'</span></div><h3>'+esc(c.zh)+'</h3><p class="xs-caption">'+esc(c.title)+' · 先说一遍，或用自己的英语写下来。表达不必逐字一致。</p><textarea class="field" data-recall-id="'+esc(c.id)+'" placeholder="先别急着看答案。你会怎么说？" maxlength="1000">'+esc(r.draft)+'</textarea>'+button('revealCard',r.shown?'收起参考表达':'揭晓表达与用法','secondary','data-id="'+esc(c.id)+'"')+'</section>'+(r.shown?sourceCardView(c):'<p class="xs-caption">点击揭晓后，可听发音、查看搭配、收藏，并记录掌握情况。</p>');
+  return '<section class="xs-card-recall xs-glass"><div class="xs-meta"><p class="ex-eyebrow">RETRIEVE BEFORE READING</p><span>'+esc(c.kind==='p'?'短语 · 主动提取':'句子 · 组织意思')+'</span></div><h3>'+learningHtml(c.zh)+'</h3><p class="xs-caption">'+learningHtml(c.title)+' · 先说一遍，或用自己的英语写下来。表达不必逐字一致。</p><textarea class="field" data-recall-id="'+esc(c.id)+'" placeholder="先别急着看答案。你会怎么说？" maxlength="1000">'+esc(r.draft)+'</textarea>'+button('revealCard',r.shown?'收起参考表达':'揭晓表达与用法','secondary','data-id="'+esc(c.id)+'"')+'</section>'+(r.shown?sourceCardView(c):'<p class="xs-caption">点击揭晓后，可听发音、查看搭配、收藏，并记录掌握情况。</p>');
 }
 function learning() {
   const list = studyPool();
@@ -180,11 +194,6 @@ function startQuiz(mode) {
     if(other) selected[selected.length-1]=other;
   }
   const questions=selected.map((c,index)=>{
-    if(window.WDLocale37?.language==='en'){
-      const q=window.WDEnglish37.cloze(c),choices=[q.answer];
-      for(const other of shuffle(cards.filter(x=>x.kind===c.kind&&x.id!==c.id))){const a=window.WDEnglish37.cloze(other).answer;if(a&&a.toLowerCase()!==q.answer.toLowerCase()&&!choices.some(x=>x.toLowerCase()===a.toLowerCase()))choices.push(a);if(choices.length===4)break}
-      return {c,options:shuffle(choices),correct:q.answer,prompt:q.prompt,field:'cloze37',answer:null};
-    }
     const field=index%2===1?'en':'zh';
     const correct=c[field], prompt=field==='en'?c.zh:c.en;
     const candidates=cards.filter(r=>r.kind===c.kind&&validText(r[field])&&r[field]!==correct);
@@ -228,9 +237,9 @@ function test(center=false) {
     return '<section class="ex-test-result"><p class="ex-eyebrow">WORDDAY / TEST</p><div class="ex-result-score">'+pct+'<small>分</small></div><h2>'+(pct===100?'Excellent!':pct>=80?'Great work!':pct>=60?'Well done!':'Keep going!')+'</h2><p>'+rows+'</p><div class="ex-result-metrics"><div><b>'+correct+'</b><span>答对</span></div><div><b>'+(total-correct)+'</b><span>答错</span></div><div><b>'+pct+'%</b><span>正确率</span></div></div><p>本次共测试 '+total+' 道题 · 成绩独立记录</p>'+button('resetQuiz','再测一次')+'</section><section class="ex-result-review"><h3>逐题回顾</h3>'+quiz.questions.map((q,i)=>'<div><strong>'+(i+1)+'. '+esc(q.prompt)+'</strong><p>'+(q.answer===q.correct?'✓ 回答正确':'✕ 你的答案：'+esc(q.answer||'未作答')+' · 正确答案：'+esc(q.correct))+'</p></div>').join('')+'</section>';
   }
   const {c,options,answer,correct,prompt,field} = quiz.questions[quiz.index];
-  return '<article class="ex-card ex-question"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='cloze37'?'Complete the expression':field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span><span>⚡ 连对 '+(quiz.streak||0)+'</span></div><progress max="'+quiz.questions.length+'" value="'+(quiz.index+1)+'" aria-label="测试进度"></progress><h3'+(field==='en'?'':' lang="en"')+'>'+esc(prompt)+'</h3>'+
-    '<div class="ex-options">'+options.map((opt,i)=>button('answer','<span class="ex-option-index" aria-hidden="true">'+String.fromCharCode(65+i)+'</span><span>'+esc(opt)+'</span>','secondary '+(answer!==null?(opt===correct?'ex-correct':opt===answer?'ex-incorrect':''):''),'data-index="'+i+'" '+(answer===null?'':'disabled'))).join('')+'</div>'+
-    (answer===null?'':'<p class="ex-note">'+(answer===correct?'答对了':'正确答案 · '+esc(correct))+(field==='note'?' · 主干 '+esc(c.main):c.note?' · '+esc(c.note):' · '+esc(c.title))+'</p>')+
+  return '<article class="ex-card ex-question"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='cloze37'?'Complete the expression':field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span><span>⚡ 连对 '+(quiz.streak||0)+'</span></div><progress max="'+quiz.questions.length+'" value="'+(quiz.index+1)+'" aria-label="测试进度"></progress><h3'+(field==='en'?'':' lang="en"')+'>'+learningHtml(prompt)+'</h3>'+
+    '<div class="ex-options">'+options.map((opt,i)=>button('answer','<span class="ex-option-index" aria-hidden="true">'+String.fromCharCode(65+i)+'</span><span>'+learningHtml(opt)+'</span>','secondary '+(answer!==null?(opt===correct?'ex-correct':opt===answer?'ex-incorrect':''):''),'data-index="'+i+'" '+(answer===null?'':'disabled'))).join('')+'</div>'+
+    (answer===null?'':'<p class="ex-note">'+(answer===correct?'答对了':'正确答案 · '+esc(correct))+(field==='note'?' · 主干 '+learningHtml(c.main):c.note?' · '+learningHtml(c.note):' · '+learningHtml(c.title))+'</p>')+
     '<div class="ex-quiz-actions">'+button('quizFavorite',data.favorites[c.id]?'★ 已收藏':'☆ 收藏')+(quiz.recorded?'':button('saveQuiz','保存并退出'))+'</div>'+
     '<div class="ex-steps">'+button('quizPrev','← 上一题','secondary',quiz.index===0?'disabled':'')+
     button('quizNext',quiz.index===quiz.questions.length-1?'查看结果':'下一题 →','',answer===null?'disabled':'')+'</div></article>';
@@ -239,7 +248,7 @@ function wrongBook() {
   const list=cards.filter(c=>data.wrong[c.id]);
   if(!list.length) return '<p class="ex-empty">答错的表达会自动收录在这里。</p>';
   return '<div class="ex-wrong-tools">'+button('practiceWrong','重练错题','')+'</div><div class="ex-notebook">'+list.map(c=>
-    '<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(c.zh)+'</small></span>'+
+    '<div><span><b lang="en">'+esc(c.en)+'</b><small>'+learningHtml(c.zh)+'</small></span>'+
     button('openWrong','复习','secondary','data-id="'+c.id+'"')+'</div>').join('')+'</div>';
 }
 function notebook() {
@@ -253,7 +262,7 @@ function notebook() {
     choices([['','全部标签'],...tags.map(t=>[t,t])],notebookTag,'tag')+
     '<input class="field" data-notebook="query" value="'+esc(notebookQuery)+'" placeholder="搜索素材" aria-label="搜索素材" />'+
     '</div><p class="ex-note">已筛选 '+filtered.length+' / '+saved.length+' 条收藏</p><div class="ex-notebook">'+
-    (filtered.map(c=>'<div><span><b lang="en">'+esc(c.en)+'</b><small>'+esc(c.zh)+' · '+esc(c.exam)+' · '+esc((data.favorites[c.id]||[]).join(' · '))+'</small></span>'+
+    (filtered.map(c=>'<div><span><b lang="en">'+esc(c.en)+'</b><small>'+learningHtml(c.zh)+' · '+esc(c.exam)+' · '+esc((data.favorites[c.id]||[]).join(' · '))+'</small></span>'+
     button('openSaved','查看','secondary','data-id="'+c.id+'"')+button('tagSaved','标签','secondary','data-id="'+c.id+'"')+'</div>').join('')||'<p class="ex-empty">暂无结果</p>')+'</div>';
 }
 function relayQuestion(c, field, slot) {
@@ -301,9 +310,9 @@ function themeContent() {
   const question=run.questions[run.step], item=byId.get(question?.id||run.response);
   const label=question?({zh:'选中文意思',en:'选英文表达',main:'找出句子主干',cloze37:'Complete the expression'})[question.field]:'场景回应';
   const prompt=question&&question.field!=='en'?item.en:item.zh;
-  return '<article class="ex-card"><small>第 '+(run.step+1)+' / '+relaySteps+' 步 · '+label+'</small><h3>'+esc(prompt)+'</h3>'+ (item?'<div class="ex-meta">'+button('relayFavorite',data.favorites[item.id]?'★ 已收藏':'☆ 收藏表达','secondary','data-id="'+esc(item.id)+'"')+'</div>':'')+
-    (question?'<div class="ex-options">'+question.options.map((opt,i)=>button('themeChoice',esc(opt),'secondary','data-index="'+i+'"')).join('')+'</div><p role="status" id="exThemeFeedback"></p>':
-    '<form class="ex-reply"><label><span>在这个场景中写至少两句、共 12 个英文词。第一句回应提示，第二句补充理由、细节或一个后续问题。</span><textarea name="reply" class="field" required maxlength="500" placeholder="Write your response">'+esc(run.draft||'')+'</textarea></label><details><summary>查看一句参考表达</summary><p lang="en">'+esc(item.en)+'</p>'+button('relayFavorite',data.favorites[item.id]?'★ 已收藏':'☆ 收藏表达','secondary','data-id="'+esc(item.id)+'"')+'</details><p role="status"></p><button type="submit">完成接力</button></form>')+'</article>';
+  return '<article class="ex-card"><small>第 '+(run.step+1)+' / '+relaySteps+' 步 · '+label+'</small><h3>'+learningHtml(prompt)+'</h3>'+ (item?'<div class="ex-meta">'+button('relayFavorite',data.favorites[item.id]?'★ 已收藏':'☆ 收藏表达','secondary','data-id="'+esc(item.id)+'"')+'</div>':'')+
+    (question?'<div class="ex-options">'+question.options.map((opt,i)=>button('themeChoice',learningHtml(opt),'secondary','data-index="'+i+'"')).join('')+'</div><p role="status" id="exThemeFeedback"></p>':
+    '<form class="ex-reply"><label><span>在这个场景中写至少两句、共 12 个英文词。第一句回应提示，第二句补充理由、细节或一个后续问题。</span><textarea name="reply" class="field" required maxlength="500" placeholder="Write your response">'+esc(run.draft||'')+'</textarea></label><details><summary>查看一句参考表达</summary><p lang="en">'+learningHtml(item.en)+'</p>'+button('relayFavorite',data.favorites[item.id]?'★ 已收藏':'☆ 收藏表达','secondary','data-id="'+esc(item.id)+'"')+'</details><p role="status"></p><button type="submit">完成接力</button></form>')+'</article>';
 }
 const wordMap=[
   ['clarify','澄清','explain','解释','confuse','使困惑',23],
