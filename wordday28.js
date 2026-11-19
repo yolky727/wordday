@@ -307,7 +307,7 @@ function releaseSkill(slot){
  if(!opts.length){toast(skill(game.hands[0][slot])?'本轮技能暂不可用':'这张卡没有特殊技能');return}
  if(opts.length===1){if(B.activate(game,0,opts[0]))step();return}
  skillPanel=true;paint();const box=dialog.querySelector('.b28-skillbox');
- if(box){const rows=box.querySelectorAll('.b28-skillrow');rows.forEach(row=>{if(!row.textContent.includes(skill(game.hands[0][slot])[0]))row.hidden=true});box.querySelector('h3').textContent='选择技能目标';box.scrollIntoView({block:'nearest',behavior:'smooth'})}
+ if(box){const rows=box.querySelectorAll('.b28-skillrow');rows.forEach(row=>{if(!row.textContent.includes(window.WDLocale37?.language==='en'?window.WDLocale37.t(skill(game.hands[0][slot])[0]):skill(game.hands[0][slot])[0]))row.hidden=true});box.querySelector('h3').textContent='选择技能目标';box.scrollIntoView({block:'nearest',behavior:'smooth'})}
 }
 dialog.addEventListener('contextmenu',ev=>{if(ev.target.closest('.a-card,[data-hold]'))ev.preventDefault()});
 dialog.addEventListener('keydown',ev=>{const face=ev.target.closest('[data-hold]');if(face&&(ev.key===' '||ev.key==='Enter')){ev.preventDefault();releaseSkill(+face.dataset.hold)}});
@@ -361,5 +361,5 @@ window.addEventListener('storage',event=>{
 });
 document.dispatchEvent(new Event('wd28badges'));
 window.WDBattleArenaUI34={start(g,mode){clearTimers();arenaRun=true;game=g;scene='fight';finalVisible=!!g.finished;skillPanel=false;dialog.showModal();step()},rewards(cards,back){arenaRun=false;game=store.active||null;externalRewardBack=back;rewardCard=cards;taskRevealStep=cards.length===1?1:0;scene='reward';if(!dialog.open)dialog.showModal();showTaskPack()}};
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.6';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.7';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

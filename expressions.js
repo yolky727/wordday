@@ -180,6 +180,11 @@ function startQuiz(mode) {
     if(other) selected[selected.length-1]=other;
   }
   const questions=selected.map((c,index)=>{
+    if(window.WDLocale37?.language==='en'){
+      const q=window.WDEnglish37.cloze(c),choices=[q.answer];
+      for(const other of shuffle(cards.filter(x=>x.kind===c.kind&&x.id!==c.id))){const a=window.WDEnglish37.cloze(other).answer;if(a&&a.toLowerCase()!==q.answer.toLowerCase()&&!choices.some(x=>x.toLowerCase()===a.toLowerCase()))choices.push(a);if(choices.length===4)break}
+      return {c,options:shuffle(choices),correct:q.answer,prompt:q.prompt,field:'cloze37',answer:null};
+    }
     const field=index%2===1?'en':'zh';
     const correct=c[field], prompt=field==='en'?c.zh:c.en;
     const candidates=cards.filter(r=>r.kind===c.kind&&validText(r[field])&&r[field]!==correct);
@@ -223,7 +228,7 @@ function test(center=false) {
     return '<section class="ex-test-result"><p class="ex-eyebrow">WORDDAY / TEST</p><div class="ex-result-score">'+pct+'<small>分</small></div><h2>'+(pct===100?'Excellent!':pct>=80?'Great work!':pct>=60?'Well done!':'Keep going!')+'</h2><p>'+rows+'</p><div class="ex-result-metrics"><div><b>'+correct+'</b><span>答对</span></div><div><b>'+(total-correct)+'</b><span>答错</span></div><div><b>'+pct+'%</b><span>正确率</span></div></div><p>本次共测试 '+total+' 道题 · 成绩独立记录</p>'+button('resetQuiz','再测一次')+'</section><section class="ex-result-review"><h3>逐题回顾</h3>'+quiz.questions.map((q,i)=>'<div><strong>'+(i+1)+'. '+esc(q.prompt)+'</strong><p>'+(q.answer===q.correct?'✓ 回答正确':'✕ 你的答案：'+esc(q.answer||'未作答')+' · 正确答案：'+esc(q.correct))+'</p></div>').join('')+'</section>';
   }
   const {c,options,answer,correct,prompt,field} = quiz.questions[quiz.index];
-  return '<article class="ex-card ex-question"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span><span>⚡ 连对 '+(quiz.streak||0)+'</span></div><progress max="'+quiz.questions.length+'" value="'+(quiz.index+1)+'" aria-label="测试进度"></progress><h3'+(field==='en'?'':' lang="en"')+'>'+esc(prompt)+'</h3>'+
+  return '<article class="ex-card ex-question"><div class="ex-meta"><span>'+(quiz.index+1)+' / '+quiz.questions.length+' · '+(field==='cloze37'?'Complete the expression':field==='en'?'选英文表达':field==='note'?'选句型解析':'选中文释义')+'</span><span>⚡ 连对 '+(quiz.streak||0)+'</span></div><progress max="'+quiz.questions.length+'" value="'+(quiz.index+1)+'" aria-label="测试进度"></progress><h3'+(field==='en'?'':' lang="en"')+'>'+esc(prompt)+'</h3>'+
     '<div class="ex-options">'+options.map((opt,i)=>button('answer','<span class="ex-option-index" aria-hidden="true">'+String.fromCharCode(65+i)+'</span><span>'+esc(opt)+'</span>','secondary '+(answer!==null?(opt===correct?'ex-correct':opt===answer?'ex-incorrect':''):''),'data-index="'+i+'" '+(answer===null?'':'disabled'))).join('')+'</div>'+
     (answer===null?'':'<p class="ex-note">'+(answer===correct?'答对了':'正确答案 · '+esc(correct))+(field==='note'?' · 主干 '+esc(c.main):c.note?' · '+esc(c.note):' · '+esc(c.title))+'</p>')+
     '<div class="ex-quiz-actions">'+button('quizFavorite',data.favorites[c.id]?'★ 已收藏':'☆ 收藏')+(quiz.recorded?'':button('saveQuiz','保存并退出'))+'</div>'+
@@ -294,7 +299,7 @@ function themeContent() {
       '<div class="ex-relay-rewards"><h4>接力奖励</h4><ul>'+rewardRow('rewardThree','三张奖励卡','固定三张','◇')+rewardRow('chest','主题卡包','逐张揭晓','✦')+'</ul></div></section>';
   }
   const question=run.questions[run.step], item=byId.get(question?.id||run.response);
-  const label=question?({zh:'选中文意思',en:'选英文表达',main:'找出句子主干'})[question.field]:'场景回应';
+  const label=question?({zh:'选中文意思',en:'选英文表达',main:'找出句子主干',cloze37:'Complete the expression'})[question.field]:'场景回应';
   const prompt=question&&question.field!=='en'?item.en:item.zh;
   return '<article class="ex-card"><small>第 '+(run.step+1)+' / '+relaySteps+' 步 · '+label+'</small><h3>'+esc(prompt)+'</h3>'+ (item?'<div class="ex-meta">'+button('relayFavorite',data.favorites[item.id]?'★ 已收藏':'☆ 收藏表达','secondary','data-id="'+esc(item.id)+'"')+'</div>':'')+
     (question?'<div class="ex-options">'+question.options.map((opt,i)=>button('themeChoice',esc(opt),'secondary','data-index="'+i+'"')).join('')+'</div><p role="status" id="exThemeFeedback"></p>':

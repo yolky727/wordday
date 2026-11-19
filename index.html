@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>try{if(localStorage.getItem('wordday_language37')==='en'){document.documentElement.classList.add('lang37-pending');setTimeout(()=>document.documentElement.classList.remove('lang37-pending'),4500)}}catch{}</script>
+<style>.lang37-pending body{visibility:hidden}</style>
 <meta name="theme-color" content="#f6f3ed"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="沃尔德">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
 <title>WORDDAY · 沃尔德</title>
@@ -247,7 +249,7 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 <nav class="bottom-nav" id="floatingNav" aria-label="主栏目导航"><button id="navGrip" class="nav-grip" aria-label="折叠底部导航" title="向下拖动折叠，向上拖动展开">⌄</button><button id="navPill" class="nav-pill" aria-label="展开导航">▤ 单词 · 展开</button><button class="active" data-main-tab="learn">▤<br>单词</button><button data-main-tab="expressions">❝<br>表达</button><button data-main-tab="ideas">✧<br>妙想</button><button data-main-tab="personal">◉<br>个人</button></nav>
 <div id="profileModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:60;padding:18px;overflow:auto"><div class="panel" style="max-width:420px;margin:10vh auto"><div class="panel-head"><h2>个人资料</h2><button class="secondary" id="closeProfile">关闭</button></div><label class="smallnote">昵称</label><input id="nicknameInput" class="field" maxlength="20" placeholder="输入昵称" style="width:100%;margin:7px 0 12px"><label class="smallnote">选择头像</label><div class="tools" id="avatarChoices"><button type="button" data-avatar="🌱">🌱</button><button type="button" data-avatar="🌙">🌙</button><button type="button" data-avatar="☀️">☀️</button><button type="button" data-avatar="🪐">🪐</button><button type="button" data-avatar="✦">✦</button></div><button id="saveProfile" style="width:100%;margin-top:16px">保存资料</button></div></div>
 <div class="foot">WORDDAY · A LITTLE EVERY DAY<br></div></div><div class="toast" id="toast"></div><div id="detailModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:18px;overflow:auto"><div class="panel" style="max-width:680px;margin:5vh auto"><div class="panel-head"><h2 id="detailTitle">单词详情</h2><button class="secondary" id="closeDetail">关闭</button></div><div id="detailBody"></div></div></div>
-<script src="lexicon.js"></script>
+<link rel="stylesheet" href="ui37.css"><script src="lang37.js"></script><script src="lexicon.js"></script><script>WDLocale37.prepareLexicon();</script>
 <script>
 const baseWords=[
 ["benefit","/ˈbenɪfɪt/","益处；使受益","Regular exercise has many benefits for our health.","CET-4","n. / v."],
@@ -857,13 +859,12 @@ document.addEventListener('click',ev=>{if(ev.target.closest('[data-action="revie
 const contrast={affect:['effect','affect 常作动词“影响”；effect 常作名词“效果”'],effect:['affect','effect 常作名词“效果”；affect 常作动词“影响”'],adapt:['adopt','adapt 适应/改编；adopt 采用/收养'],adopt:['adapt','adopt 采用/收养；adapt 适应/改编'],economic:['economical','economic 经济的；economical 节约的'],economical:['economic','economical 节约的；economic 经济的'],principal:['principle','principal 主要的/校长；principle 原则'],principle:['principal','principle 原则；principal 主要的/校长']};
 const oldDetail=showDetail;showDetail=function(word){oldDetail(word);const x=contrast[word?.toLowerCase()];if(x){const d=e('detailBody');d.insertAdjacentHTML('beforeend',`<h3>WORD CONTRAST · 易混词</h3><p><strong>${esc(word)} / ${esc(x[0])}</strong></p><p>${esc(x[1])}</p>`)}};
 // Splash respects iOS autoplay restrictions: sound only after explicit user tap.
-const splash=make('div','wdSplash',`<section class="wd-splash-panel" role="dialog" aria-modal="true" aria-label="欢迎来到 WORDDAY"><div class="wd-splash-monogram" aria-hidden="true"><span>W<span class="wd-splash-dot">.</span></span><i>THE ART OF SMALL PROGRESS</i></div><h2 class="wd-splash-title">WORDDAY</h2><p class="wd-splash-tagline">A LITTLE EVERY DAY.</p><div class="wd-splash-line"></div><button class="wd-splash-enter" id="wdEnter">开始 <span aria-hidden="true">↗</span></button><button id="wdSkip" class="wd-splash-skip">跳过</button></section>`);document.body.appendChild(splash);
+const splash=make('div','wdSplash',`<div class="scene37" aria-hidden="true"><i class="scene37-a"></i><i class="scene37-b"></i><i class="scene37-c"></i></div><button id="wdEnter" class="splash37-enter" aria-label="Enter WORDDAY"><span class="splash37-word">WORDDAY</span><span class="splash37-hint">轻触任意位置进入</span></button><i class="splash37-ripple" aria-hidden="true"></i>`);document.body.appendChild(splash);
 if(!sessionStorage.getItem('wd24Opened')){
-  requestAnimationFrame(()=>requestAnimationFrame(()=>splash.classList.add('visible')));
-  const enter=()=>{playFeedback('finish');splash.classList.remove('visible');sessionStorage.setItem('wd24Opened','1')};
-  const skip=()=>{splash.classList.remove('visible');sessionStorage.setItem('wd24Opened','1')};
-  e('wdEnter').onclick=enter;e('wdSkip').onclick=skip;
-}
+ requestAnimationFrame(()=>requestAnimationFrame(()=>splash.classList.add('visible')));
+ let entering=false;
+ e('wdEnter').onclick=event=>{if(entering)return;entering=true;const rect=splash.getBoundingClientRect();splash.style.setProperty('--tap-x',(event.detail?event.clientX-rect.left:rect.width/2)+'px');splash.style.setProperty('--tap-y',(event.detail?event.clientY-rect.top:rect.height/2)+'px');splash.classList.add('leaving');sessionStorage.setItem('wd24Opened','1');setTimeout(()=>{splash.classList.remove('visible');splash.setAttribute('aria-hidden','true');e('wdEnter').disabled=true},500)};
+}else{splash.setAttribute('aria-hidden','true');e('wdEnter').disabled=true}
 
 // WORDDAY 2.4: incremental enhancements, preserve wordday_v1 and wd23 state.
 const wd24=state.wd24=state.wd24||{exam:'both',source:'smart',count:20,motion:65,font:'normal',badgeOpen:false,quizDates:{},lastQuizWords:{}};
@@ -927,14 +928,14 @@ const wd24OldAudio=playFeedback;
 playFeedback=function(kind){if(state.theme!=='midnight')return wd24OldAudio(kind);if(!state.audioEnabled)return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;soundContext=soundContext||new AC();if(soundContext.state==='suspended')soundContext.resume();const vol=Math.max(0,Math.min(1,Number(state.audioVolume??35)/100));const patterns={tap:[392],known:[392,494],correct:[440,554],wrong:[311],combo:[392,494,587,784],achievement:[349,440,523,698],finish:[392,494,587]};const notes=patterns[kind]||patterns.tap;notes.forEach((hz,i)=>{const t=soundContext.currentTime+i*.09;for(const [type,mult,amp] of [['sine',1,.07],['triangle',2,.012]]){let osc=soundContext.createOscillator(),gain=soundContext.createGain();osc.type=type;osc.frequency.setValueAtTime(hz*mult,t);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,amp*vol),t+.023);gain.gain.exponentialRampToValueAtTime(.0001,t+.33);osc.connect(gain).connect(soundContext.destination);osc.start(t);osc.stop(t+.35)}})}catch(err){console.warn(err)}};
 const wd24OldTheme=setTheme;setTheme=function(t){wd24OldTheme(t);renderHeatmap();wd24Style()};renderHeatmap();
 // A version label useful for verifying PWA cache refresh.
-const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd24Version.style.cssText='text-align:center;padding:12px';wd24Version.textContent='WORDDAY · 沃尔德 · 3.6';document.querySelector('.foot')?.appendChild(wd24Version);
+const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd24Version.style.cssText='text-align:center;padding:12px';wd24Version.textContent='WORDDAY · 沃尔德 · 3.7';document.querySelector('.foot')?.appendChild(wd24Version);
 
 // Initial render after enhancement.
 renderAchievements();renderResume();
 })();
 
 </script><script src="wildwords331fix.js"></script><script src="wordday26.js"></script><script src="wordday27.js"></script><script src="wordday271.js"></script><script src="card-feedback28.js"></script><script src="battle-rules283.js"></script>
-<script src="battle-engine.js"></script><script src="victory285.js"></script><script src="reveal331.js"></script><script src="battle-ui34.js"></script><script src="card35.js"></script><script src="result35.js"></script><script src="wordday28.js"></script><script src="review28.js"></script><script src="figures281.js"></script><script src="expression-data.js"></script><script src="expression-extra.js"></script><script src="expression-studio-data.js"></script><script src="expression-studio.js"></script><script src="expressions.js"></script><script src="legend33.js"></script><script src="online-config.js"></script><script src="dom34.js"></script><script src="realtime34.js"></script><script src="online34.js"></script><script src="battle-input34.js"></script>
+<script src="battle-engine.js"></script><script src="victory285.js"></script><script src="reveal331.js"></script><script src="battle-ui34.js"></script><script src="card35.js"></script><script src="result35.js"></script><script src="wordday28.js"></script><script src="review28.js"></script><script src="figures281.js"></script><script src="expression-data.js"></script><script src="expression-extra.js"></script><script src="expression-studio-data.js"></script><script src="content37.js"></script><script src="expression-studio.js"></script><script src="expressions.js"></script><script src="legend33.js"></script><script src="online-config.js"></script><script src="dom34.js"></script><script src="realtime34.js"></script><script src="online34.js"></script><script src="battle-input34.js"></script>
 <script src="album331.js"></script>
-<script src="friends34.js"></script><script src="arena34.js"></script><script src="profile34.js"></script><script src="gift35.js"></script><script>document.getElementById("wd24Version").textContent="WORDDAY · 沃尔德 · 3.6";</script>
+<script src="friends34.js"></script><script src="arena34.js"></script><script src="profile34.js"></script><script src="gift35.js"></script><script>document.getElementById("wd24Version").textContent="WORDDAY · 沃尔德 · 3.7";</script>
 </body></html>
