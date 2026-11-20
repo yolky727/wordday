@@ -1,9 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-entry-stage="splash">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<script>try{if(localStorage.getItem('wordday_language37')==='en'){document.documentElement.classList.add('lang37-pending');setTimeout(()=>document.documentElement.classList.remove('lang37-pending'),4500)}}catch{}</script>
-<style>.lang37-pending body{visibility:hidden}</style>
+<script>try{const p=JSON.parse(localStorage.getItem('wordday_v1')||'{}');if(['forest','ocean','vintage','midnight'].includes(p.theme))document.documentElement.dataset.theme=p.theme}catch{}</script>
+<style>
+/* Critical entry styles precede every app resource: no main-page first frame. */
+html:not([data-entry-stage="learning"]) body{overflow:hidden}
+html:not([data-entry-stage="learning"]) body>:not(#wdSplash):not(script):not(style):not(link),html:not([data-entry-stage="learning"]) body>:not(#wdSplash) *{visibility:hidden!important;pointer-events:none!important}
+#wdSplash{position:fixed;inset:0;width:100%;height:100dvh;z-index:9999;background:var(--bg,#f6f3ed);color:var(--ink,#252820)}
+html[data-entry-stage="splash"] #wdSplash,html[data-entry-stage="entering"] #wdSplash{visibility:visible!important;opacity:1!important}
+html[data-entry-stage="learning"] #wdSplash{display:none!important}
+#wdEnter.splash37-enter{position:absolute;inset:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;border:0;padding:0;background:transparent;color:inherit}
+.splash37-word{font:500 16px/1.2 -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.28em;opacity:.72}
+.splash37-hint{position:absolute;bottom:12dvh;font-size:9px;opacity:.52}
+</style>
 <meta name="theme-color" content="#f6f3ed"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="沃尔德">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
 <title>WORDDAY · 沃尔德</title>
@@ -224,7 +234,7 @@ button{min-height:38px;transition:background .18s ease,transform .16s ease}butto
 <link rel="stylesheet" href="advanced285fix.css">
 <link rel="stylesheet" href="wordday29.css"><link rel="stylesheet" href="luminous297.css"><link rel="stylesheet" href="expressions.css"><link rel="stylesheet" href="expression-studio.css"><link rel="stylesheet" href="refine321.css">
 <link rel="stylesheet" href="legend33.css"><link rel="stylesheet" href="online33.css"><link rel="stylesheet" href="patch331fix.css"><link rel="stylesheet" href="design34.css"><link rel="stylesheet" href="update35.css">
-</head><body><div class="wrap">
+</head><body><div id="wdSplash" class="visible" role="dialog" aria-modal="true" aria-label="WORDDAY"><div class="scene37" aria-hidden="true"><i class="scene37-a"></i><i class="scene37-b"></i><i class="scene37-c"></i></div><button id="wdEnter" class="splash37-enter" aria-label="Enter WORDDAY" disabled><span class="splash37-word">WORDDAY</span><span class="splash37-hint">轻触任意位置进入</span></button><i class="splash37-ripple" aria-hidden="true"></i></div><div class="wrap">
 <header class="top"><div class="brand">WORD<span>DAY</span> <small style="font-size:10px;color:var(--muted);font-weight:600">沃尔德 · THE DAILY PRACTICE</small></div><div class="date" id="today"></div></header>
 <section class="hero"><div><div class="eyebrow">A LITTLE EVERY DAY</div><h1>每日练习</h1><p>今日学习</p></div><div class="hero-stat"><strong id="streak">0</strong><span>连续打卡 · 天</span></div></section>
 <nav class="nav" aria-label="学习功能"><div class="wild-entry"><button class="active" data-tab="learn">今日学习</button><button id="wildPawDraw" type="button" class="wild-paw" aria-label="抽取萌物奇遇卡牌" title="抽取萌物奇遇卡牌" hidden><span aria-hidden="true">🐾</span></button></div><button data-tab="quiz">每日测试</button><button data-tab="review">智能复习 <span id="dueBadge"></span></button></nav>
@@ -655,7 +665,7 @@ const oldNext=nextDailyQuiz;nextDailyQuiz=function(){oldNext();if(quizSession&&e
 const oldFinish=finishDailyQuiz;finishDailyQuiz=function(){oldFinish();delete w23.quizDraft;quizSession=null;persist();checkAchievements()};
 function updateStreak(){e('quizStreak').textContent=`⚡ 连对 ${quizSession?.streak||0}`}
 e('quizSave').onclick=()=>{if(quizSession){w23.quizDraft=quizSession;persist()}qplay.style.display='none';e('quizReady').style.display='block';renderQuizGate();renderResume();toast('测试进度已保存')};
-// 3.7.3: restore legacy English-definition drafts to the common word curriculum.
+// 3.7.4: restore legacy English-definition drafts to the common word curriculum.
 function restoreWordDraft372(draft){
  if(!draft?.questions)return draft;
  const meanings=new Map();
@@ -872,13 +882,6 @@ document.addEventListener('click',ev=>{if(ev.target.closest('[data-action="revie
 const contrast={affect:['effect','affect 常作动词“影响”；effect 常作名词“效果”'],effect:['affect','effect 常作名词“效果”；affect 常作动词“影响”'],adapt:['adopt','adapt 适应/改编；adopt 采用/收养'],adopt:['adapt','adopt 采用/收养；adapt 适应/改编'],economic:['economical','economic 经济的；economical 节约的'],economical:['economic','economical 节约的；economic 经济的'],principal:['principle','principal 主要的/校长；principle 原则'],principle:['principal','principle 原则；principal 主要的/校长']};
 const oldDetail=showDetail;showDetail=function(word){oldDetail(word);const x=contrast[word?.toLowerCase()];if(x){const d=e('detailBody');d.insertAdjacentHTML('beforeend',`<h3>WORD CONTRAST · 易混词</h3><p><strong>${esc(word)} / ${esc(x[0])}</strong></p><p>${esc(x[1])}</p>`)}};
 // Splash respects iOS autoplay restrictions: sound only after explicit user tap.
-const splash=make('div','wdSplash',`<div class="scene37" aria-hidden="true"><i class="scene37-a"></i><i class="scene37-b"></i><i class="scene37-c"></i></div><button id="wdEnter" class="splash37-enter" aria-label="Enter WORDDAY"><span class="splash37-word">WORDDAY</span><span class="splash37-hint">轻触任意位置进入</span></button><i class="splash37-ripple" aria-hidden="true"></i>`);document.body.appendChild(splash);
-if(!sessionStorage.getItem('wd24Opened')){
- requestAnimationFrame(()=>requestAnimationFrame(()=>splash.classList.add('visible')));
- let entering=false;
- e('wdEnter').onclick=event=>{if(entering)return;entering=true;playFeedback('finish');const rect=splash.getBoundingClientRect();splash.style.setProperty('--tap-x',(event.detail?event.clientX-rect.left:rect.width/2)+'px');splash.style.setProperty('--tap-y',(event.detail?event.clientY-rect.top:rect.height/2)+'px');splash.classList.add('leaving');sessionStorage.setItem('wd24Opened','1');setTimeout(()=>{splash.classList.remove('visible');splash.setAttribute('aria-hidden','true');e('wdEnter').disabled=true},500)};
-}else{splash.setAttribute('aria-hidden','true');e('wdEnter').disabled=true}
-
 // WORDDAY 2.4: incremental enhancements, preserve wordday_v1 and wd23 state.
 const wd24=state.wd24=state.wd24||{exam:'both',source:'smart',count:20,motion:65,font:'normal',badgeOpen:false,quizDates:{},lastQuizWords:{}};
 wd24.quizDates=wd24.quizDates||{};wd24.lastQuizWords=wd24.lastQuizWords||{};
@@ -942,7 +945,7 @@ const wd24OldAudio=playFeedback;
 playFeedback=function(kind){if(state.theme!=='midnight')return wd24OldAudio(kind);if(!state.audioEnabled)return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;soundContext=soundContext||new AC();if(soundContext.state==='suspended')soundContext.resume();const vol=Math.max(0,Math.min(1,Number(state.audioVolume??35)/100));const patterns={tap:[392],known:[392,494],correct:[440,554],wrong:[311],combo:[392,494,587,784],achievement:[349,440,523,698],finish:[392,494,587]};const notes=patterns[kind]||patterns.tap;notes.forEach((hz,i)=>{const t=soundContext.currentTime+i*.09;for(const [type,mult,amp] of [['sine',1,.07],['triangle',2,.012]]){let osc=soundContext.createOscillator(),gain=soundContext.createGain();osc.type=type;osc.frequency.setValueAtTime(hz*mult,t);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,amp*vol),t+.023);gain.gain.exponentialRampToValueAtTime(.0001,t+.33);osc.connect(gain).connect(soundContext.destination);osc.start(t);osc.stop(t+.35)}})}catch(err){console.warn(err)}};
 const wd24OldTheme=setTheme;setTheme=function(t){wd24OldTheme(t);renderHeatmap();wd24Style()};renderHeatmap();
 // A version label useful for verifying PWA cache refresh.
-const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd24Version.style.cssText='text-align:center;padding:12px';wd24Version.textContent='WORDDAY · 沃尔德 · 3.7.3';document.querySelector('.foot')?.appendChild(wd24Version);
+const wd24Version=make('div','wd24Version');wd24Version.className='smallnote';wd24Version.style.cssText='text-align:center;padding:12px';wd24Version.textContent='WORDDAY · 沃尔德 · 3.7.4';document.querySelector('.foot')?.appendChild(wd24Version);
 
 // Initial render after enhancement.
 renderAchievements();renderResume();
@@ -951,5 +954,6 @@ renderAchievements();renderResume();
 </script><script src="wildwords331fix.js"></script><script src="wordday26.js"></script><script src="wordday27.js"></script><script src="wordday271.js"></script><script src="card-feedback28.js"></script><script src="battle-rules283.js"></script>
 <script src="battle-engine.js"></script><script src="victory285.js"></script><script src="reveal331.js"></script><script src="battle-ui34.js"></script><script src="card35.js"></script><script src="result35.js"></script><script src="wordday28.js"></script><script src="review28.js"></script><script src="figures281.js"></script><script src="expression-data.js"></script><script src="expression-extra.js"></script><script src="expression-studio-data.js"></script><script src="content37.js"></script><script src="expression-studio.js"></script><script src="expressions.js"></script><script src="legend33.js"></script><script src="online-config.js"></script><script src="dom34.js"></script><script src="realtime34.js"></script><script src="online34.js"></script><script src="battle-input34.js"></script>
 <script src="album331.js"></script>
-<script src="friends34.js"></script><script src="arena34.js"></script><script src="profile34.js"></script><script src="gift35.js"></script><script>document.getElementById("wd24Version").textContent="WORDDAY · 沃尔德 · 3.7.3";</script>
+<script src="friends34.js"></script><script src="arena34.js"></script><script src="profile34.js"></script><script src="gift35.js"></script><script>document.getElementById("wd24Version").textContent="WORDDAY · 沃尔德 · 3.7.4";</script>
+<script src="entry374.js"></script>
 </body></html>

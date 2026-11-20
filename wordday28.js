@@ -361,5 +361,5 @@ window.addEventListener('storage',event=>{
 });
 document.dispatchEvent(new Event('wd28badges'));
 window.WDBattleArenaUI34={start(g,mode){clearTimers();arenaRun=true;game=g;scene='fight';finalVisible=!!g.finished;skillPanel=false;dialog.showModal();step()},rewards(cards,back){arenaRun=false;game=store.active||null;externalRewardBack=back;rewardCard=cards;taskRevealStep=cards.length===1?1:0;scene='reward';if(!dialog.open)dialog.showModal();showTaskPack()}};
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.7.3';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.7.4';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();

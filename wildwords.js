@@ -173,15 +173,13 @@ function updateBadges(){
 function encounter(){const keys=Object.keys(data.encounters).filter(k=>data.encounters[k]?.status==='ready');if(!keys.length){notify('继续学习，下一位萌物伙伴可能很快出现');return}const k=keys[0];data.encounters[k].status='claimed';persist();updateBadges();reveal(randomCard(),'encounter')}
 function install(){document.querySelector('.brand small')?.replaceChildren(document.createTextNode('2.6.1 · WILDWORDS'));const footer=$('wd24Version');if(footer)footer.textContent='WORDDAY 2.6.1 · WILDWORDS Edition';const splashFoot=document.querySelector('.wd-splash-foot');if(splashFoot)splashFoot.textContent='WILDWORDS · 3.3';const home=$('wildIdeasHome');if(home){home.innerHTML=`<section class="panel" id="wildInline"><div class="panel-head"><h2>萌物收藏</h2><span class="sub">${animals.length} 种萌物</span></div><p class="wild-muted">每日 3 次 · 学习触发奇遇</p><div class="wild-actions"><button id="wildOpenDaily">✦ 翻牌</button><button class="secondary" id="wildOpenAlbum">萌物图鉴</button><button class="secondary" id="wildOpenFusion">✧ 合成</button><button class="secondary" id="wildOpenEncounter" style="display:none">🐾 奇遇</button></div></section>`;$('wildOpenDaily').onclick=daily;$('wildOpenAlbum').onclick=album;$('wildOpenFusion').onclick=fusion;$('wildOpenEncounter').onclick=encounter}
 updateAvatars();updateBadges();
-const splash=$('wdSplash');
+// Only the learning-mode entry event may trigger the automatic daily offer.
 function offerDaily(){
- if(day().seen||day().used>=3||overlay.classList.contains('show'))return;
- const open=()=>{if(!day().seen&&day().used<3&&!overlay.classList.contains('show'))daily()};
+ if(!window.WDEntry374?.isLearning()||day().seen||day().used>=3||overlay.classList.contains('show'))return;
+ const open=()=>{if(window.WDEntry374?.isLearning()&&!day().seen&&day().used<3&&!overlay.classList.contains('show'))daily()};
  if(window.wordday26BeforeDaily)window.wordday26BeforeDaily(open);else open();
 }
-if(splash?.classList.contains('visible')){
- for(const id of ['wdEnter','wdSkip'])$(id)?.addEventListener('click',()=>setTimeout(offerDaily,180),{once:true});
-}else setTimeout(offerDaily,350);
+document.addEventListener('wordday:learning-entered',offerDaily);
 // Visible learning interactions, not idle page time, accumulate encounter eligibility.
 window.addEventListener('storage',ev=>{if(ev.key!==KEY||!ev.newValue)return;try{Object.assign(data,JSON.parse(ev.newValue));updateBadges()}catch{}});
 let lastActive=0;document.addEventListener('input',ev=>{if(ev.target.closest('#expressions'))lastActive=Date.now()});document.addEventListener("visibilitychange",()=>{if(document.hidden)lastActive=0});document.addEventListener('click',ev=>{const btn=ev.target.closest('button');if(!btn||overlay.classList.contains('show'))return;if(!btn.closest('#learn,#quiz,#review,#studyStage,#expressions'))return;lastActive=Date.now()},true);setInterval(()=>{if(document.hidden||!['learn','expressions'].includes(mainTab)||overlay.classList.contains('show')||document.querySelector('dialog[open]')||(Date.now()-lastActive>45000&&!window.WDExpressionAudioActive))return;data.activeSeconds+=10;if(data.activeSeconds>=120){data.activeSeconds-=120;if(!Object.values(data.encounters).some(x=>x?.status==='ready')){data.encounters[today()]={status:'ready',created:Date.now()};notify('🐾 有萌物奇遇！');window.WDExpressions?.showEncounter()}}persist();updateBadges();const eb=$('wildOpenEncounter');if(eb)eb.style.display=Object.values(data.encounters).some(x=>x.status==='ready')?'inline-block':'none'},10000);
