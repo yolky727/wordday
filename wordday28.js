@@ -83,8 +83,8 @@ function plan(){
 function labelOption(o){const n=game.hands[0][o.i];let target='';if(o.target!=null){const friendly=['mimic','swan','dolphin','bless','swap','phoenix','unicorn'].includes(o.k);target=friendly?' · '+en(game.hands[0][o.target]):o.k==='gorilla'?' · '+en(game.hands[1][o.target]):' · 对方第 '+(o.target+1)+' 槽'}if(o.k==='gorilla'&&o.target==null)target=' · 随机指定';return (o.k==='distribute'?'远古号令':o.k==='tyrant'?'暴君降临':skill(n)[0])+target+(o.mode?' · 复制侦察':'')}
 function panel(){
  const opts=B.options(game,0),cards=game.hands[0];let html='<div class="b28-skillbox"><h3>选择技能</h3>';
- cards.forEach((n,i)=>{const def=skill(n);if(!def){if(B.passives[n])html+='<div class="b28-skillrow"><strong>'+fighter(n)+'</strong><p>'+text(B.passives[n])+'</p></div>';return;}const local=opts.filter(o=>o.i===i);
- html+='<div class="b28-skillrow"><strong>'+fighter(n)+' · '+def[0]+'</strong><p>'+def[1]+'</p>'+(local.length?local.map(o=>btn('opt:'+opts.indexOf(o),text(labelOption(o)))).join(''):'<small>不可用：'+(game.played[0].includes(i)?'本牌已出战':game.fx.seal===1?'本轮遭到封锁':'等待合适时机')+'</small>')+'</div>'});
+ cards.forEach((n,i)=>{const def=skill(n);if(!def){if(B.passives[n])html+='<div class="b28-skillrow" data-skill-slot="'+i+'"><strong>'+fighter(n)+'</strong><p>'+text(B.passives[n])+'</p></div>';return;}const local=opts.filter(o=>o.i===i);
+ html+='<div class="b28-skillrow" data-skill-slot="'+i+'"><strong>'+fighter(n)+' · '+def[0]+'</strong><p>'+def[1]+'</p>'+(local.length?local.map(o=>btn('opt:'+opts.indexOf(o),text(labelOption(o)))).join(''):'<small>不可用：'+(game.played[0].includes(i)?'本牌已出战':game.fx.seal===1?'本轮遭到封锁':'等待合适时机')+'</small>')+'</div>'});
  if(!cards.some(skill))html+='<p>暂无可用技能</p>';
  if(false&&chosenSkill){html+='<p>发动后将消耗本场唯一机会。</p>'+btn('confirm','确认发动 · '+text(labelOption(chosenSkill)),'')}
  return html+btn('skills','收起技能')+'</div>';
@@ -206,7 +206,7 @@ function tasks(){
  function challenge(left,right,rewardTier,id) {
   const n=Number(left[0]>=left[1])+Number(right[0]>=right[1]);
   const metric=([v,goal,unit])=>Math.min(v,goal)+' / '+goal+' '+unit;
-  rows.push({label:'进阶挑战',n,max:2,id:prefix+id,rewardTier,progress:metric(left)+' · '+metric(right)});
+  rows.push({label:rewardTier===4?'流光挑战':'进阶挑战',n,max:2,id:prefix+id,rewardTier,progress:metric(left)+' · '+metric(right)});
  }
  if(!daily&&challengeRoll(days[0])<.2){
   const original=[[quizzes.length,5,'场测试'],[correct,100,'题答对']];
@@ -307,7 +307,7 @@ function releaseSkill(slot){
  if(!opts.length){toast(skill(game.hands[0][slot])?'本轮技能暂不可用':'这张卡没有特殊技能');return}
  if(opts.length===1){if(B.activate(game,0,opts[0]))step();return}
  skillPanel=true;paint();const box=dialog.querySelector('.b28-skillbox');
- if(box){const rows=box.querySelectorAll('.b28-skillrow');rows.forEach(row=>{if(!row.textContent.includes(window.WDLocale37?.language==='en'?window.WDLocale37.t(skill(game.hands[0][slot])[0]):skill(game.hands[0][slot])[0]))row.hidden=true});box.querySelector('h3').textContent='选择技能目标';box.scrollIntoView({block:'nearest',behavior:'smooth'})}
+ if(box){const rows=box.querySelectorAll('.b28-skillrow');rows.forEach(row=>{row.hidden=Number(row.dataset.skillSlot)!==slot});box.querySelector('h3').textContent='选择技能目标';box.scrollIntoView({block:'nearest',behavior:'smooth'})}
 }
 dialog.addEventListener('contextmenu',ev=>{if(ev.target.closest('.a-card,[data-hold]'))ev.preventDefault()});
 dialog.addEventListener('keydown',ev=>{const face=ev.target.closest('[data-hold]');if(face&&(ev.key===' '||ev.key==='Enter')){ev.preventDefault();releaseSkill(+face.dataset.hold)}});
@@ -361,5 +361,5 @@ window.addEventListener('storage',event=>{
 });
 document.dispatchEvent(new Event('wd28badges'));
 window.WDBattleArenaUI34={start(g,mode){clearTimers();arenaRun=true;game=g;scene='fight';finalVisible=!!g.finished;skillPanel=false;dialog.showModal();step()},rewards(cards,back){arenaRun=false;game=store.active||null;externalRewardBack=back;rewardCard=cards;taskRevealStep=cards.length===1?1:0;scene='reward';if(!dialog.open)dialog.showModal();showTaskPack()}};
-$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.7.2';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
+$('wd24Version').textContent='WORDDAY · 沃尔德 · 3.7.3';document.querySelector('.brand small').textContent='沃尔德 · THE DAILY PRACTICE';
 })();
